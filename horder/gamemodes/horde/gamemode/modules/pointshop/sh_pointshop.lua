@@ -9,6 +9,7 @@ local ROOT = "horde/gamemode/modules/pointshop/core/"
 
 local FILES = {
     { "sh_config.lua",    "sh" },
+    { "sh_lang.lua",      "sh" },
     { "sh_core.lua",      "sh" },
     { "sv_pointshop.lua", "sv" },
     { "sv_contracts.lua", "sv" },

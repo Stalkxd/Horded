@@ -58,14 +58,50 @@ net.Receive("Horde_PS_Contracts", function()
     Changed("contracts")
 end)
 
+-- UI sound helper (respects the Settings toggle).
+PS.SoundConVar   = CreateClientConVar("horde_ps_sounds", "1", true, false, "Pointshop interface sounds")
+PS.SpinConVar    = CreateClientConVar("horde_ps_autospin", "1", true, false, "Rotate pointshop model previews")
+PS.KeyConVar     = CreateClientConVar("horde_ps_menu_key", "0", true, false, "Key code that toggles the pointshop (0 = none)")
+
+function PS:Sound(path)
+    if self.SoundConVar:GetBool() then surface.PlaySound(path) end
+end
+
+local function ReadArgs()
+    local args = PS:ReadTable()
+    return istable(args) and args or {}
+end
+
 net.Receive("Horde_PS_Result", function()
-    local ok, msg = net.ReadBool(), net.ReadString()
-    surface.PlaySound(ok and "buttons/button14.wav" or "buttons/button10.wav")
+    local ok, key = net.ReadBool(), net.ReadString()
+    local args = ReadArgs()
+    local msg = PS:L(key, unpack(args))
+    PS:Sound(ok and "buttons/button14.wav" or "buttons/button10.wav")
     if PS.UI and PS.UI.Toast and IsValid(PS.Menu) then
         PS.UI.Toast(msg, ok)
     elseif msg ~= "" then
-        chat.AddText(Color(200, 28, 28), "[Pointshop] ", color_white, msg)
+        chat.AddText(Color(200, 28, 28), "[" .. PS:L("title_b") .. "] ", color_white, msg)
     end
+end)
+
+net.Receive("Horde_PS_Notify", function()
+    local key = net.ReadString()
+    local msg = PS:L(key, unpack(ReadArgs()))
+    if HORDE.PlayNotification then
+        HORDE:PlayNotification(msg, 0)
+    else
+        chat.AddText(Color(200, 28, 28), "[" .. PS:L("title_b") .. "] ", color_white, msg)
+    end
+    if IsValid(PS.Menu) and PS.UI and PS.UI.Toast then PS.UI.Toast(msg, true) end
+end)
+
+-- Admin-only data (bank balances, contract templates).
+PS.AdminData = PS.AdminData or {}
+net.Receive("Horde_PS_AdminData", function()
+    local kind = net.ReadString()
+    local data = PS:ReadTable()
+    PS.AdminData[kind] = istable(data) and data or {}
+    Changed("admin_" .. kind)
 end)
 
 net.Receive("Horde_PS_Open", function()
@@ -148,4 +184,31 @@ end
 
 concommand.Add("horde_pointshop_toggle", function()
     if IsValid(PS.Menu) then PS.Menu:Remove() else RunConsoleCommand("horde_pointshop") end
+end)
+
+---------------------------------------------------------------------------
+-- Custom open/close key (Settings tab). Polled so it also works in singleplayer.
+---------------------------------------------------------------------------
+
+local key_was_down = false
+local chat_open = false
+hook.Add("StartChat", "Horde_PS_Chat", function() chat_open = true end)
+hook.Add("FinishChat", "Horde_PS_Chat", function() chat_open = false end)
+
+hook.Add("Think", "Horde_PS_MenuKey", function()
+    local key = PS.KeyConVar:GetInt()
+    if key <= 0 then key_was_down = false return end
+    local down = input.IsButtonDown(key)
+    if down and not key_was_down and not chat_open and not gui.IsGameUIVisible() then
+        local focus = vgui.GetKeyboardFocus()
+        if IsValid(PS.Menu) then
+            -- Don't close while typing in a text field or binding a key.
+            if not (IsValid(focus) and (focus:GetClassName() == "TextEntry" or focus.Binding)) and not PS.Binding then
+                PS.Menu:Remove()
+            end
+        elseif not IsValid(focus) then
+            RunConsoleCommand("horde_pointshop")
+        end
+    end
+    key_was_down = down
 end)

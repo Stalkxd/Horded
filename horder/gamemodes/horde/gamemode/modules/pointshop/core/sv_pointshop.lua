@@ -236,10 +236,29 @@ function PS:SyncPlayer(ply)
     net.Send(ply)
 end
 
-function PS:SendResult(ply, ok, msg)
+-- Results and notifications are sent as translation keys (see sh_lang.lua) so every
+-- client shows them in its own language. args may contain { en = ..., ru = ... } tables.
+function PS:SendResult(ply, ok, key, args)
+    if not IsValid(ply) or not key then return end
     net.Start("Horde_PS_Result")
     net.WriteBool(ok)
-    net.WriteString(msg or "")
+    net.WriteString(key)
+    self:WriteTable(args or {})
+    net.Send(ply)
+end
+
+function PS:Notify(ply, key, args)
+    if not IsValid(ply) or ply:IsBot() then return end
+    net.Start("Horde_PS_Notify")
+    net.WriteString(key)
+    self:WriteTable(args or {})
+    net.Send(ply)
+end
+
+function PS:SendAdminData(ply, kind, tbl)
+    net.Start("Horde_PS_AdminData")
+    net.WriteString(kind)
+    self:WriteTable(tbl or {})
     net.Send(ply)
 end
 
@@ -338,15 +357,15 @@ end
 
 function PS:Buy(ply, id)
     local d = self:Data(ply)
-    if not d.loaded then return false, "Your pointshop data is not loaded yet." end
+    if not d.loaded then return false, "err.not_loaded" end
     local item = self.Catalog[id]
-    if not item or not item.enabled then return false, "That item is not for sale." end
-    if d.owned[id] then return false, "You already own " .. item.name .. "." end
-    if #self:GetInventory(ply) >= C.InventorySlots then return false, "Your inventory is full." end
+    if not item or not item.enabled then return false, "err.not_for_sale" end
+    if d.owned[id] then return false, "err.already_own", { item.name } end
+    if #self:GetInventory(ply) >= C.InventorySlots then return false, "err.inventory_full" end
 
     local price = self:GetPrice(id)
     if d.skulls < price then
-        return false, "Not enough " .. C.CurrencyName .. " (" .. self:FormatNumber(price - d.skulls) .. " more needed)."
+        return false, "err.not_enough", { self:FormatNumber(price - d.skulls) }
     end
 
     local sid = SteamKey(ply)
@@ -362,7 +381,7 @@ function PS:Buy(ply, id)
             sid, id, os.time()))
         return not e2
     end)
-    if not ok then return false, "Purchase failed (database error)." end
+    if not ok then return false, "err.db" end
 
     d.skulls = new_skulls
     d.owned[id] = true
@@ -375,26 +394,26 @@ function PS:Buy(ply, id)
     end
 
     hook.Run("Horde_PS_ItemBought", ply, item, price)
-    return true, "Purchased " .. item.name .. " for " .. self:FormatNumber(price) .. " " .. C.CurrencyName .. "."
+    return true, "ok.purchased", { item.name, self:FormatNumber(price) }
 end
 
 function PS:Equip(ply, class_name, id)
     local d = self:Data(ply)
-    if not d.loaded then return false, "Your pointshop data is not loaded yet." end
-    if not (HORDE.classes and HORDE.classes[class_name]) then return false, "Unknown class." end
+    if not d.loaded then return false, "err.not_loaded" end
+    if not (HORDE.classes and HORDE.classes[class_name]) then return false, "err.unknown_class" end
     local sid = SteamKey(ply)
 
     if id == nil or id == "" then
         d.equipped[class_name] = nil
         DB.Query(DB.Prepare("DELETE FROM horde_ps_equipped WHERE steamid = ? AND class_name = ?;", sid, class_name))
         self:RefreshModel(ply, class_name)
-        return true, self:ClassDisplayName(class_name) .. " now uses the default model."
+        return true, "ok.default_model", { self:ClassDisplayName(class_name) }
     end
 
     local item = self.Catalog[id]
-    if not item or not d.owned[id] then return false, "You do not own that item." end
+    if not item or not d.owned[id] then return false, "err.not_owned" end
     if not self:CanClassUse(item, class_name) then
-        return false, item.name .. " cannot be worn by " .. self:ClassDisplayName(class_name) .. "."
+        return false, "err.class_cannot_wear", { item.name, self:ClassDisplayName(class_name) }
     end
 
     d.equipped[class_name] = id
@@ -403,7 +422,7 @@ function PS:Equip(ply, class_name, id)
         ON CONFLICT(steamid, class_name) DO UPDATE SET item_id = excluded.item_id;
     ]], sid, class_name, id))
     self:RefreshModel(ply, class_name)
-    return true, item.name .. " equipped on " .. self:ClassDisplayName(class_name) .. "."
+    return true, "ok.equipped", { item.name, self:ClassDisplayName(class_name) }
 end
 
 ---------------------------------------------------------------------------
@@ -435,23 +454,27 @@ local function CleanPrice(price)
     return math.Clamp(math.floor(price), 0, PS.MAX_PRICE)
 end
 
-local ADMIN_ACTIONS = {}
+-- Admin actions return ok, message key, message args, opts.
+-- opts.catalog = true rebuilds and rebroadcasts the catalog / daily store.
+PS.AdminActions = PS.AdminActions or {}
+local ADMIN_ACTIONS = PS.AdminActions
+PS.CleanName = CleanName
 
 function ADMIN_ACTIONS.update(ply, data)
     local item = PS.Catalog[data.id]
-    if not item then return false, "Unknown item." end
+    if not item then return false, "err.unknown_item" end
     local price = CleanPrice(data.price)
-    if not price then return false, "Invalid price." end
+    if not price then return false, "err.invalid_price" end
     local classes = CleanClasses(data.classes)
     local rarity = C.Rarities[data.rarity] and data.rarity or item.rarity
 
     if item.custom then
         local src = PS.Overrides.custom[item.id]
-        if not src then return false, "Unknown custom item." end
+        if not src then return false, "err.unknown_item" end
         local model = data.model and PS:SanitizeModel(data.model)
-        if data.model and not model then return false, "Invalid model path." end
+        if data.model and not model then return false, "err.invalid_model" end
         if model and model ~= src.model and not util.IsValidModel(model) then
-            return false, "Model not found on the server: " .. model
+            return false, "err.model_missing", { model }
         end
         src.name    = CleanName(data.name) or src.name
         src.model   = model or src.model
@@ -460,32 +483,33 @@ function ADMIN_ACTIONS.update(ply, data)
         src.classes = classes
         PS.Overrides.items[item.id] = data.enabled == false and { disabled = true } or nil
     else
-        local o = { price = price, classes = classes, rarity = rarity ~= item.rarity and rarity or nil }
+        local o = { price = price, classes = classes, rarity = rarity ~= item.base_rarity and rarity or nil }
         if data.enabled == false then o.disabled = true end
         PS.Overrides.items[item.id] = o
     end
-    return true, "Saved " .. item.name .. "."
+    return true, "ok.saved", { item.name }, { catalog = true, save = true }
 end
 
 function ADMIN_ACTIONS.reset(ply, data)
     local item = PS.Catalog[data.id]
-    if not item then return false, "Unknown item." end
-    if item.custom then return false, "Custom items have no default; edit or delete it instead." end
+    if not item then return false, "err.unknown_item" end
+    if item.custom then return false, "err.custom_no_default" end
     PS.Overrides.items[item.id] = nil
-    return true, item.name .. " reset to config defaults."
+    return true, "ok.reset", { item.name }, { catalog = true, save = true }
 end
 
 function ADMIN_ACTIONS.add(ply, data)
     local name  = CleanName(data.name)
     local model = PS:SanitizeModel(data.model)
     local price = CleanPrice(data.price)
-    if not name then return false, "Enter a name." end
-    if not model then return false, "Invalid model path (expected models/....mdl)." end
-    if not util.IsValidModel(model) then return false, "Model not found on the server: " .. model end
-    if not price then return false, "Invalid price." end
-    if table.Count(PS.Overrides.custom) >= 1000 then return false, "Too many custom items." end
+    if not name then return false, "err.enter_name" end
+    if not model then return false, "err.invalid_model" end
+    if not util.IsValidModel(model) then return false, "err.model_missing", { model } end
+    if not price then return false, "err.invalid_price" end
+    if table.Count(PS.Overrides.custom) >= 1000 then return false, "err.too_many" end
 
     local base = "custom_" .. (name:lower():gsub("[^%w]+", "_"):gsub("^_+", ""):gsub("_+$", ""):sub(1, 24))
+    if base == "custom_" then base = "custom_model" end
     local id, n = base, 1
     while PS.Catalog[id] or PS.Overrides.custom[id] do
         n = n + 1
@@ -500,22 +524,105 @@ function ADMIN_ACTIONS.add(ply, data)
         rarity  = C.Rarities[data.rarity] and data.rarity or C.DefaultRarity,
         classes = CleanClasses(data.classes),
     }
-    return true, "Added " .. name .. "."
+    if data.enabled == false then PS.Overrides.items[id] = { disabled = true } end
+    return true, "ok.added", { name }, { catalog = true, save = true }
 end
 
 function ADMIN_ACTIONS.delete(ply, data)
     local item = PS.Catalog[data.id]
-    if not item or not item.custom then return false, "Only custom items can be deleted. Disable config items instead." end
+    if not item or not item.custom then return false, "err.only_custom_delete" end
     PS.Overrides.custom[item.id] = nil
     PS.Overrides.items[item.id] = nil
-    return true, "Deleted " .. item.name .. "."
+    return true, "ok.deleted", { item.name }, { catalog = true, save = true }
 end
 
 function ADMIN_ACTIONS.reroll(ply, data)
     local day = PS:GetDay()
     PS.DailyReroll = { day = day, n = (PS.DailyReroll.day == day and PS.DailyReroll.n or 0) + 1 }
     SetMeta("pointshop_daily_reroll", PS.DailyReroll)
-    return true, "Daily store rerolled."
+    return true, "ok.rerolled", nil, { catalog = true }
+end
+
+---------------------------------------------------------------------------
+-- Bank (admin: view / give / take / set balances, online or offline by SteamID)
+---------------------------------------------------------------------------
+
+local function ValidSteamID(sid)
+    return isstring(sid) and sid:match("^STEAM_%d:%d:%d+$") ~= nil
+end
+
+local function OnlineBySteamID(sid)
+    for _, p in ipairs(player.GetHumans()) do
+        if p:SteamID() == sid then return p end
+    end
+end
+
+local function OfflineSkulls(sid)
+    if not PS:EnsureTables() then return nil end
+    local v = DB.QueryValue("SELECT skulls FROM horde_ps_players WHERE steamid = ?;", sid)
+    return v and tonumber(v) or nil
+end
+
+local function SendBankList(ply)
+    local list = {}
+    for _, p in ipairs(player.GetHumans()) do
+        local d = PS:Data(p)
+        list[#list + 1] = { name = p:Nick(), steamid = p:SteamID(), skulls = d.skulls, loaded = d.loaded }
+    end
+    table.sort(list, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
+    PS:SendAdminData(ply, "bank", list)
+end
+
+function ADMIN_ACTIONS.bank_list(ply)
+    SendBankList(ply)
+end
+
+function ADMIN_ACTIONS.bank_lookup(ply, data)
+    local sid = isstring(data.steamid) and string.Trim(data.steamid):upper() or ""
+    if not ValidSteamID(sid) then return false, "err.bad_steamid" end
+    local online = OnlineBySteamID(sid)
+    local skulls = online and PS:Data(online).skulls or OfflineSkulls(sid)
+    PS:SendAdminData(ply, "bank_lookup", { steamid = sid, name = online and online:Nick() or nil, skulls = skulls, found = skulls ~= nil })
+end
+
+function ADMIN_ACTIONS.bank(ply, data)
+    local sid = isstring(data.steamid) and string.Trim(data.steamid):upper() or ""
+    if not ValidSteamID(sid) then return false, "err.bad_steamid" end
+    local amount = math.floor(tonumber(data.amount) or -1)
+    if amount < 0 or amount > 2000000000 then return false, "err.bad_amount" end
+    local mode = data.mode
+    if mode ~= "add" and mode ~= "remove" and mode ~= "set" then return false, "err.bad_amount" end
+
+    local online = OnlineBySteamID(sid)
+    local name = online and online:Nick() or sid
+    local current
+    if online then
+        local d = PS:Data(online)
+        if not d.loaded then return false, "err.target_not_loaded" end
+        current = d.skulls
+    else
+        current = OfflineSkulls(sid)
+        if current == nil then current = math.max(0, math.floor(tonumber(C.StartingSkulls) or 0)) end
+    end
+
+    local new = current
+    if mode == "add" then new = current + amount elseif mode == "remove" then new = current - amount else new = amount end
+    new = math.Clamp(new, 0, 2000000000)
+
+    if online then
+        PS:AddSkulls(online, new - current)
+        PS:Notify(online, "n.balance_changed", { PS:FormatNumber(new - current), PS:FormatNumber(new) })
+    else
+        if not PS:EnsureTables() then return false, "err.db" end
+        DB.Query(DB.Prepare([[
+            INSERT INTO horde_ps_players (steamid, skulls) VALUES (?, ?)
+            ON CONFLICT(steamid) DO UPDATE SET skulls = excluded.skulls;
+        ]], sid, new))
+    end
+
+    SendBankList(ply)
+    PS:SendAdminData(ply, "bank_lookup", { steamid = sid, name = online and online:Nick() or nil, skulls = new, found = true })
+    return true, "ok.bank", { name, PS:FormatNumber(new) }
 end
 
 ---------------------------------------------------------------------------
@@ -539,8 +646,8 @@ end)
 net.Receive("Horde_PS_Buy", function(_, ply)
     if not IsValid(ply) or Throttle(ply, "buy") then return end
     local id = net.ReadString()
-    local ok, msg = PS:Buy(ply, id)
-    PS:SendResult(ply, ok, msg)
+    local ok, key, args = PS:Buy(ply, id)
+    PS:SendResult(ply, ok, key, args)
     PS:SyncPlayer(ply)
 end)
 
@@ -548,15 +655,15 @@ net.Receive("Horde_PS_Equip", function(_, ply)
     if not IsValid(ply) or Throttle(ply, "equip") then return end
     local class_name = net.ReadString()
     local id = net.ReadString()
-    local ok, msg = PS:Equip(ply, class_name, id)
-    PS:SendResult(ply, ok, msg)
+    local ok, key, args = PS:Equip(ply, class_name, id)
+    PS:SendResult(ply, ok, key, args)
     PS:SyncPlayer(ply)
 end)
 
 net.Receive("Horde_PS_Admin", function(len, ply)
-    if not IsValid(ply) or Throttle(ply, "admin") then return end
+    if not IsValid(ply) or Throttle(ply, "admin", 0.15) then return end
     if not C.IsAdmin(ply) then
-        PS:SendResult(ply, false, "You do not have access to the pointshop admin panel.")
+        PS:SendResult(ply, false, "err.no_access")
         return
     end
     local action = net.ReadString()
@@ -564,23 +671,29 @@ net.Receive("Horde_PS_Admin", function(len, ply)
     local fn = ADMIN_ACTIONS[action]
     if not fn then return end
 
-    local ok, msg = fn(ply, data)
+    local ok, key, args, opts = fn(ply, data)
+    if ok == nil then return end
+    opts = opts or {}
     if ok then
-        if action ~= "reroll" then PS:SaveOverrides() end
-        PS:Rebuild()
-        PS:SendCatalog()
-        PS:SendDaily()
-        for _, p in ipairs(player.GetHumans()) do PS:SyncPlayer(p) end
-        log(ply:Nick() .. " (" .. ply:SteamID() .. ") admin action '" .. action .. "': " .. msg)
+        if opts.save then PS:SaveOverrides() end
+        if opts.catalog then
+            PS:Rebuild()
+            PS:SendCatalog()
+            PS:SendDaily()
+            for _, p in ipairs(player.GetHumans()) do PS:SyncPlayer(p) end
+        end
+        local shown = {}
+        for _, a in ipairs(args or {}) do shown[#shown + 1] = istable(a) and tostring(a.en) or tostring(a) end
+        log(ply:Nick() .. " (" .. ply:SteamID() .. ") admin action '" .. action .. "': " .. key .. " " .. table.concat(shown, ", "))
     end
-    PS:SendResult(ply, ok, msg)
+    PS:SendResult(ply, ok, key, args)
 end)
 
 function PS:Open(ply)
     if not IsValid(ply) or ply:IsBot() then return end
     if not self:Data(ply).loaded then
         if not self:LoadPlayer(ply) then
-            HORDE:SendNotification("Pointshop is unavailable (database not ready).", 1, ply)
+            self:Notify(ply, "n.db_unavailable")
             return
         end
         if self.LoadContracts then self:LoadContracts(ply) end
@@ -635,7 +748,7 @@ concommand.Add("horde_ps_give_skulls", function(ply, _, args)
     local target = targets[1]
     if PS:AddSkulls(target, amount) then
         reply(string.format("Gave %d %s to %s (now %d).", amount, C.CurrencyName, target:Nick(), PS:GetSkulls(target)))
-        HORDE:SendNotification(string.format("%s: %+d", C.CurrencyName, amount), 0, target)
+        PS:Notify(target, "n.balance_changed", { PS:FormatNumber(amount), PS:FormatNumber(PS:GetSkulls(target)) })
     else
         reply("That player's pointshop data is not loaded.")
     end

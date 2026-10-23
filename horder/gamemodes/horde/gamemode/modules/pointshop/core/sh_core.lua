@@ -20,7 +20,9 @@ if SERVER then
         "Horde_PS_Equip",
         "Horde_PS_Claim",
         "Horde_PS_Result",
+        "Horde_PS_Notify",
         "Horde_PS_Admin",
+        "Horde_PS_AdminData",
     }) do
         util.AddNetworkString(name)
     end
@@ -75,7 +77,7 @@ function PS:CanClassUse(item, class_name)
 end
 
 function PS:ClassesText(item)
-    if not item.classes or table.IsEmpty(item.classes) then return "All classes" end
+    if not item.classes or table.IsEmpty(item.classes) then return self.L and self:L("all_classes") or "All classes" end
     local names = {}
     for _, class in ipairs(self:GetClassList()) do
         if item.classes[class.name] then names[#names + 1] = class.display_name or class.name end
@@ -175,6 +177,7 @@ function PS:BuildCatalog(overrides)
             model      = src.model,
             base_price = math.Clamp(math.floor(tonumber(src.price) or 0), 0, self.MAX_PRICE),
             rarity     = C.Rarities[src.rarity] and src.rarity or C.DefaultRarity,
+            base_rarity = C.Rarities[src.rarity] and src.rarity or C.DefaultRarity,
             base_classes = ToClassSet(src.classes),
             custom     = custom or nil,
             enabled    = true,
