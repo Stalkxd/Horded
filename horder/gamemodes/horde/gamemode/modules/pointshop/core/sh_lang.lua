@@ -1,0 +1,564 @@
+--[[-------------------------------------------------------------------------
+    HORDE POINTSHOP - TRANSLATIONS (English / Russian)
+
+    PS:L(key, ...) returns the text in the player's language (SETTINGS tab,
+    or C.DefaultLanguage). Texts use string.format placeholders (%s, %d) and
+    the token {cur}, which is replaced by the currency name.
+    To add a language: add a table below and a choice in cl_menu.lua (Settings).
+---------------------------------------------------------------------------]]
+
+local PS = HORDE.Pointshop
+local C  = PS.Config
+
+PS.Lang = PS.Lang or {}
+
+PS.Lang.en = {
+    -- Window / tabs
+    ["title_a"]          = "HORDE ",
+    ["title_b"]          = "POINTSHOP",
+    ["tab.loadout"]      = "Loadout",
+    ["tab.inventory"]    = "Inventory",
+    ["tab.store"]        = "Daily Store",
+    ["tab.contracts"]    = "Contracts",
+    ["tab.settings"]     = "Settings",
+    ["tab.admin"]        = "Admin",
+    ["playing_as"]       = "Playing as: %s",
+    ["loading"]          = "Loading pointshop data…",
+
+    -- Common
+    ["all_classes"]      = "All classes",
+    ["usable_by"]        = "Usable by: %s",
+    ["usable_by_label"]  = "Usable by:",
+    ["equipped_on_label"] = "Equipped on:",
+    ["equipped_on"]      = "Equipped on: %s",
+    ["nothing"]          = "Nothing",
+    ["rarity_pm"]        = "%s Playermodel",
+    ["cancel"]           = "Cancel",
+    ["confirm"]          = "Confirm",
+    ["search"]           = "Search…",
+    ["drag_rotate"]      = "Drag to rotate",
+
+    -- Loadout
+    ["playing"]          = "PLAYING",
+    ["default"]          = "Default",
+    ["default_model"]    = "Default model",
+    ["preview"]          = "PREVIEW",
+    ["playermodel"]      = "Playermodel",
+    ["class_only"]       = "%s only",
+    ["no_equipped"]      = "No pointshop playermodel equipped for this class.",
+    ["use_default"]      = "Use default",
+    ["browse_store"]     = "Browse store",
+    ["your_models"]      = "Your models",
+    ["your_models_sub"]  = "%d usable by %s · click to equip",
+    ["slot_default"]     = "DEFAULT",
+    ["badge_equipped"]   = "EQUIPPED",
+    ["equipped"]         = "Equipped",
+    ["click_equip"]      = "Click to equip",
+    ["none_for_class"]   = "You don't own any models for %s yet.",
+    ["check_daily"]      = "Check the Daily Store for discounted skins.",
+    ["no_classes"]       = "No classes available.",
+
+    -- Inventory
+    ["backpack"]         = "Backpack",
+    ["slots_used"]       = "%d / %d slots used",
+    ["page"]             = "PAGE %d / %d",
+    ["sort_oldest"]      = "Oldest first",
+    ["sort_newest"]      = "Newest first",
+    ["sort_name"]        = "Name",
+    ["sort_rarity"]      = "Rarity",
+    ["select_item"]      = "Select an item",
+    ["hint_dbl"]         = "Double-click to equip on your current class",
+    ["hint_right"]       = "Right-click to choose classes",
+    ["equip_on"]         = "Equip on %s",
+    ["equip_current"]    = "Equip on current class",
+    ["equip_on_class"]   = "Equip on class…",
+    ["unequip_all"]      = "Unequip everywhere",
+    ["no_class_can"]     = "No class can use this item",
+
+    -- Store
+    ["daily_deals"]      = "Daily Deals",
+    ["daily_sub"]        = "Discounted today only · refreshes in %s",
+    ["daily_deal"]       = "DAILY DEAL",
+    ["no_deals"]         = "No daily deals today.",
+    ["store"]            = "Store",
+    ["store_sub"]        = "Every playermodel at its regular price",
+    ["buy"]              = "Buy",
+    ["owned"]            = "Owned",
+    ["inv_full"]         = "Inventory full",
+    ["badge_owned"]      = "OWNED",
+    ["badge_daily"]      = "DAILY",
+    ["hide_owned"]       = "Hide owned",
+    ["items_count"]      = "%d items",
+    ["no_match"]         = "No playermodels match your filters.",
+    ["sort_price_asc"]   = "Price: low to high",
+    ["sort_price_desc"]  = "Price: high to low",
+    ["confirm_purchase"] = "Confirm purchase",
+    ["buy_body"]         = "Buy %s for %s {cur}?",
+    ["deal_line"]        = "Daily deal: -%d%%",
+
+    -- Contracts
+    ["contracts_title"]  = "DAILY CONTRACTS",
+    ["contracts_info"]   = "Complete contracts during a game to earn {cur}. Finished contracts must be claimed here.",
+    ["new_in"]           = "New contracts in %s",
+    ["completed"]        = "COMPLETED",
+    ["no_contracts"]     = "No contracts available right now.",
+    ["reward"]           = "REWARD",
+    ["claim"]            = "Claim",
+    ["claimed"]          = "Claimed",
+    ["in_progress"]      = "In progress",
+
+    -- Settings
+    ["general"]          = "General",
+    ["controls"]         = "Controls",
+    ["language"]         = "Language",
+    ["lang_default"]     = "Server default",
+    ["lang_auto"]        = "Automatic (game language)",
+    ["keybind"]          = "Open / close menu key",
+    ["keybind_hint"]     = "Click the button, then press a key or mouse button. F4 and !ps always work too.",
+    ["keybind_none"]     = "Not bound",
+    ["press_key"]        = "Press a key…",
+    ["clear"]            = "Clear",
+    ["sounds"]           = "Interface sounds",
+    ["autospin"]         = "Rotate model previews automatically",
+
+    -- Admin: items
+    ["admin_items"]      = "Items",
+    ["admin_bank"]       = "Bank",
+    ["admin_contracts"]  = "Contracts",
+    ["playermodels"]     = "Playermodels",
+    ["n_items"]          = "%d items",
+    ["new"]              = "+ New",
+    ["tag_disabled"]     = "DISABLED",
+    ["tag_custom"]       = "CUSTOM",
+    ["tag_edited"]       = "EDITED",
+    ["tag_classes"]      = "%d CLASSES",
+    ["admin_title"]      = "Pointshop admin",
+    ["admin_help1"]      = "Select a playermodel on the left to change its price, rarity, class restriction or availability.",
+    ["admin_help2"]      = "Use \"+ New\" to add any playermodel installed on the server (\"+\" opens the model picker).",
+    ["admin_help3"]      = "Default items are defined in gamemode/modules/pointshop/core/sh_config.lua.",
+    ["admin_help4"]      = "In-game changes are saved in the server database and override the config file.",
+    ["admin_help5"]      = "Balances can be changed in the Bank tab, contracts in the Contracts tab.",
+    ["new_pm"]           = "New playermodel",
+    ["edit_pm"]          = "Edit playermodel",
+    ["added_custom"]     = "Added as a custom item",
+    ["src_custom"]       = "custom · %s",
+    ["src_config"]       = "config · %s",
+    ["f_name"]           = "Name",
+    ["ph_name"]          = "Display name",
+    ["f_model"]          = "Model path",
+    ["f_price"]          = "Price ({cur})",
+    ["f_price_cfg"]      = " · config: %s",
+    ["f_rarity"]         = "Rarity",
+    ["f_avail"]          = "Availability",
+    ["avail_store"]      = "Available in the store",
+    ["f_usable"]         = "Usable by",
+    ["add_pm"]           = "Add playermodel",
+    ["save"]             = "Save changes",
+    ["reset_cfg"]        = "Reset to config",
+    ["delete"]           = "Delete",
+    ["delete_title"]     = "Delete",
+    ["delete_body"]      = "Delete %s? Players who own it will no longer see it.",
+    ["reroll"]           = "Reroll daily store",
+    ["reroll_body"]      = "Pick new random daily deals for everyone right now?",
+
+    -- Admin: model picker
+    ["picker_title"]     = "Select playermodel",
+    ["picker_sub"]       = "%d installed playermodels · click one to use it",
+    ["picker_tip"]       = "Open playermodel picker",
+
+    -- Admin: bank
+    ["bank_online"]      = "Online players",
+    ["bank_refresh"]     = "Refresh",
+    ["bank_lookup"]      = "Find by SteamID",
+    ["find"]             = "Find",
+    ["bank_balance"]     = "Balance",
+    ["bank_amount"]      = "Amount",
+    ["give"]             = "Give",
+    ["take"]             = "Take",
+    ["set"]              = "Set",
+    ["bank_select"]      = "Select a player or look up a SteamID.",
+    ["bank_notfound"]    = "No pointshop data yet for this SteamID. Giving will create it.",
+    ["bank_offline"]     = "offline",
+    ["bank_loading"]     = "loading…",
+    ["bank_player"]      = "Player",
+    ["bank_title"]       = "Player balance",
+
+    -- Admin: contracts
+    ["c_templates"]      = "Contract types",
+    ["c_event_kill"]     = "Kill enemies",
+    ["c_event_win"]      = "Win a game",
+    ["c_event_wave"]     = "Survive waves",
+    ["c_edit"]           = "Edit contract",
+    ["c_new_title"]      = "New contract",
+    ["f_name_en"]        = "Name (English)",
+    ["f_name_ru"]        = "Name (Russian)",
+    ["f_desc_en"]        = "Description (English) · %d = goal, %s = class",
+    ["f_desc_ru"]        = "Description (Russian)",
+    ["f_event"]          = "Type",
+    ["f_goal"]           = "Goal: min / max / step",
+    ["f_reward"]         = "Reward (empty = default %s)",
+    ["f_enemies"]        = "Enemy names, comma separated (empty = any enemy)",
+    ["add_enemy"]        = "Add enemy…",
+    ["f_filters"]        = "Filters",
+    ["only_elite"]       = "Only elites",
+    ["only_boss"]        = "Only bosses",
+    ["per_class"]        = "Random class",
+    ["c_enabled"]        = "Enabled (can be rolled)",
+    ["c_settings"]       = "Contract settings",
+    ["per_day"]          = "Contracts per day",
+    ["def_reward"]       = "Default reward",
+    ["save_settings"]    = "Save settings",
+    ["regen"]            = "Regenerate today's contracts",
+    ["regen_body"]       = "Give everyone online new contracts for today? Current progress will be lost.",
+    ["c_example"]        = "Example: %s",
+    ["c_help"]           = "Select a contract type to edit it, or create a new one. Disabled types are never rolled.",
+
+    -- Server results / notifications
+    ["err.not_loaded"]        = "Your pointshop data is not loaded yet.",
+    ["err.not_for_sale"]      = "That item is not for sale.",
+    ["err.already_own"]       = "You already own %s.",
+    ["err.inventory_full"]    = "Your inventory is full.",
+    ["err.not_enough"]        = "Not enough {cur} (%s more needed).",
+    ["err.db"]                = "Database error, try again.",
+    ["ok.purchased"]          = "Purchased %s for %s {cur}.",
+    ["err.unknown_class"]     = "Unknown class.",
+    ["ok.default_model"]      = "%s now uses the default model.",
+    ["err.not_owned"]         = "You do not own that item.",
+    ["err.class_cannot_wear"] = "%s cannot be worn by %s.",
+    ["ok.equipped"]           = "%s equipped on %s.",
+    ["err.no_access"]         = "You do not have access to the pointshop admin panel.",
+    ["err.unknown_item"]      = "Unknown item.",
+    ["err.invalid_price"]     = "Invalid price.",
+    ["err.invalid_model"]     = "Invalid model path (expected models/....mdl).",
+    ["err.model_missing"]     = "Model not found on the server: %s",
+    ["ok.saved"]              = "Saved %s.",
+    ["err.custom_no_default"] = "Custom items have no default; edit or delete it instead.",
+    ["ok.reset"]              = "%s reset to config defaults.",
+    ["err.enter_name"]        = "Enter a name.",
+    ["err.too_many"]          = "Too many custom entries.",
+    ["ok.added"]              = "Added %s.",
+    ["err.only_custom_delete"] = "Only custom items can be deleted. Disable config items instead.",
+    ["ok.deleted"]            = "Deleted %s.",
+    ["ok.rerolled"]           = "Daily store rerolled.",
+    ["err.bad_steamid"]       = "Invalid SteamID (example: STEAM_0:1:12345678).",
+    ["err.bad_amount"]        = "Invalid amount.",
+    ["err.target_not_loaded"] = "That player's data is still loading.",
+    ["ok.bank"]               = "%s now has %s {cur}.",
+    ["err.contract_text"]     = "Enter an English name and description.",
+    ["err.contract_event"]    = "Choose a contract type.",
+    ["err.contract_unknown"]  = "Unknown contract.",
+    ["ok.contract_saved"]     = "Saved contract %s.",
+    ["ok.contract_reset"]     = "Contract reset to config defaults.",
+    ["err.contract_delete"]   = "Only custom contracts can be deleted. Disable config contracts instead.",
+    ["ok.contract_deleted"]   = "Contract deleted.",
+    ["ok.settings_saved"]     = "Settings saved.",
+    ["ok.contracts_regen"]    = "Today's contracts were regenerated for everyone online.",
+    ["err.contract_incomplete"] = "That contract is not complete yet.",
+    ["ok.contract_claimed"]   = "Contract claimed: +%s {cur}.",
+    ["n.db_unavailable"]      = "Pointshop is unavailable (database not ready).",
+    ["n.balance_changed"]     = "{cur}: %s (balance: %s)",
+    ["n.contract_complete"]   = "Contract complete: %s! Claim %s {cur} in the pointshop.",
+    ["n.new_day"]             = "New daily contracts and store deals are available!",
+}
+
+PS.Lang.ru = {
+    ["title_a"]          = "HORDE ",
+    ["title_b"]          = "МАГАЗИН",
+    ["tab.loadout"]      = "Снаряжение",
+    ["tab.inventory"]    = "Инвентарь",
+    ["tab.store"]        = "Магазин дня",
+    ["tab.contracts"]    = "Контракты",
+    ["tab.settings"]     = "Настройки",
+    ["tab.admin"]        = "Админ",
+    ["playing_as"]       = "Класс: %s",
+    ["loading"]          = "Загрузка данных магазина…",
+
+    ["all_classes"]      = "Все классы",
+    ["usable_by"]        = "Доступно: %s",
+    ["usable_by_label"]  = "Доступно классам:",
+    ["equipped_on_label"] = "Надето на:",
+    ["equipped_on"]      = "Надето на: %s",
+    ["nothing"]          = "Нигде",
+    ["rarity_pm"]        = "%s · модель игрока",
+    ["cancel"]           = "Отмена",
+    ["confirm"]          = "Подтвердить",
+    ["search"]           = "Поиск…",
+    ["drag_rotate"]      = "Зажмите мышь, чтобы вращать",
+
+    ["playing"]          = "В ИГРЕ",
+    ["default"]          = "Стандарт",
+    ["default_model"]    = "Стандартная модель",
+    ["preview"]          = "ПРОСМОТР",
+    ["playermodel"]      = "Модель игрока",
+    ["class_only"]       = "только %s",
+    ["no_equipped"]      = "Для этого класса не выбрана модель из магазина.",
+    ["use_default"]      = "Стандартная",
+    ["browse_store"]     = "В магазин",
+    ["your_models"]      = "Ваши модели",
+    ["your_models_sub"]  = "доступно: %d для %s · нажмите, чтобы надеть",
+    ["slot_default"]     = "СТАНДАРТ",
+    ["badge_equipped"]   = "НАДЕТО",
+    ["equipped"]         = "Надето",
+    ["click_equip"]      = "Нажмите, чтобы надеть",
+    ["none_for_class"]   = "У вас пока нет моделей для класса %s.",
+    ["check_daily"]      = "Загляните в «Магазин дня» за скидками.",
+    ["no_classes"]       = "Нет доступных классов.",
+
+    ["backpack"]         = "Рюкзак",
+    ["slots_used"]       = "занято слотов: %d / %d",
+    ["page"]             = "СТР. %d / %d",
+    ["sort_oldest"]      = "Сначала старые",
+    ["sort_newest"]      = "Сначала новые",
+    ["sort_name"]        = "По названию",
+    ["sort_rarity"]      = "По редкости",
+    ["select_item"]      = "Выберите предмет",
+    ["hint_dbl"]         = "Двойной клик — надеть на текущий класс",
+    ["hint_right"]       = "Правый клик — выбрать классы",
+    ["equip_on"]         = "Надеть на %s",
+    ["equip_current"]    = "Надеть на текущий класс",
+    ["equip_on_class"]   = "Надеть на класс…",
+    ["unequip_all"]      = "Снять везде",
+    ["no_class_can"]     = "Ни один класс не может это носить",
+
+    ["daily_deals"]      = "Скидки дня",
+    ["daily_sub"]        = "Скидки только сегодня · обновление через %s",
+    ["daily_deal"]       = "СКИДКА ДНЯ",
+    ["no_deals"]         = "Сегодня скидок нет.",
+    ["store"]            = "Магазин",
+    ["store_sub"]        = "Все модели по обычной цене",
+    ["buy"]              = "Купить",
+    ["owned"]            = "Куплено",
+    ["inv_full"]         = "Инвентарь полон",
+    ["badge_owned"]      = "КУПЛЕНО",
+    ["badge_daily"]      = "СКИДКА",
+    ["hide_owned"]       = "Скрыть купленные",
+    ["items_count"]      = "предметов: %d",
+    ["no_match"]         = "Нет моделей, подходящих под фильтры.",
+    ["sort_price_asc"]   = "Цена: по возрастанию",
+    ["sort_price_desc"]  = "Цена: по убыванию",
+    ["confirm_purchase"] = "Подтверждение покупки",
+    ["buy_body"]         = "Купить %s за %s {cur}?",
+    ["deal_line"]        = "Скидка дня: -%d%%",
+
+    ["contracts_title"]  = "ЕЖЕДНЕВНЫЕ КОНТРАКТЫ",
+    ["contracts_info"]   = "Выполняйте контракты в игре, чтобы получать {cur}. Награду нужно забрать здесь.",
+    ["new_in"]           = "Новые контракты через %s",
+    ["completed"]        = "ВЫПОЛНЕНО",
+    ["no_contracts"]     = "Сейчас нет доступных контрактов.",
+    ["reward"]           = "НАГРАДА",
+    ["claim"]            = "Забрать",
+    ["claimed"]          = "Получено",
+    ["in_progress"]      = "В процессе",
+
+    ["general"]          = "Общие",
+    ["controls"]         = "Управление",
+    ["language"]         = "Язык",
+    ["lang_default"]     = "Как на сервере",
+    ["lang_auto"]        = "Автоматически (язык игры)",
+    ["keybind"]          = "Клавиша открытия / закрытия меню",
+    ["keybind_hint"]     = "Нажмите на кнопку, затем нажмите клавишу или кнопку мыши. F4 и !ps тоже работают.",
+    ["keybind_none"]     = "Не назначена",
+    ["press_key"]        = "Нажмите клавишу…",
+    ["clear"]            = "Сбросить",
+    ["sounds"]           = "Звуки интерфейса",
+    ["autospin"]         = "Автоматически вращать модели в превью",
+
+    ["admin_items"]      = "Предметы",
+    ["admin_bank"]       = "Банк",
+    ["admin_contracts"]  = "Контракты",
+    ["playermodels"]     = "Модели игроков",
+    ["n_items"]          = "предметов: %d",
+    ["new"]              = "+ Новый",
+    ["tag_disabled"]     = "ВЫКЛ",
+    ["tag_custom"]       = "СВОЙ",
+    ["tag_edited"]       = "ИЗМЕНЁН",
+    ["tag_classes"]      = "КЛАССОВ: %d",
+    ["admin_title"]      = "Управление магазином",
+    ["admin_help1"]      = "Выберите модель слева, чтобы изменить цену, редкость, классы или доступность.",
+    ["admin_help2"]      = "«+ Новый» добавляет любую модель, установленную на сервере (кнопка «+» открывает выбор моделей).",
+    ["admin_help3"]      = "Стандартные предметы задаются в gamemode/modules/pointshop/core/sh_config.lua.",
+    ["admin_help4"]      = "Изменения из игры сохраняются в базе сервера и важнее файла конфига.",
+    ["admin_help5"]      = "Балансы меняются во вкладке «Банк», контракты — во вкладке «Контракты».",
+    ["new_pm"]           = "Новая модель",
+    ["edit_pm"]          = "Изменить модель",
+    ["added_custom"]     = "будет добавлена как своя",
+    ["src_custom"]       = "своя · %s",
+    ["src_config"]       = "из конфига · %s",
+    ["f_name"]           = "Название",
+    ["ph_name"]          = "Отображаемое название",
+    ["f_model"]          = "Путь к модели",
+    ["f_price"]          = "Цена ({cur})",
+    ["f_price_cfg"]      = " · в конфиге: %s",
+    ["f_rarity"]         = "Редкость",
+    ["f_avail"]          = "Доступность",
+    ["avail_store"]      = "Продаётся в магазине",
+    ["f_usable"]         = "Доступно классам",
+    ["add_pm"]           = "Добавить модель",
+    ["save"]             = "Сохранить",
+    ["reset_cfg"]        = "Сбросить к конфигу",
+    ["delete"]           = "Удалить",
+    ["delete_title"]     = "Удаление",
+    ["delete_body"]      = "Удалить %s? Игроки, купившие её, больше не увидят эту модель.",
+    ["reroll"]           = "Обновить скидки дня",
+    ["reroll_body"]      = "Выбрать новые случайные скидки дня для всех прямо сейчас?",
+
+    ["picker_title"]     = "Выбор модели игрока",
+    ["picker_sub"]       = "установлено моделей: %d · нажмите на модель, чтобы выбрать",
+    ["picker_tip"]       = "Открыть выбор модели",
+
+    ["bank_online"]      = "Игроки онлайн",
+    ["bank_refresh"]     = "Обновить",
+    ["bank_lookup"]      = "Поиск по SteamID",
+    ["find"]             = "Найти",
+    ["bank_balance"]     = "Баланс",
+    ["bank_amount"]      = "Сумма",
+    ["give"]             = "Выдать",
+    ["take"]             = "Забрать",
+    ["set"]              = "Установить",
+    ["bank_select"]      = "Выберите игрока или найдите его по SteamID.",
+    ["bank_notfound"]    = "Для этого SteamID ещё нет данных. Выдача создаст запись.",
+    ["bank_offline"]     = "не в сети",
+    ["bank_loading"]     = "загрузка…",
+    ["bank_player"]      = "Игрок",
+    ["bank_title"]       = "Баланс игрока",
+
+    ["c_templates"]      = "Типы контрактов",
+    ["c_event_kill"]     = "Убийство врагов",
+    ["c_event_win"]      = "Победа в игре",
+    ["c_event_wave"]     = "Пережить волны",
+    ["c_edit"]           = "Изменить контракт",
+    ["c_new_title"]      = "Новый контракт",
+    ["f_name_en"]        = "Название (английский)",
+    ["f_name_ru"]        = "Название (русский)",
+    ["f_desc_en"]        = "Описание (английский) · %d = цель, %s = класс",
+    ["f_desc_ru"]        = "Описание (русский)",
+    ["f_event"]          = "Тип",
+    ["f_goal"]           = "Цель: мин / макс / шаг",
+    ["f_reward"]         = "Награда (пусто = по умолчанию %s)",
+    ["f_enemies"]        = "Имена врагов через запятую (пусто = любой враг)",
+    ["add_enemy"]        = "Добавить врага…",
+    ["f_filters"]        = "Фильтры",
+    ["only_elite"]       = "Только элита",
+    ["only_boss"]        = "Только боссы",
+    ["per_class"]        = "Случайный класс",
+    ["c_enabled"]        = "Включён (может выпасть)",
+    ["c_settings"]       = "Настройки контрактов",
+    ["per_day"]          = "Контрактов в день",
+    ["def_reward"]       = "Награда по умолчанию",
+    ["save_settings"]    = "Сохранить настройки",
+    ["regen"]            = "Перевыпустить контракты",
+    ["regen_body"]       = "Выдать всем игрокам онлайн новые контракты на сегодня? Текущий прогресс будет потерян.",
+    ["c_example"]        = "Пример: %s",
+    ["c_help"]           = "Выберите тип контракта, чтобы изменить его, или создайте новый. Выключенные типы не выпадают.",
+
+    ["err.not_loaded"]        = "Ваши данные магазина ещё не загружены.",
+    ["err.not_for_sale"]      = "Этот предмет не продаётся.",
+    ["err.already_own"]       = "У вас уже есть %s.",
+    ["err.inventory_full"]    = "Ваш инвентарь полон.",
+    ["err.not_enough"]        = "Недостаточно: {cur} (не хватает %s).",
+    ["err.db"]                = "Ошибка базы данных, попробуйте ещё раз.",
+    ["ok.purchased"]          = "Куплено: %s за %s {cur}.",
+    ["err.unknown_class"]     = "Неизвестный класс.",
+    ["ok.default_model"]      = "%s теперь использует стандартную модель.",
+    ["err.not_owned"]         = "У вас нет этого предмета.",
+    ["err.class_cannot_wear"] = "%s нельзя надеть на класс %s.",
+    ["ok.equipped"]           = "%s надето на класс %s.",
+    ["err.no_access"]         = "У вас нет доступа к панели администратора магазина.",
+    ["err.unknown_item"]      = "Неизвестный предмет.",
+    ["err.invalid_price"]     = "Неверная цена.",
+    ["err.invalid_model"]     = "Неверный путь к модели (нужно models/....mdl).",
+    ["err.model_missing"]     = "Модель не найдена на сервере: %s",
+    ["ok.saved"]              = "Сохранено: %s.",
+    ["err.custom_no_default"] = "У своих предметов нет стандартных значений — измените или удалите предмет.",
+    ["ok.reset"]              = "%s: сброшено к значениям конфига.",
+    ["err.enter_name"]        = "Введите название.",
+    ["err.too_many"]          = "Слишком много своих записей.",
+    ["ok.added"]              = "Добавлено: %s.",
+    ["err.only_custom_delete"] = "Удалять можно только свои предметы. Предметы из конфига можно выключить.",
+    ["ok.deleted"]            = "Удалено: %s.",
+    ["ok.rerolled"]           = "Скидки дня обновлены.",
+    ["err.bad_steamid"]       = "Неверный SteamID (пример: STEAM_0:1:12345678).",
+    ["err.bad_amount"]        = "Неверная сумма.",
+    ["err.target_not_loaded"] = "Данные этого игрока ещё загружаются.",
+    ["ok.bank"]               = "У игрока %s теперь %s {cur}.",
+    ["err.contract_text"]     = "Введите английское название и описание.",
+    ["err.contract_event"]    = "Выберите тип контракта.",
+    ["err.contract_unknown"]  = "Неизвестный контракт.",
+    ["ok.contract_saved"]     = "Контракт сохранён: %s.",
+    ["ok.contract_reset"]     = "Контракт сброшен к значениям конфига.",
+    ["err.contract_delete"]   = "Удалять можно только свои контракты. Контракты из конфига можно выключить.",
+    ["ok.contract_deleted"]   = "Контракт удалён.",
+    ["ok.settings_saved"]     = "Настройки сохранены.",
+    ["ok.contracts_regen"]    = "Контракты на сегодня перевыпущены для всех игроков онлайн.",
+    ["err.contract_incomplete"] = "Этот контракт ещё не выполнен.",
+    ["ok.contract_claimed"]   = "Награда получена: +%s {cur}.",
+    ["n.db_unavailable"]      = "Магазин недоступен (база данных не готова).",
+    ["n.balance_changed"]     = "{cur}: %s (баланс: %s)",
+    ["n.contract_complete"]   = "Контракт выполнен: %s! Заберите %s {cur} в магазине.",
+    ["n.new_day"]             = "Доступны новые ежедневные контракты и скидки!",
+}
+
+PS.Languages = {
+    { id = "en", name = "English" },
+    { id = "ru", name = "Русский" },
+}
+
+if CLIENT then
+    PS.LangConVar = CreateClientConVar("horde_ps_language", "", true, false, "Pointshop language: en, ru, auto or empty (server default)")
+end
+
+-- Active language id ("en" / "ru").
+function PS:LangId()
+    if SERVER then return "en" end
+    local v = self.LangConVar and self.LangConVar:GetString() or ""
+    if v == "" then v = C.DefaultLanguage or "auto" end
+    if v == "auto" then
+        local gl = GetConVar("gmod_language")
+        v = (gl and string.sub(string.lower(gl:GetString()), 1, 2) == "ru") and "ru" or "en"
+    end
+    return self.Lang[v] and v or "en"
+end
+
+-- Picks the right string out of a { en = ..., ru = ... } table.
+function PS:Localized(v)
+    if istable(v) then return tostring(v[self:LangId()] or v.en or "") end
+    return v
+end
+
+function PS:Currency()
+    if self:LangId() == "ru" and C.CurrencyNameRU and C.CurrencyNameRU ~= "" then return C.CurrencyNameRU end
+    return C.CurrencyName
+end
+
+function PS:RarityName(key)
+    local r = self:GetRarity(key)
+    if self:LangId() == "ru" and r.name_ru then return r.name_ru end
+    return r.name
+end
+
+function PS:L(key, ...)
+    local lang = self.Lang[self:LangId()] or self.Lang.en
+    local text = lang[key] or self.Lang.en[key] or key
+    text = text:gsub("{cur}", function() return self:Currency() end)
+    if select("#", ...) == 0 then return text end
+    local args = { ... }
+    for i = 1, select("#", ...) do args[i] = self:Localized(args[i]) end
+    local ok, res = pcall(string.format, text, unpack(args, 1, select("#", ...)))
+    return ok and res or text
+end
+
+-- string.upper only handles ASCII; this also uppercases Cyrillic (а-я, ё).
+function PS:Upper(s)
+    s = string.upper(tostring(s or ""))
+    return (s:gsub("[\208\209][\128-\191]", function(ch)
+        local cp = utf8.codepoint(ch)
+        if cp >= 0x430 and cp <= 0x44F then return utf8.char(cp - 0x20) end
+        if cp == 0x451 then return utf8.char(0x401) end
+        return ch
+    end))
+end
+
+-- Removes the last UTF-8 character (safe for Cyrillic when truncating text).
+function PS:DropLastChar(s)
+    return (s:gsub("[%z\1-\127\194-\244][\128-\191]*$", ""))
+end

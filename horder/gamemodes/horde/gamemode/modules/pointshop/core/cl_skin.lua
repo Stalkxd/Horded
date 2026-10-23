@@ -148,10 +148,10 @@ end
 -- Standard section heading: white title with a red accent bar and fading underline.
 function UI.Heading(text, x, y, w, sub)
     UI.Box(x, y, S(4), S(24), COL.red)
-    UI.Text(string.upper(text), "HordePS_Header", x + S(12), y + S(12), COL.white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+    UI.Text(PS:Upper(text), "HordePS_Header", x + S(12), y + S(12), COL.white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     if sub then
         surface.SetFont("HordePS_Header")
-        local tw = surface.GetTextSize(string.upper(text))
+        local tw = surface.GetTextSize(PS:Upper(text))
         UI.Text(sub, "HordePS_Small", x + S(22) + tw, y + S(13), COL.muted, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
     UI.GradH(x, y + S(28), w, 1, COL.red, Color(0, 0, 0, 0))
@@ -187,7 +187,7 @@ function BUTTON:Paint(w, h)
     if not enabled then
         UI.Box(0, 0, w, h, COL.panel)
         UI.Outline(0, 0, w, h, COL.border)
-        UI.Text(string.upper(self.Label), self.Font, w / 2, h / 2, COL.dim, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        UI.Text(PS:Upper(self.Label), self.Font, w / 2, h / 2, COL.dim, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         return
     end
 
@@ -202,11 +202,11 @@ function BUTTON:Paint(w, h)
         UI.Outline(0, 0, w, h, Color(70 + 130 * hv, 60, 60))
     end
     if self:IsDown() then UI.Box(0, 0, w, h, Color(0, 0, 0, 60)) end
-    UI.TextShadow(string.upper(self.Label), self.Font, w / 2, h / 2, COL.white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    UI.TextShadow(PS:Upper(self.Label), self.Font, w / 2, h / 2, COL.white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 end
 
 function BUTTON:OnCursorEntered()
-    if self:IsEnabled() then surface.PlaySound("ui/buttonrollover.wav") end
+    if self:IsEnabled() then PS:Sound("ui/buttonrollover.wav") end
 end
 
 vgui.Register("HordePS_Button", BUTTON, "DButton")
@@ -216,7 +216,7 @@ function UI.Button(parent, label, style, onclick)
     b:SetLabel(label)
     b:SetStyle(style or "dark")
     b.DoClick = function(s)
-        surface.PlaySound("ui/buttonclick.wav")
+        PS:Sound("ui/buttonclick.wav")
         if onclick then onclick(s) end
     end
     return b
@@ -335,7 +335,7 @@ function UI.Check(parent, label, value, onchange)
     end
     p.DoClick = function(s)
         s.Value = not s.Value
-        surface.PlaySound("ui/buttonclick.wav")
+        PS:Sound("ui/buttonclick.wav")
         if onchange then onchange(s.Value) end
     end
     p.SetValue = function(s, v) s.Value = v and true or false end
@@ -358,8 +358,8 @@ function UI.ShowTooltip(item, lines)
     local rarity = PS:GetRarity(item.rarity)
     local rows = {
         { item.name, "HordePS_Header", rarity.color },
-        { rarity.name .. " Playermodel", "HordePS_Small", COL.muted },
-        { "Usable by: " .. PS:ClassesText(item), "HordePS_Body", COL.text },
+        { PS:L("rarity_pm", PS:RarityName(item.rarity)), "HordePS_Small", COL.muted },
+        { PS:L("usable_by", PS:ClassesText(item)), "HordePS_Body", COL.text },
     }
     for _, l in ipairs(lines or {}) do rows[#rows + 1] = l end
 
@@ -463,8 +463,8 @@ function SLOT:PaintOver(w, h)
         UI.Box(0, h - S(21), w, S(18), Color(0, 0, 0, 170))
         local name = item.name
         surface.SetFont("HordePS_Small")
-        while #name > 3 and surface.GetTextSize(name) > w - S(6) do name = name:sub(1, -2) end
-        if name ~= item.name then name = name:sub(1, -2) .. "…" end
+        while #name > 3 and surface.GetTextSize(name) > w - S(6) do name = PS:DropLastChar(name) end
+        if name ~= item.name then name = PS:DropLastChar(name) .. "…" end
         UI.Text(name, "HordePS_Small", w / 2, h - S(12), UI.RarityColor(item), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
     if opts.badge then
@@ -503,7 +503,7 @@ function PREVIEW:Init()
     self.Yaw = 25
     self.AutoSpin = true
     self:SetFOV(32)
-    self:SetDirectionalLight(BOX_RIGHT, Color(255, 120, 120))
+    self:SetDirectionalLight(BOX_RIGHT, Color(230, 230, 230))
     self:SetDirectionalLight(BOX_LEFT, Color(200, 200, 220))
     self:SetAmbientLight(Color(60, 60, 60))
 end
@@ -542,7 +542,7 @@ function PREVIEW:LayoutEntity(ent)
         self.Yaw = self.Yaw + (mx - self.Dragging) * 0.6
         self.Dragging = mx
         self.LastDrag = RealTime()
-    elseif self.AutoSpin and RealTime() - (self.LastDrag or 0) > 2 then
+    elseif self.AutoSpin and PS.SpinConVar:GetBool() and RealTime() - (self.LastDrag or 0) > 2 then
         self.Yaw = self.Yaw + FrameTime() * 18
     end
     ent:SetAngles(Angle(0, self.Yaw, 0))
@@ -551,11 +551,11 @@ function PREVIEW:LayoutEntity(ent)
 end
 
 function PREVIEW:Paint(w, h)
-    -- Dark stage with a red floor glow.
-    UI.GradV(0, 0, w, h, COL.bg, Color(20, 20, 20))
-    UI.GradV(0, h * 0.55, w, h * 0.45, Color(0, 0, 0, 0), Color(110, 12, 12, 110))
+    -- Neutral grey stage with a soft floor.
+    UI.GradV(0, 0, w, h, Color(52, 52, 52), Color(24, 24, 24))
+    UI.GradV(0, h * 0.62, w, h * 0.38, Color(0, 0, 0, 0), Color(0, 0, 0, 90))
     surface.SetMaterial(MAT.center)
-    surface.SetDrawColor(255, 255, 255, 6)
+    surface.SetDrawColor(255, 255, 255, 10)
     surface.DrawTexturedRect(0, 0, w, h)
     if self.Current then BaseModelPanel.Paint(self, w, h) end
     UI.Outline(0, 0, w, h, COL.border)
@@ -580,7 +580,7 @@ function UI.Confirm(title, body, yes_label, on_yes)
         UI.GradV(0, 0, w, h, COL.panel2, COL.bg)
         UI.Box(0, 0, w, S(3), COL.red)
         UI.Outline(0, 0, w, h, COL.red_dark)
-        UI.Text(string.upper(title), "HordePS_Header", S(18), S(18), COL.white)
+        UI.Text(PS:Upper(title), "HordePS_Header", S(18), S(18), COL.white)
     end
 
     local text = vgui.Create("DLabel", box)
@@ -592,11 +592,11 @@ function UI.Confirm(title, body, yes_label, on_yes)
     text:SetSize(S(404), S(70))
     text:SetContentAlignment(7)
 
-    local cancel = UI.Button(box, "Cancel", "ghost", function() shade:Remove() end)
+    local cancel = UI.Button(box, PS:L("cancel"), "ghost", function() shade:Remove() end)
     cancel:SetSize(S(130), S(36))
     cancel:SetPos(S(440) - S(18) - S(130) * 2 - S(10), S(190) - S(54))
 
-    local ok = UI.Button(box, yes_label or "Confirm", "red", function()
+    local ok = UI.Button(box, yes_label or PS:L("confirm"), "red", function()
         shade:Remove()
         if on_yes then on_yes() end
     end)
@@ -627,4 +627,141 @@ function UI.Toast(msg, ok)
     end
     if IsValid(menu.LastToast) then menu.LastToast:Remove() end
     menu.LastToast = t
+end
+
+---------------------------------------------------------------------------
+-- Key binder (Settings tab)
+---------------------------------------------------------------------------
+
+local function KeyName(code)
+    if not code or code <= 0 then return PS:L("keybind_none") end
+    local name = input.GetKeyName(code)
+    return name and PS:Upper(name) or ("#" .. code)
+end
+UI.KeyName = KeyName
+
+function UI.Binder(parent, value, onchange)
+    local b = vgui.Create("DButton", parent)
+    b:SetText("")
+    b.Value = value or 0
+    b.Paint = function(s, w, h)
+        local hov = s:IsHovered()
+        UI.GradV(0, 0, w, h, s.Binding and COL.red_dark or (hov and COL.panel2 or COL.panel), COL.bg)
+        UI.Outline(0, 0, w, h, s.Binding and COL.red_light or (hov and COL.border_hi or COL.border))
+        local txt = s.Binding and PS:L("press_key") or KeyName(s.Value)
+        UI.Text(txt, "HordePS_Tab", w / 2, h / 2, s.Binding and COL.white or (s.Value > 0 and COL.white or COL.dim), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+    local function finish(s, code)
+        s.Binding = false
+        PS.Binding = false
+        if code then
+            s.Value = code
+            if onchange then onchange(code) end
+        end
+    end
+    b.DoClick = function(s)
+        if s.Binding then return end
+        PS:Sound("ui/buttonclick.wav")
+        s.Binding = true
+        PS.Binding = true
+        input.StartKeyTrapping()
+    end
+    -- Same approach as GMod's DBinder: the engine traps the next key / mouse button.
+    b.Think = function(s)
+        if not s.Binding or not input.IsKeyTrapping() then return end
+        local code = input.CheckKeyTrapping()
+        if code then
+            if code == KEY_ESCAPE then finish(s) else finish(s, code) end
+        end
+    end
+    b.OnRemove = function(s) if s.Binding then PS.Binding = false end end
+    b.SetValue = function(s, v) s.Value = v or 0 end
+    return b
+end
+
+---------------------------------------------------------------------------
+-- Playermodel picker (admin "+" button): every model registered with
+-- player_manager (stock + workshop playermodels installed on this client).
+---------------------------------------------------------------------------
+
+function UI.ModelPicker(onpick)
+    local parent = IsValid(PS.Menu) and PS.Menu or nil
+    local shade = vgui.Create("DPanel", parent)
+    if parent then shade:SetSize(parent:GetSize()) else shade:SetSize(ScrW(), ScrH()); shade:MakePopup() end
+    shade.Paint = function(_, w, h) UI.Box(0, 0, w, h, Color(0, 0, 0, 200)) end
+    shade.OnMousePressed = function(s) s:Remove() end
+
+    local models = {}
+    for name, path in pairs(player_manager.AllValidModels()) do
+        models[#models + 1] = { name = name, path = string.lower(path) }
+    end
+    table.sort(models, function(a, b) return a.name < b.name end)
+
+    local sw, sh = shade:GetSize()
+    local box = vgui.Create("DPanel", shade)
+    box:SetSize(math.min(S(900), sw - S(40)), math.min(S(640), sh - S(40)))
+    box:Center()
+    box.Paint = function(_, w, h)
+        UI.GradV(0, 0, w, h, Color(40, 40, 40), Color(18, 18, 18))
+        UI.Box(0, 0, w, S(3), COL.red)
+        UI.Outline(0, 0, w, h, COL.border)
+        UI.Text(PS:Upper(PS:L("picker_title")), "HordePS_Header", S(18), S(16), COL.white)
+        UI.Text(PS:L("picker_sub", #models), "HordePS_Small", S(18), S(44), COL.muted)
+    end
+    local bw, bh = box:GetSize()
+
+    local close = UI.Button(box, "✕", "ghost", function() shade:Remove() end)
+    close:SetSize(S(36), S(36))
+    close:SetPos(bw - S(50), S(14))
+
+    local search = UI.Entry(box, PS:L("search"))
+    search:SetPos(bw - S(50) - S(10) - S(260), S(17))
+    search:SetSize(S(260), S(30))
+    search:SetUpdateOnType(true)
+
+    local sp = UI.Scroll(box)
+    sp:SetPos(S(14), S(70))
+    sp:SetSize(bw - S(28), bh - S(84))
+    local grid = vgui.Create("DIconLayout", sp)
+    grid:Dock(TOP)
+    grid:SetSpaceX(S(8))
+    grid:SetSpaceY(S(8))
+
+    local size = S(96)
+    local function Fill(q)
+        grid:Clear()
+        q = string.lower(string.Trim(q or ""))
+        for _, m in ipairs(models) do
+            if q == "" or string.find(string.lower(m.name), q, 1, true) or string.find(m.path, q, 1, true) then
+                local cell = grid:Add("DButton")
+                cell:SetText("")
+                cell:SetSize(size, size + S(18))
+                cell:SetTooltip(m.path)
+                local icon = vgui.Create("SpawnIcon", cell)
+                icon:SetModel(m.path)
+                icon:SetSize(size - S(8), size - S(8))
+                icon:SetPos(S(4), S(4))
+                icon:SetMouseInputEnabled(false)
+                cell.Paint = function(s, w, h)
+                    local hov = s:IsHovered()
+                    UI.GradV(0, 0, w, h, hov and COL.slot_hi or COL.slot, COL.bg)
+                    UI.Outline(0, 0, w, h, hov and COL.red_light or COL.border)
+                    local name = m.name
+                    surface.SetFont("HordePS_Small")
+                    while #name > 2 and surface.GetTextSize(name) > w - S(6) do name = PS:DropLastChar(name) end
+                    UI.Text(name, "HordePS_Small", w / 2, h - S(11), hov and COL.white or COL.muted, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                end
+                cell.DoClick = function()
+                    PS:Sound("ui/buttonclick.wav")
+                    shade:Remove()
+                    if onpick then onpick(m.path, m.name) end
+                end
+            end
+        end
+        grid:Layout()
+        sp:InvalidateLayout()
+    end
+    search.OnValueChange = function(_, v) Fill(v) end
+    Fill("")
+    return shade
 end

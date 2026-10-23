@@ -27,7 +27,12 @@ local C = PS.Config
 
 -- Name of the pointshop currency (test currency, separate from Horde skull tokens).
 C.CurrencyName      = "Skulls"
+C.CurrencyNameRU    = "Черепа"
 C.CurrencyIcon      = "skull.png"
+
+-- Default menu language: "auto" (follows the game's language), "en" or "ru".
+-- Every player can change it in the SETTINGS tab.
+C.DefaultLanguage   = "auto"
 
 -- Skulls every new player starts with.
 C.StartingSkulls    = 1000
@@ -46,31 +51,33 @@ C.DailyDiscountStep = 5
 -- 0 = midnight UTC, 3 = midnight UTC+3 (Moscow), -5 = midnight UTC-5 (New York), ...
 C.ResetUTCOffset    = 0
 
--- Daily contracts.
+-- Daily contracts (both can also be changed in ADMIN > CONTRACTS).
 C.ContractsPerDay   = 3
 C.ContractReward    = 100
 -- Count contract progress while sandbox mode (horde_enable_sandbox 1) is on?
 C.ContractsInSandbox = false
 
 -- Open the pointshop with F4 (gm_showspare2) in addition to !ps / !pointshop / horde_pointshop.
+-- Players can also bind their own key in the SETTINGS tab.
 C.OpenWithF4        = true
 C.ChatCommands      = { "!ps", "!pointshop", "!store", "/ps", "/pointshop" }
 
--- Who can use the ADMIN tab (change prices, class restrictions, add models).
+-- Who can use the ADMIN tab (prices, class restrictions, models, bank, contracts).
 C.IsAdmin = function(ply)
     return IsValid(ply) and ply:IsAdmin()
 end
 
 -- Item rarities (TF2-like quality colours, kept in the black / white / red palette).
 C.Rarities = {
-    common    = { name = "Common",    order = 1, color = Color(185, 185, 185) },
-    uncommon  = { name = "Uncommon",  order = 2, color = Color(245, 245, 245) },
-    rare      = { name = "Rare",      order = 3, color = Color(225, 75, 75)   },
-    legendary = { name = "Legendary", order = 4, color = Color(255, 25, 25)   },
+    common    = { name = "Common",    name_ru = "Обычный",     order = 1, color = Color(185, 185, 185) },
+    uncommon  = { name = "Uncommon",  name_ru = "Необычный",   order = 2, color = Color(245, 245, 245) },
+    rare      = { name = "Rare",      name_ru = "Редкий",      order = 3, color = Color(225, 75, 75)   },
+    legendary = { name = "Legendary", name_ru = "Легендарный", order = 4, color = Color(255, 25, 25)   },
 }
 C.DefaultRarity = "common"
 
 -- Daily contract templates. One is picked at random per contract slot every day.
+-- They can also be edited, disabled or added in-game: ADMIN > CONTRACTS.
 --   event   : "kill"  (enemy killed by the player)
 --             "win"   (game finished with VICTORY while the player is on the server)
 --             "wave"  (wave completed while the player is alive)
@@ -80,18 +87,18 @@ C.DefaultRarity = "common"
 --   boss    : (kill) only bosses
 --   per_class: (kill) a random class is chosen; kills only count while playing it
 --   reward  : optional override for C.ContractReward
---   desc    : %d = goal, %s = class name (per_class only)
+--   desc / desc_ru : %d = goal, %s = class name (per_class only)
 C.Contracts = {
-    { id = "win_game",      name = "Last Stand",      desc = "Complete a game (win the final wave).", event = "win",  min = 1,   max = 1 },
-    { id = "kill_hulks",    name = "Hulk Smasher",    desc = "Destroy %d Hulks.",            event = "kill", enemy = { "Hulk", "Mutated Hulk" }, min = 3, max = 3 },
-    { id = "kill_enemies",  name = "Exterminator",    desc = "Kill %d enemies.",             event = "kill", min = 150, max = 300, step = 25 },
-    { id = "kill_elites",   name = "Elite Hunter",    desc = "Kill %d elite enemies.",       event = "kill", elite = true, min = 10, max = 25, step = 5 },
-    { id = "kill_bosses",   name = "Giant Slayer",    desc = "Defeat %d boss.",              event = "kill", boss = true,  min = 1,  max = 1 },
-    { id = "survive_waves", name = "Endurance",       desc = "Survive %d waves.",            event = "wave", min = 5,   max = 10 },
-    { id = "class_kills",   name = "Specialist",      desc = "Kill %d enemies as %s.",       event = "kill", per_class = true, min = 75, max = 150, step = 25 },
-    { id = "kill_exploder", name = "Bomb Squad",      desc = "Kill %d Exploders.",           event = "kill", enemy = { "Exploder" },  min = 15, max = 30, step = 5 },
-    { id = "kill_screech",  name = "Silence",         desc = "Kill %d Screechers.",          event = "kill", enemy = { "Screecher" }, min = 5,  max = 10 },
-    { id = "kill_blight",   name = "Plague Doctor",   desc = "Kill %d Blights.",             event = "kill", enemy = { "Blight" },    min = 5,  max = 10 },
+    { id = "win_game",      name = "Last Stand",    name_ru = "Последний рубеж",  desc = "Complete a game (win the final wave).", desc_ru = "Пройдите игру (победите в последней волне).", event = "win",  min = 1, max = 1 },
+    { id = "kill_hulks",    name = "Hulk Smasher",  name_ru = "Крушитель Халков", desc = "Destroy %d Hulks.",          desc_ru = "Уничтожьте Халков: %d.",          event = "kill", enemy = { "Hulk", "Mutated Hulk" }, min = 3, max = 3 },
+    { id = "kill_enemies",  name = "Exterminator",  name_ru = "Истребитель",      desc = "Kill %d enemies.",           desc_ru = "Убейте врагов: %d.",              event = "kill", min = 150, max = 300, step = 25 },
+    { id = "kill_elites",   name = "Elite Hunter",  name_ru = "Охотник на элиту", desc = "Kill %d elite enemies.",     desc_ru = "Убейте элитных врагов: %d.",      event = "kill", elite = true, min = 10, max = 25, step = 5 },
+    { id = "kill_bosses",   name = "Giant Slayer",  name_ru = "Убийца гигантов",  desc = "Defeat %d boss.",            desc_ru = "Победите боссов: %d.",            event = "kill", boss = true,  min = 1,  max = 1 },
+    { id = "survive_waves", name = "Endurance",     name_ru = "Выносливость",     desc = "Survive %d waves.",          desc_ru = "Переживите волн: %d.",            event = "wave", min = 5, max = 10 },
+    { id = "class_kills",   name = "Specialist",    name_ru = "Специалист",       desc = "Kill %d enemies as %s.",     desc_ru = "Убейте врагов: %d, играя за класс %s.", event = "kill", per_class = true, min = 75, max = 150, step = 25 },
+    { id = "kill_exploder", name = "Bomb Squad",    name_ru = "Сапёры",           desc = "Kill %d Exploders.",         desc_ru = "Убейте Взрывунов: %d.",           event = "kill", enemy = { "Exploder" },  min = 15, max = 30, step = 5 },
+    { id = "kill_screech",  name = "Silence",       name_ru = "Тишина",           desc = "Kill %d Screechers.",        desc_ru = "Убейте Крикунов: %d.",            event = "kill", enemy = { "Screecher" }, min = 5,  max = 10 },
+    { id = "kill_blight",   name = "Plague Doctor", name_ru = "Чумной доктор",    desc = "Kill %d Blights.",           desc_ru = "Убейте Блайтов: %d.",             event = "kill", enemy = { "Blight" },    min = 5,  max = 10 },
 }
 
 -- Playermodels available in the pointshop. Stock Garry's Mod models are used so it works

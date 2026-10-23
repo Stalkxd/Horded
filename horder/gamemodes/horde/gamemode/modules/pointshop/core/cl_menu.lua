@@ -20,6 +20,9 @@ PS.MenuState = PS.MenuState or {
     admin_search   = "",
 }
 local ST = PS.MenuState
+ST.admin_sub = ST.admin_sub or "items"
+
+local function L(...) return PS:L(...) end
 
 local DEFAULT_PREVIEW = "models/player/group01/male_07.mdl"
 
@@ -30,7 +33,7 @@ end
 local function Truncate(text, font, width)
     surface.SetFont(font)
     if surface.GetTextSize(text) <= width then return text end
-    while #text > 1 and surface.GetTextSize(text .. "…") > width do text = text:sub(1, -2) end
+    while #text > 1 and surface.GetTextSize(text .. "…") > width do text = PS:DropLastChar(text) end
     return text .. "…"
 end
 
@@ -48,10 +51,10 @@ end
 
 local function ConfirmBuy(item)
     local price, discount = PS:GetPrice(item.id)
-    local body = "Buy " .. item.name .. " for " .. PS:FormatNumber(price) .. " " .. C.CurrencyName .. "?"
-    if discount > 0 then body = body .. "\nDaily deal: -" .. discount .. "%" end
-    body = body .. "\nUsable by: " .. PS:ClassesText(item)
-    UI.Confirm("Confirm purchase", body, "Buy", function() PS:RequestBuy(item.id) end)
+    local body = L("buy_body", item.name, PS:FormatNumber(price))
+    if discount > 0 then body = body .. "\n" .. L("deal_line", discount) end
+    body = body .. "\n" .. L("usable_by", PS:ClassesText(item))
+    UI.Confirm(L("confirm_purchase"), body, L("buy"), function() PS:RequestBuy(item.id) end)
 end
 
 -- Panel with a plain dark background.
@@ -110,29 +113,28 @@ local function BuildLoadout(root)
             UI.Outline(0, 0, w, h, sel and COL.red_light or (hov and COL.border_hi or COL.border))
             if sel then UI.Box(0, h - S(3), w, S(3), COL.white) end
 
-            local icon = S(44)
+            local icon = S(42)
             surface.SetMaterial(UI.ClassIcon(class))
             local c = (sel or hov) and 255 or 165
             surface.SetDrawColor(c, c, c)
-            surface.DrawTexturedRect((w - icon) / 2, S(10), icon, icon)
+            surface.DrawTexturedRect((w - icon) / 2, S(18), icon, icon)
 
-            local name = Truncate(string.upper(class.display_name or class.name), "HordePS_ItemName", w - S(8))
-            UI.TextShadow(name, "HordePS_ItemName", w / 2, S(68), COL.white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            local name = Truncate(PS:Upper(class.display_name or class.name), "HordePS_ItemName", w - S(8))
+            UI.TextShadow(name, "HordePS_ItemName", w / 2, S(72), COL.white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
             local item = PS:GetEquipped(class.name)
-            local sub = item and Truncate(item.name, "HordePS_Small", w - S(8)) or "Default"
-            UI.Text(sub, "HordePS_Small", w / 2, S(88), item and UI.RarityColor(item) or COL.dim, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            local sub = item and Truncate(item.name, "HordePS_Small", w - S(8)) or L("default")
+            UI.Text(sub, "HordePS_Small", w / 2, S(91), item and UI.RarityColor(item) or COL.dim, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
             if class.name == PS:LocalClassName() then
-                surface.SetFont("HordePS_Small")
-                local tw, th = surface.GetTextSize("PLAYING")
-                UI.Box(w - tw - S(10), S(4), tw + S(6), th, COL.white)
-                UI.Text("PLAYING", "HordePS_Small", w - S(7), S(4), COL.bg, TEXT_ALIGN_RIGHT)
+                -- Strip across the top so it never covers the class icon.
+                UI.Box(1, 1, w - 2, S(14), COL.white)
+                UI.Text(L("playing"), "HordePS_Small", w / 2, S(8), COL.bg, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             end
         end
         b.DoClick = function()
             if ST.class == class.name then return end
-            surface.PlaySound("ui/buttonclick.wav")
+            PS:Sound("ui/buttonclick.wav")
             ST.class = class.name
             root:RebuildBody()
         end
@@ -148,7 +150,7 @@ local function BuildLoadout(root)
         local bw, bh = body:GetSize()
         local class_name = ST.class
         if not class_name then
-            Label(body, "No classes available.", "HordePS_Header", COL.muted):SetPos(pad, pad)
+            Label(body, L("no_classes"), "HordePS_Header", COL.muted):SetPos(pad, pad)
             return
         end
         local equipped = PS:GetEquipped(class_name)
@@ -165,13 +167,13 @@ local function BuildLoadout(root)
         end
         ShowEquipped()
         preview.PaintOver = function(s, w, h)
-            UI.TextShadow(string.upper(PS:ClassDisplayName(class_name)), "HordePS_Big", S(16), S(10), COL.white)
+            UI.TextShadow(PS:Upper(PS:ClassDisplayName(class_name)), "HordePS_Big", S(16), S(10), COL.white)
             local it = s.ShowItem
-            UI.TextShadow(it and it.name or "Default model", "HordePS_Header", S(16), S(52), it and UI.RarityColor(it) or COL.muted)
+            UI.TextShadow(it and it.name or L("default_model"), "HordePS_Header", S(16), S(52), it and UI.RarityColor(it) or COL.muted)
             if s.Hovering then
-                UI.Text("PREVIEW", "HordePS_Small", w - S(12), S(14), COL.red_light, TEXT_ALIGN_RIGHT)
+                UI.Text(L("preview"), "HordePS_Small", w - S(12), S(14), COL.red_light, TEXT_ALIGN_RIGHT)
             end
-            UI.Text("Drag to rotate", "HordePS_Small", w / 2, h - S(16), COL.dim, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            UI.Text(L("drag_rotate"), "HordePS_Small", w / 2, h - S(16), COL.dim, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
 
         -- Right column
@@ -181,7 +183,7 @@ local function BuildLoadout(root)
         right:SetPos(rx, pad)
         right:SetSize(rw, bh - pad * 2)
         right.Paint = function(_, w)
-            UI.Heading("Playermodel", 0, 0, w, PS:ClassDisplayName(class_name) .. " only")
+            UI.Heading(L("playermodel"), 0, 0, w, L("class_only", PS:ClassDisplayName(class_name)))
         end
 
         -- Equipped slot card
@@ -193,7 +195,7 @@ local function BuildLoadout(root)
         local slot = vgui.Create("HordePS_Slot", eq)
         slot:SetPos(S(10), S(10))
         slot:SetSize(eqH - S(20), eqH - S(20))
-        slot:SetItem(equipped, { empty_label = "DEFAULT", badge = equipped and "EQUIPPED" or nil })
+        slot:SetItem(equipped, { empty_label = L("slot_default"), badge = equipped and L("badge_equipped") or nil })
 
         local tx = eqH + S(4)
         local info = vgui.Create("DPanel", eq)
@@ -203,23 +205,23 @@ local function BuildLoadout(root)
             if equipped then
                 local r = PS:GetRarity(equipped.rarity)
                 UI.Text(equipped.name, "HordePS_Header", 0, 0, r.color)
-                UI.Text(r.name .. " Playermodel", "HordePS_Small", 0, S(28), COL.muted)
-                UI.Text("Usable by: " .. PS:ClassesText(equipped), "HordePS_Body", 0, S(48), COL.text)
+                UI.Text(L("rarity_pm", PS:RarityName(equipped.rarity)), "HordePS_Small", 0, S(28), COL.muted)
+                UI.Text(L("usable_by", PS:ClassesText(equipped)), "HordePS_Body", 0, S(48), COL.text)
             else
-                UI.Text("Default model", "HordePS_Header", 0, 0, COL.white)
-                UI.Text("No pointshop playermodel equipped for this class.", "HordePS_Body", 0, S(30), COL.muted)
+                UI.Text(L("default_model"), "HordePS_Header", 0, 0, COL.white)
+                UI.Text(L("no_equipped"), "HordePS_Body", 0, S(30), COL.muted)
             end
         end
 
         local bwid = S(170)
-        local def = UI.Button(info, "Use default", "ghost", function()
+        local def = UI.Button(info, L("use_default"), "ghost", function()
             PS:RequestEquip(class_name, "")
         end)
         def:SetSize(bwid, S(32))
         def:SetPos(0, eqH - S(20) - S(32))
         def:SetEnabled(equipped ~= nil)
 
-        local browse = UI.Button(info, "Browse store", "dark", function()
+        local browse = UI.Button(info, L("browse_store"), "dark", function()
             ST.store_class = class_name
             PS.Menu:SetTab("store")
         end)
@@ -238,7 +240,7 @@ local function BuildLoadout(root)
         gh:SetPos(0, gy)
         gh:SetSize(rw, S(34))
         gh.Paint = function(_, w)
-            UI.Heading("Your models", 0, 0, w, #owned .. " usable by " .. PS:ClassDisplayName(class_name) .. " · click to equip")
+            UI.Heading(L("your_models"), 0, 0, w, L("your_models_sub", #owned, PS:ClassDisplayName(class_name)))
         end
 
         local sp = UI.Scroll(right)
@@ -258,13 +260,13 @@ local function BuildLoadout(root)
             s:SetItem(item, {
                 show_name = true,
                 selected = is_eq,
-                badge = (item and is_eq) and "EQUIPPED" or nil,
-                empty_label = "DEFAULT",
-                tooltip = item and { { is_eq and "Equipped" or "Click to equip", "HordePS_Small", COL.red_light } } or nil,
+                badge = (item and is_eq) and L("badge_equipped") or nil,
+                empty_label = L("slot_default"),
+                tooltip = item and { { is_eq and L("equipped") or L("click_equip"), "HordePS_Small", COL.red_light } } or nil,
             })
             s.DoClick = function()
                 if is_eq then return end
-                surface.PlaySound("ui/buttonclick.wav")
+                PS:Sound("ui/buttonclick.wav")
                 PS:RequestEquip(class_name, item and item.id or "")
             end
             local enter, exit = s.OnCursorEntered, s.OnCursorExited
@@ -291,8 +293,8 @@ local function BuildLoadout(root)
             hint:SetSize(rw - size - S(30), size + S(18))
             hint.OwnLine = true
             hint.Paint = function(_, w, h)
-                UI.Text("You don't own any models for " .. PS:ClassDisplayName(class_name) .. " yet.", "HordePS_BodyBold", S(8), h / 2 - S(10), COL.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-                UI.Text("Check the Daily Store for discounted skins.", "HordePS_Body", S(8), h / 2 + S(12), COL.muted, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+                UI.Text(L("none_for_class", PS:ClassDisplayName(class_name)), "HordePS_BodyBold", S(8), h / 2 - S(10), COL.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+                UI.Text(L("check_daily"), "HordePS_Body", S(8), h / 2 + S(12), COL.muted, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             end
         end
     end
@@ -309,10 +311,10 @@ end
 ---------------------------------------------------------------------------
 
 local INV_SORTS = {
-    { "acquired", "Oldest first" },
-    { "newest",   "Newest first" },
-    { "name",     "Name" },
-    { "rarity",   "Rarity" },
+    { "acquired", "sort_oldest" },
+    { "newest",   "sort_newest" },
+    { "name",     "sort_name" },
+    { "rarity",   "sort_rarity" },
 }
 
 local function SortedInventory()
@@ -349,7 +351,7 @@ local function EquipMenu(item)
             end)
         end
     end
-    if not any then m:AddOption("No class can use this item") end
+    if not any then m:AddOption(L("no_class_can")) end
     m:Open()
 end
 
@@ -366,13 +368,13 @@ local function BuildInventory(root)
     left:SetPos(pad, pad)
     left:SetSize(lw, H - pad * 2)
     left.Paint = function(_, w)
-        UI.Heading("Backpack", 0, 0, w, #PS.Player.inventory .. " / " .. C.InventorySlots .. " slots used")
+        UI.Heading(L("backpack"), 0, 0, w, L("slots_used", #PS.Player.inventory, C.InventorySlots))
     end
 
     local sort = UI.Combo(left)
     sort:SetSize(S(170), S(28))
     sort:SetPos(lw - S(170), 0)
-    for _, s in ipairs(INV_SORTS) do sort:AddChoice(s[2], s[1], s[1] == ST.inv_sort) end
+    for _, s in ipairs(INV_SORTS) do sort:AddChoice(L(s[2]), s[1], s[1] == ST.inv_sort) end
     sort.OnSelect = function(_, _, _, value)
         ST.inv_sort = value
         root:RebuildGrid()
@@ -387,7 +389,7 @@ local function BuildInventory(root)
     nav:SetPos(0, left:GetTall() - S(42))
     nav:SetSize(lw, S(42))
     nav.Paint = function(_, w, h)
-        UI.Text("PAGE " .. ST.inv_page .. " / " .. pages, "HordePS_Tab", w / 2, h / 2, COL.white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        UI.Text(L("page", ST.inv_page, pages), "HordePS_Tab", w / 2, h / 2, COL.white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
     local prev = UI.Button(nav, "<", "dark", function()
         ST.inv_page = math.max(1, ST.inv_page - 1)
@@ -415,9 +417,9 @@ local function BuildInventory(root)
         local dh = details:GetTall()
         if not item then
             details.PaintOver = function(_, w, h)
-                UI.Text("Select an item", "HordePS_Header", w / 2, h / 2 - S(12), COL.muted, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-                UI.Text("Double-click to equip on your current class", "HordePS_Small", w / 2, h / 2 + S(14), COL.dim, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-                UI.Text("Right-click to choose classes", "HordePS_Small", w / 2, h / 2 + S(32), COL.dim, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                UI.Text(L("select_item"), "HordePS_Header", w / 2, h / 2 - S(12), COL.muted, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                UI.Text(L("hint_dbl"), "HordePS_Small", w / 2, h / 2 + S(14), COL.dim, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                UI.Text(L("hint_right"), "HordePS_Small", w / 2, h / 2 + S(32), COL.dim, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             end
             return
         end
@@ -435,28 +437,28 @@ local function BuildInventory(root)
         info.Paint = function(_, w)
             local r = PS:GetRarity(item.rarity)
             UI.Text(Truncate(item.name, "HordePS_Big", w), "HordePS_Big", 0, 0, r.color)
-            UI.Text(r.name .. " Playermodel", "HordePS_Body", 0, S(42), COL.muted)
-            UI.Text("Usable by:", "HordePS_BodyBold", 0, S(70), COL.white)
+            UI.Text(L("rarity_pm", PS:RarityName(item.rarity)), "HordePS_Body", 0, S(42), COL.muted)
+            UI.Text(L("usable_by_label"), "HordePS_BodyBold", 0, S(70), COL.white)
             UI.Text(Truncate(PS:ClassesText(item), "HordePS_Body", w), "HordePS_Body", 0, S(90), COL.text)
             local on = PS:EquippedOn(item.id)
-            UI.Text("Equipped on:", "HordePS_BodyBold", 0, S(118), COL.white)
-            UI.Text(#on > 0 and Truncate(table.concat(on, ", "), "HordePS_Body", w) or "Nothing", "HordePS_Body", 0, S(138), #on > 0 and COL.red_light or COL.dim)
+            UI.Text(L("equipped_on_label"), "HordePS_BodyBold", 0, S(118), COL.white)
+            UI.Text(#on > 0 and Truncate(table.concat(on, ", "), "HordePS_Body", w) or L("nothing"), "HordePS_Body", 0, S(138), #on > 0 and COL.red_light or COL.dim)
         end
 
         local cur = PS:LocalClassName()
         local bw = dw - S(28)
-        local b1 = UI.Button(details, cur and ("Equip on " .. PS:ClassDisplayName(cur)) or "Equip on current class", "red", function()
+        local b1 = UI.Button(details, cur and L("equip_on", PS:ClassDisplayName(cur)) or L("equip_current"), "red", function()
             PS:RequestEquip(cur, item.id)
         end)
         b1:SetSize(bw, S(38))
         b1:SetPos(S(14), dh - S(136))
         b1:SetEnabled(cur ~= nil and PS:CanClassUse(item, cur) and PS.Player.equipped[cur] ~= item.id)
 
-        local b2 = UI.Button(details, "Equip on class…", "dark", function() EquipMenu(item) end)
+        local b2 = UI.Button(details, L("equip_on_class"), "dark", function() EquipMenu(item) end)
         b2:SetSize(bw, S(38))
         b2:SetPos(S(14), dh - S(92))
 
-        local b3 = UI.Button(details, "Unequip everywhere", "ghost", function()
+        local b3 = UI.Button(details, L("unequip_all"), "ghost", function()
             for _, class in ipairs(PS:GetClassList()) do
                 if PS.Player.equipped[class.name] == item.id then PS:RequestEquip(class.name, "") end
             end
@@ -488,11 +490,11 @@ local function BuildInventory(root)
                 s:SetItem(item, {
                     show_name = true,
                     selected = ST.inv_selected == item.id,
-                    badge = #on > 0 and "EQUIPPED" or nil,
-                    tooltip = #on > 0 and { { "Equipped on: " .. table.concat(on, ", "), "HordePS_Small", COL.red_light } } or nil,
+                    badge = #on > 0 and L("badge_equipped") or nil,
+                    tooltip = #on > 0 and { { L("equipped_on", table.concat(on, ", ")), "HordePS_Small", COL.red_light } } or nil,
                 })
                 s.DoClick = function()
-                    surface.PlaySound("ui/buttonclick.wav")
+                    PS:Sound("ui/buttonclick.wav")
                     ST.inv_selected = item.id
                     root:RebuildGrid()
                     root:RebuildDetails()
@@ -526,19 +528,19 @@ end
 ---------------------------------------------------------------------------
 
 local STORE_SORTS = {
-    { "price_asc",  "Price: low to high" },
-    { "price_desc", "Price: high to low" },
-    { "name",       "Name" },
-    { "rarity",     "Rarity" },
+    { "price_asc",  "sort_price_asc" },
+    { "price_desc", "sort_price_desc" },
+    { "name",       "sort_name" },
+    { "rarity",     "sort_rarity" },
 }
 
 local function BuyButton(parent, item)
-    local b = UI.Button(parent, "Buy", "red", function() ConfirmBuy(item) end)
+    local b = UI.Button(parent, L("buy"), "red", function() ConfirmBuy(item) end)
     b.Think = function(s)
         local owned = PS:Owns(item.id)
         local full = #PS.Player.inventory >= C.InventorySlots
         s:SetEnabled(not owned and not full)
-        s:SetLabel(owned and "Owned" or (full and "Inventory full" or "Buy"))
+        s:SetLabel(owned and L("owned") or (full and L("inv_full") or L("buy")))
     end
     return b
 end
@@ -550,14 +552,14 @@ local function DailyCard(parent, item, deal, w, h)
     local info_h = S(132)
 
     card.Paint = function(_, pw, ph)
-        UI.GradV(0, 0, pw, ph, Color(30, 22, 22), COL.bg)
-        UI.GradV(0, ph - info_h - S(40), pw, info_h + S(40), Color(0, 0, 0, 0), ColorAlpha(rc, 22))
+        UI.GradV(0, 0, pw, ph, Color(40, 40, 40), Color(20, 20, 20))
+        UI.GradV(0, ph - info_h - S(40), pw, info_h + S(40), Color(0, 0, 0, 0), ColorAlpha(rc, 12))
         UI.Box(0, 0, pw, S(3), COL.red)
         UI.Outline(0, 0, pw, ph, ColorAlpha(rc, 120))
 
         local y = ph - info_h
         UI.Text(Truncate(item.name, "HordePS_Header", pw - S(24)), "HordePS_Header", S(12), y, rc)
-        UI.Text(PS:GetRarity(item.rarity).name .. " · " .. Truncate(PS:ClassesText(item), "HordePS_Small", pw - S(110)), "HordePS_Small", S(12), y + S(28), COL.muted)
+        UI.Text(PS:RarityName(item.rarity) .. " · " .. Truncate(PS:ClassesText(item), "HordePS_Small", pw - S(110)), "HordePS_Small", S(12), y + S(28), COL.muted)
 
         local price = PS:DailyPrice(item.price, deal.discount)
         local py = y + S(62)
@@ -575,7 +577,7 @@ local function DailyCard(parent, item, deal, w, h)
         local tw, th = surface.GetTextSize(txt)
         UI.GradV(pw - tw - S(24), S(8), tw + S(16), th + S(6), COL.red_light, COL.red_dark)
         UI.Text(txt, "HordePS_Header", pw - S(16), S(11), COL.white, TEXT_ALIGN_RIGHT)
-        UI.Text("DAILY DEAL", "HordePS_Small", S(10), S(10), COL.white)
+        UI.Text(L("daily_deal"), "HordePS_Small", S(10), S(10), COL.white)
     end
 
     local b = BuyButton(card, item)
@@ -605,7 +607,7 @@ local function StoreCard(parent, item, w, h)
     slot:SetSize(w - S(16), w - S(16))
     local deal = PS:GetDailyDeal(item.id)
     slot:SetItem(item, {
-        badge = PS:Owns(item.id) and "OWNED" or (deal and "DAILY" or nil),
+        badge = PS:Owns(item.id) and L("badge_owned") or (deal and L("badge_daily") or nil),
         badge_col = PS:Owns(item.id) and COL.dim or COL.red,
     })
     slot.DoClick = function()
@@ -656,7 +658,7 @@ local function BuildStore(root)
     dh:Dock(TOP)
     dh:SetTall(S(40))
     dh.Paint = function(_, w)
-        UI.Heading("Daily Deals", 0, 0, w, "Discounted today only · refreshes in " .. PS:FormatTime(PS.Daily.reset_at - RealTime()))
+        UI.Heading(L("daily_deals"), 0, 0, w, L("daily_sub", PS:FormatTime(PS.Daily.reset_at - RealTime())))
     end
 
     local deals = {}
@@ -673,7 +675,7 @@ local function BuildStore(root)
     drow.Paint = nil
     if #deals == 0 then
         drow.Paint = function(_, w, h)
-            UI.Text("No daily deals today.", "HordePS_Body", 0, h / 2, COL.muted, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            UI.Text(L("no_deals"), "HordePS_Body", 0, h / 2, COL.muted, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         end
     else
         local gap = S(12)
@@ -690,7 +692,7 @@ local function BuildStore(root)
     sh:Dock(TOP)
     sh:SetTall(S(40))
     sh.Paint = function(_, w)
-        UI.Heading("Store", 0, 0, w, "Every playermodel at its regular price")
+        UI.Heading(L("store"), 0, 0, w, L("store_sub"))
     end
 
     local bar = vgui.Create("DPanel", sp)
@@ -702,7 +704,7 @@ local function BuildStore(root)
     local class_cb = UI.Combo(bar)
     class_cb:SetPos(0, S(2))
     class_cb:SetSize(S(200), S(30))
-    class_cb:AddChoice("All classes", "all", ST.store_class == "all")
+    class_cb:AddChoice(L("all_classes"), "all", ST.store_class == "all")
     for _, class in ipairs(PS:GetClassList()) do
         class_cb:AddChoice(class.display_name or class.name, class.name, ST.store_class == class.name)
     end
@@ -710,15 +712,15 @@ local function BuildStore(root)
     local sort_cb = UI.Combo(bar)
     sort_cb:SetPos(S(210), S(2))
     sort_cb:SetSize(S(190), S(30))
-    for _, s in ipairs(STORE_SORTS) do sort_cb:AddChoice(s[2], s[1], s[1] == ST.store_sort) end
+    for _, s in ipairs(STORE_SORTS) do sort_cb:AddChoice(L(s[2]), s[1], s[1] == ST.store_sort) end
 
-    local search = UI.Entry(bar, "Search…")
+    local search = UI.Entry(bar, L("search"))
     search:SetPos(S(410), S(2))
     search:SetSize(S(240), S(30))
     search:SetValue(ST.store_search or "")
     search:SetUpdateOnType(true)
 
-    local hide = UI.Check(bar, "Hide owned", ST.hide_owned)
+    local hide = UI.Check(bar, L("hide_owned"), ST.hide_owned)
     hide:SetPos(S(664), S(4))
     hide:SetSize(S(150), S(28))
 
@@ -734,7 +736,7 @@ local function BuildStore(root)
 
     local items_shown = 0
     count.Paint = function(_, w, h)
-        UI.Text(items_shown .. " items", "HordePS_Small", w, h / 2, COL.muted, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+        UI.Text(L("items_count", items_shown), "HordePS_Small", w, h / 2, COL.muted, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
     end
 
     function root:RebuildGrid()
@@ -752,7 +754,7 @@ local function BuildStore(root)
             local empty = grid:Add("DPanel")
             empty:SetSize(cw, S(60))
             empty.Paint = function(_, ew, eh)
-                UI.Text("No playermodels match your filters.", "HordePS_Body", 0, eh / 2, COL.muted, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+                UI.Text(L("no_match"), "HordePS_Body", 0, eh / 2, COL.muted, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             end
         end
         grid:Layout()
@@ -765,7 +767,7 @@ local function BuildStore(root)
     hide.DoClick = function(s)
         s:SetValue(not s:GetValue())
         ST.hide_owned = s:GetValue()
-        surface.PlaySound("ui/buttonclick.wav")
+        PS:Sound("ui/buttonclick.wav")
         root:RebuildGrid()
     end
 
@@ -793,13 +795,13 @@ local function BuildContracts(root)
     top:SetPos(pad, pad)
     top:SetSize(W - pad * 2, S(112))
     top.Paint = function(_, w, h)
-        UI.GradH(0, 0, w, h, Color(110, 12, 12), COL.bg2)
-        UI.Outline(0, 0, w, h, COL.red_dark)
+        UI.GradV(0, 0, w, h, Color(44, 44, 44), Color(24, 24, 24))
+        UI.Outline(0, 0, w, h, COL.border)
         UI.Box(0, 0, S(5), h, COL.red)
-        UI.TextShadow("DAILY CONTRACTS", "HordePS_Big", S(24), S(14), COL.white)
-        UI.Text("Complete contracts during a game to earn " .. C.CurrencyName .. ". Finished contracts must be claimed here.",
+        UI.TextShadow(L("contracts_title"), "HordePS_Big", S(24), S(14), COL.white)
+        UI.Text(L("contracts_info"),
             "HordePS_Body", S(24), S(60), COL.text)
-        UI.Text("New contracts in " .. PS:FormatTime(PS.Contracts.reset_at - RealTime()), "HordePS_BodyBold", S(24), S(84), COL.red_light)
+        UI.Text(L("new_in", PS:FormatTime(PS.Contracts.reset_at - RealTime())), "HordePS_BodyBold", S(24), S(84), COL.red_light)
 
         local done, total, earned = 0, #PS.Contracts.list, 0
         for _, c in ipairs(PS.Contracts.list) do
@@ -807,7 +809,7 @@ local function BuildContracts(root)
             if c.claimed then earned = earned + (c.reward or 0) end
         end
         UI.Text(done .. " / " .. total, "HordePS_Huge", w - S(24), S(10), COL.white, TEXT_ALIGN_RIGHT)
-        UI.Text("COMPLETED", "HordePS_Small", w - S(24), S(64), COL.muted, TEXT_ALIGN_RIGHT)
+        UI.Text(L("completed"), "HordePS_Small", w - S(24), S(64), COL.muted, TEXT_ALIGN_RIGHT)
         UI.Price(earned, "HordePS_BodyBold", w - S(24), S(88), COL.white, TEXT_ALIGN_RIGHT)
     end
 
@@ -823,7 +825,7 @@ local function BuildContracts(root)
             e:Dock(TOP)
             e:SetTall(S(60))
             e.Paint = function(_, w, h)
-                UI.Text("No contracts available right now.", "HordePS_Body", 0, h / 2, COL.muted, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+                UI.Text(L("no_contracts"), "HordePS_Body", 0, h / 2, COL.muted, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             end
             return
         end
@@ -847,8 +849,8 @@ local function BuildContracts(root)
                 local x = S(24) + bs
                 local right = S(250)
                 local tw = w - x - right
-                UI.Text(string.upper(c.name or "Contract"), "HordePS_Header", x, S(12), c.claimed and COL.muted or COL.white)
-                UI.Text(c.desc or "", "HordePS_Body", x, S(40), COL.muted)
+                UI.Text(PS:Upper(PS:Localized(c.name) or ""), "HordePS_Header", x, S(12), c.claimed and COL.muted or COL.white)
+                UI.Text(PS:Localized(c.desc) or "", "HordePS_Body", x, S(40), COL.muted)
 
                 -- Progress bar
                 local by, bh = S(70), S(14)
@@ -861,16 +863,16 @@ local function BuildContracts(root)
                 UI.Text(PS:FormatNumber(c.progress) .. " / " .. PS:FormatNumber(c.goal), "HordePS_Small", x + tw, by + bh + S(10), state_col, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 
                 -- Reward
-                UI.Text("REWARD", "HordePS_Small", w - S(20), S(14), COL.muted, TEXT_ALIGN_RIGHT)
+                UI.Text(L("reward"), "HordePS_Small", w - S(20), S(14), COL.muted, TEXT_ALIGN_RIGHT)
                 UI.Price(c.reward or 0, "HordePS_Price", w - S(20), S(42), c.claimed and COL.dim or COL.white, TEXT_ALIGN_RIGHT)
             end
 
             local btn
             if c.claimed then
-                btn = UI.Button(row, "Claimed", "ghost")
+                btn = UI.Button(row, L("claimed"), "ghost")
                 btn:SetEnabled(false)
             elseif complete then
-                btn = UI.Button(row, "Claim", "red", function() PS:RequestClaim(i) end)
+                btn = UI.Button(row, L("claim"), "red", function() PS:RequestClaim(c.index or i) end)
                 local paint = btn.Paint
                 btn.Paint = function(s, w, h)
                     paint(s, w, h)
@@ -878,7 +880,7 @@ local function BuildContracts(root)
                     UI.Outline(0, 0, w, h, Color(255, 255, 255, 60 + 120 * a), 2)
                 end
             else
-                btn = UI.Button(row, "In progress", "ghost")
+                btn = UI.Button(row, L("in_progress"), "ghost")
                 btn:SetEnabled(false)
             end
             btn:SetSize(S(160), S(34))
@@ -895,10 +897,84 @@ local function BuildContracts(root)
 end
 
 ---------------------------------------------------------------------------
--- ADMIN
+-- SETTINGS
 ---------------------------------------------------------------------------
 
-local function BuildAdmin(root)
+local function BuildSettings(root)
+    local W, H = root:GetSize()
+    local pad = S(16)
+    local cw = math.floor((W - pad * 3) / 2)
+
+    -- General
+    local gen = Card(root)
+    gen:SetPos(pad, pad)
+    gen:SetSize(cw, S(250))
+    local gpaint = gen.Paint
+    gen.Paint = function(s, w, h)
+        gpaint(s, w, h)
+        UI.Heading(L("general"), S(16), S(14), w - S(32))
+        UI.Text(PS:Upper(L("language")), "HordePS_Small", S(16), S(58), COL.muted)
+    end
+
+    local lang = UI.Combo(gen)
+    lang:SetPos(S(16), S(78))
+    lang:SetSize(cw - S(32), S(32))
+    local current = PS.LangConVar:GetString()
+    lang:AddChoice(L("lang_default"), "", current == "")
+    lang:AddChoice(L("lang_auto"), "auto", current == "auto")
+    for _, l in ipairs(PS.Languages) do lang:AddChoice(l.name, l.id, current == l.id) end
+    lang.OnSelect = function(_, _, _, value)
+        RunConsoleCommand("horde_ps_language", value)
+        -- Convars update on the next frame; rebuild the whole window in the new language.
+        timer.Simple(0.05, function()
+            if IsValid(PS.Menu) then PS.Menu:Rebuild() end
+        end)
+    end
+
+    local snd = UI.Check(gen, L("sounds"), PS.SoundConVar:GetBool(), function(v)
+        RunConsoleCommand("horde_ps_sounds", v and "1" or "0")
+    end)
+    snd:SetPos(S(16), S(130))
+    snd:SetSize(cw - S(32), S(30))
+
+    local spin = UI.Check(gen, L("autospin"), PS.SpinConVar:GetBool(), function(v)
+        RunConsoleCommand("horde_ps_autospin", v and "1" or "0")
+    end)
+    spin:SetPos(S(16), S(168))
+    spin:SetSize(cw - S(32), S(30))
+
+    -- Controls
+    local ctl = Card(root)
+    ctl:SetPos(pad * 2 + cw, pad)
+    ctl:SetSize(cw, S(250))
+    local cpaint = ctl.Paint
+    ctl.Paint = function(s, w, h)
+        cpaint(s, w, h)
+        UI.Heading(L("controls"), S(16), S(14), w - S(32))
+        UI.Text(PS:Upper(L("keybind")), "HordePS_Small", S(16), S(58), COL.muted)
+        UI.Text(L("keybind_hint"), "HordePS_Small", S(16), S(126), COL.dim)
+        UI.Text("F4 · !ps · horde_pointshop_toggle", "HordePS_Small", S(16), S(146), COL.dim)
+    end
+
+    local binder = UI.Binder(ctl, PS.KeyConVar:GetInt(), function(code)
+        RunConsoleCommand("horde_ps_menu_key", tostring(code))
+    end)
+    binder:SetPos(S(16), S(78))
+    binder:SetSize(cw - S(32) - S(130), S(36))
+
+    local clear = UI.Button(ctl, L("clear"), "ghost", function()
+        RunConsoleCommand("horde_ps_menu_key", "0")
+        binder:SetValue(0)
+    end)
+    clear:SetPos(cw - S(16) - S(120), S(78))
+    clear:SetSize(S(120), S(36))
+end
+
+---------------------------------------------------------------------------
+-- ADMIN: ITEMS
+---------------------------------------------------------------------------
+
+local function BuildAdminItems(root)
     local W, H = root:GetSize()
     local pad = S(16)
     local lw = S(380)
@@ -907,22 +983,22 @@ local function BuildAdmin(root)
     left:SetPos(pad, pad)
     left:SetSize(lw, H - pad * 2)
     left.Paint = function(_, w)
-        UI.Heading("Playermodels", 0, 0, w, #PS.CatalogOrder .. " items")
+        UI.Heading(L("playermodels"), 0, 0, w, L("n_items", #PS.CatalogOrder))
     end
 
-    local search = UI.Entry(left, "Search…")
+    local search = UI.Entry(left, L("search"))
     search:SetPos(0, S(40))
-    search:SetSize(lw - S(110), S(30))
+    search:SetSize(lw - S(120), S(30))
     search:SetValue(ST.admin_search or "")
     search:SetUpdateOnType(true)
 
-    local add = UI.Button(left, "+ New", "red", function()
+    local add = UI.Button(left, L("new"), "red", function()
         ST.admin_selected = "__new"
         root:RebuildList()
         root:RebuildEditor()
     end)
-    add:SetPos(lw - S(100), S(40))
-    add:SetSize(S(100), S(30))
+    add:SetPos(lw - S(110), S(40))
+    add:SetSize(S(110), S(30))
 
     local list = UI.Scroll(left)
     list:SetPos(0, S(80))
@@ -956,16 +1032,17 @@ local function BuildAdmin(root)
                     local x = S(56)
                     UI.Text(Truncate(item.name, "HordePS_ItemName", w - x - S(100)), "HordePS_ItemName", x, S(8), item.enabled and UI.RarityColor(item) or COL.dim)
                     local tags = {}
-                    if not item.enabled then tags[#tags + 1] = "DISABLED" end
-                    if item.custom then tags[#tags + 1] = "CUSTOM" end
-                    if item.overridden and not item.custom then tags[#tags + 1] = "EDITED" end
-                    if item.classes then tags[#tags + 1] = table.Count(item.classes) .. " CLASS" .. (table.Count(item.classes) > 1 and "ES" or "") end
+                    if not item.enabled then tags[#tags + 1] = L("tag_disabled") end
+                    if item.custom then tags[#tags + 1] = L("tag_custom") end
+                    if item.overridden and not item.custom then tags[#tags + 1] = L("tag_edited") end
+                    if item.classes then tags[#tags + 1] = L("tag_classes", table.Count(item.classes)) end
                     UI.Text(table.concat(tags, " · "), "HordePS_Small", x, S(30), COL.muted)
                     UI.Price(item.price, "HordePS_BodyBold", w - S(10), h / 2, COL.white, TEXT_ALIGN_RIGHT)
                 end
                 row.DoClick = function()
-                    surface.PlaySound("ui/buttonclick.wav")
+                    PS:Sound("ui/buttonclick.wav")
                     ST.admin_selected = id
+                    root:RebuildList()
                     root:RebuildEditor()
                 end
             end
@@ -979,31 +1056,26 @@ local function BuildAdmin(root)
         local rw, rh = right:GetSize()
 
         if not is_new and not item then
-            right.Paint = function(_, w, h)
-                UI.Heading("Pointshop admin", 0, 0, w)
+            right.Paint = function(_, w)
+                UI.Heading(L("admin_title"), 0, 0, w)
                 local y = S(50)
-                for _, line in ipairs({
-                    "Select a playermodel on the left to change its price, rarity, class restriction or availability.",
-                    "Use \"+ New\" to add any playermodel installed on the server (e.g. a workshop model).",
-                    "Default items are defined in gamemode/modules/pointshop/core/sh_config.lua.",
-                    "In-game changes are saved in the server database and override the config file.",
-                    "Give test currency: horde_ps_give_skulls <name|steamid|^> <amount>",
-                }) do
-                    UI.Text(line, "HordePS_Body", 0, y, COL.text)
+                for i = 1, 5 do
+                    UI.Text(L("admin_help" .. i), "HordePS_Body", 0, y, COL.text)
                     y = y + S(26)
                 end
+                UI.Text("horde_ps_give_skulls <name|steamid|^> <amount>", "HordePS_Small", 0, y + S(6), COL.dim)
             end
         else
             right.Paint = function(_, w)
-                UI.Heading(is_new and "New playermodel" or "Edit playermodel", 0, 0, w,
-                    is_new and "Added as a custom item" or (item.custom and ("custom · " .. item.id) or ("config · " .. item.id)))
+                UI.Heading(is_new and L("new_pm") or L("edit_pm"), 0, 0, w,
+                    is_new and L("added_custom") or (item.custom and L("src_custom", item.id) or L("src_config", item.id)))
             end
 
             local editable = is_new or item.custom
             local fw = math.floor(rw * 0.56)
             local y = S(44)
             local function Field(label, h)
-                local l = Label(right, string.upper(label), "HordePS_Small", COL.muted)
+                local l = Label(right, PS:Upper(label), "HordePS_Small", COL.muted)
                 l:SetPos(0, y)
                 y = y + S(18)
                 local top = y
@@ -1011,19 +1083,36 @@ local function BuildAdmin(root)
                 return top
             end
 
-            local name = UI.Entry(right, "Display name")
-            name:SetPos(0, Field("Name"))
+            local name = UI.Entry(right, L("ph_name"))
+            name:SetPos(0, Field(L("f_name")))
             name:SetSize(fw, S(32))
             name:SetValue(item and item.name or "")
             name:SetEnabled(editable)
 
+            -- Model path + "+" picker
+            local model_top = Field(L("f_model"))
             local model = UI.Entry(right, "models/player/....mdl")
-            model:SetPos(0, Field("Model path"))
-            model:SetSize(fw, S(32))
+            model:SetPos(0, model_top)
+            model:SetSize(fw - S(42), S(32))
             model:SetValue(item and item.model or "")
             model:SetEnabled(editable)
 
-            local price_top = Field("Price (" .. C.CurrencyName .. ")" .. (item and item.base_price ~= item.price and (" · config: " .. item.base_price) or ""))
+            local pv -- preview, created below
+            local pick = UI.Button(right, "+", "red", function()
+                UI.ModelPicker(function(path, pname)
+                    if not IsValid(model) then return end
+                    model:SetValue(path)
+                    if string.Trim(name:GetValue()) == "" then name:SetValue(pname) end
+                    if IsValid(pv) then pv:SetPlayerModel(path) end
+                end)
+            end)
+            pick:SetLabelFont("HordePS_Header")
+            pick:SetPos(fw - S(34), model_top)
+            pick:SetSize(S(34), S(32))
+            pick:SetTooltip(L("picker_tip"))
+            pick:SetEnabled(editable)
+
+            local price_top = Field(L("f_price") .. (item and item.base_price ~= item.price and L("f_price_cfg", item.base_price) or ""))
             local price = UI.Entry(right, "0")
             price:SetPos(0, price_top)
             price:SetSize(math.floor(fw / 2) - S(5), S(32))
@@ -1037,18 +1126,17 @@ local function BuildAdmin(root)
             for key, r in pairs(C.Rarities) do rlist[#rlist + 1] = { key = key, r = r } end
             table.sort(rlist, function(a, b) return a.r.order < b.r.order end)
             local cur_rarity = item and item.rarity or C.DefaultRarity
-            for _, e in ipairs(rlist) do rarity:AddChoice(e.r.name, e.key, e.key == cur_rarity) end
+            for _, e in ipairs(rlist) do rarity:AddChoice(PS:RarityName(e.key), e.key, e.key == cur_rarity) end
 
-            local enabled = UI.Check(right, "Available in the store", not item or item.enabled)
-            enabled:SetPos(0, Field("Availability", S(28)))
+            local enabled = UI.Check(right, L("avail_store"), not item or item.enabled)
+            enabled:SetPos(0, Field(L("f_avail"), S(28)))
             enabled:SetSize(fw, S(28))
 
-            -- Class restriction
             local classes = PS:GetClassList()
             local set = item and item.classes or nil
-            local ctop = Field("Usable by", S(28) * (1 + math.ceil(#classes / 3)))
+            local ctop = Field(L("f_usable"), S(28) * (1 + math.ceil(#classes / 3)))
             local checks = {}
-            local all = UI.Check(right, "All classes", set == nil)
+            local all = UI.Check(right, L("all_classes"), set == nil)
             all:SetPos(0, ctop)
             all:SetSize(fw, S(28))
             local cwid = math.floor(fw / 3)
@@ -1062,12 +1150,11 @@ local function BuildAdmin(root)
             end
             all.DoClick = function(s)
                 s:SetValue(not s:GetValue())
-                surface.PlaySound("ui/buttonclick.wav")
+                PS:Sound("ui/buttonclick.wav")
                 if s:GetValue() then for _, chk in pairs(checks) do chk:SetValue(false) end end
             end
 
-            -- Preview
-            local pv = vgui.Create("HordePS_Preview", right)
+            pv = vgui.Create("HordePS_Preview", right)
             pv:SetPos(fw + S(20), S(44))
             pv:SetSize(rw - fw - S(20), rh - S(44) - S(56))
             pv:SetPlayerModel(item and item.model or DEFAULT_PREVIEW)
@@ -1076,7 +1163,6 @@ local function BuildAdmin(root)
                 if m and util.IsValidModel(m) then pv:SetPlayerModel(m) end
             end
 
-            -- Actions
             local function Gather()
                 local list = {}
                 if not all:GetValue() then
@@ -1097,7 +1183,7 @@ local function BuildAdmin(root)
             end
 
             local by = rh - S(44)
-            local save = UI.Button(right, is_new and "Add playermodel" or "Save changes", "red", function()
+            local save = UI.Button(right, is_new and L("add_pm") or L("save"), "red", function()
                 PS:RequestAdmin(is_new and "add" or "update", Gather())
                 if is_new then ST.admin_selected = nil end
             end)
@@ -1105,31 +1191,31 @@ local function BuildAdmin(root)
             save:SetSize(S(200), S(40))
 
             if item and not item.custom then
-                local reset = UI.Button(right, "Reset to config", "ghost", function()
+                local reset = UI.Button(right, L("reset_cfg"), "ghost", function()
                     PS:RequestAdmin("reset", { id = item.id })
                 end)
                 reset:SetPos(S(210), by)
-                reset:SetSize(S(180), S(40))
+                reset:SetSize(S(190), S(40))
                 reset:SetEnabled(item.overridden == true)
             elseif item and item.custom then
-                local del = UI.Button(right, "Delete", "ghost", function()
-                    UI.Confirm("Delete playermodel", "Delete " .. item.name .. "? Players who own it will no longer see it.", "Delete", function()
+                local del = UI.Button(right, L("delete"), "ghost", function()
+                    UI.Confirm(L("delete_title"), L("delete_body", item.name), L("delete"), function()
                         PS:RequestAdmin("delete", { id = item.id })
                         ST.admin_selected = nil
                     end)
                 end)
                 del:SetPos(S(210), by)
-                del:SetSize(S(180), S(40))
+                del:SetSize(S(190), S(40))
             end
         end
 
-        local reroll = UI.Button(right, "Reroll daily store", "dark", function()
-            UI.Confirm("Reroll daily store", "Pick new random daily deals for everyone right now?", "Reroll", function()
+        local reroll = UI.Button(right, L("reroll"), "dark", function()
+            UI.Confirm(L("reroll"), L("reroll_body"), L("confirm"), function()
                 PS:RequestAdmin("reroll", {})
             end)
         end)
-        reroll:SetSize(S(210), S(40))
-        reroll:SetPos(rw - S(210), rh - S(44))
+        reroll:SetSize(S(230), S(40))
+        reroll:SetPos(rw - S(230), rh - S(44))
     end
 
     search.OnValueChange = function(_, value)
@@ -1148,15 +1234,508 @@ local function BuildAdmin(root)
 end
 
 ---------------------------------------------------------------------------
+-- ADMIN: BANK
+---------------------------------------------------------------------------
+
+local function BuildAdminBank(root)
+    local W, H = root:GetSize()
+    local pad = S(16)
+    local lw = S(460)
+
+    local left = vgui.Create("DPanel", root)
+    left:SetPos(pad, pad)
+    left:SetSize(lw, H - pad * 2)
+    left.Paint = function(_, w, h)
+        UI.Heading(L("bank_online"), 0, 0, w, tostring(#(PS.AdminData.bank or {})))
+        UI.Heading(L("bank_lookup"), 0, h - S(80), w)
+    end
+
+    local refresh = UI.Button(left, L("bank_refresh"), "dark", function() PS:RequestAdmin("bank_list", {}) end)
+    refresh:SetSize(S(120), S(28))
+    refresh:SetPos(lw - S(120), 0)
+
+    local list = UI.Scroll(left)
+    list:SetPos(0, S(40))
+    list:SetSize(lw, left:GetTall() - S(40) - S(96))
+
+    local sid = UI.Entry(left, "STEAM_0:1:12345678")
+    sid:SetPos(0, left:GetTall() - S(40))
+    sid:SetSize(lw - S(130), S(34))
+
+    local find = UI.Button(left, L("find"), "red", function()
+        PS:RequestAdmin("bank_lookup", { steamid = sid:GetValue() })
+    end)
+    find:SetPos(lw - S(120), left:GetTall() - S(40))
+    find:SetSize(S(120), S(34))
+
+    local right = Card(root)
+    right:SetPos(pad * 2 + lw, pad)
+    right:SetSize(W - lw - pad * 3, S(330))
+
+    function root:RebuildList()
+        list:Clear()
+        for _, p in ipairs(PS.AdminData.bank or {}) do
+            local row = vgui.Create("DButton", list)
+            row:SetText("")
+            row:Dock(TOP)
+            row:SetTall(S(46))
+            row:DockMargin(0, 0, S(10), S(4))
+            row.Paint = function(s, w, h)
+                local sel = ST.bank_sel and ST.bank_sel.steamid == p.steamid
+                UI.GradV(0, 0, w, h, sel and Color(120, 16, 16) or (s:IsHovered() and COL.panel2 or COL.panel), COL.bg)
+                UI.Outline(0, 0, w, h, sel and COL.red_light or COL.border)
+                UI.Text(Truncate(p.name or "?", "HordePS_ItemName", w - S(160)), "HordePS_ItemName", S(12), S(6), COL.white)
+                UI.Text(p.steamid or "", "HordePS_Small", S(12), S(26), COL.muted)
+                if p.loaded then
+                    UI.Price(p.skulls or 0, "HordePS_BodyBold", w - S(12), h / 2, COL.white, TEXT_ALIGN_RIGHT)
+                else
+                    UI.Text(L("bank_loading"), "HordePS_Small", w - S(12), h / 2, COL.dim, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+                end
+            end
+            row.DoClick = function()
+                PS:Sound("ui/buttonclick.wav")
+                ST.bank_sel = { steamid = p.steamid, name = p.name, skulls = p.skulls, found = true, online = true }
+                root:RebuildEditor()
+            end
+        end
+    end
+
+    function root:RebuildEditor()
+        Clear(right)
+        local sel = ST.bank_sel
+        local rw = right:GetWide()
+        right.Paint = function(s, w, h)
+            UI.GradV(0, 0, w, h, COL.panel, COL.bg2)
+            UI.Outline(0, 0, w, h, COL.border)
+            UI.Heading(L("bank_title"), S(16), S(14), w - S(32))
+            if not sel then
+                UI.Text(L("bank_select"), "HordePS_Body", S(16), S(64), COL.muted)
+                return
+            end
+            UI.Text(sel.name or sel.steamid or "?", "HordePS_Big", S(16), S(52), COL.white)
+            UI.Text((sel.steamid or "") .. (sel.online and "" or (" · " .. L("bank_offline"))), "HordePS_Small", S(16), S(96), COL.muted)
+            UI.Text(PS:Upper(L("bank_balance")), "HordePS_Small", w - S(16), S(56), COL.muted, TEXT_ALIGN_RIGHT)
+            UI.Price(sel.skulls or 0, "HordePS_Big", w - S(16), S(90), COL.white, TEXT_ALIGN_RIGHT)
+            if not sel.found then
+                UI.Text(L("bank_notfound"), "HordePS_Small", S(16), S(118), COL.red_light)
+            end
+            UI.Text(PS:Upper(L("bank_amount")), "HordePS_Small", S(16), S(150), COL.muted)
+        end
+        if not sel then return end
+
+        local amount = UI.Entry(right, "100")
+        amount:SetNumeric(true)
+        amount:SetPos(S(16), S(170))
+        amount:SetSize(rw - S(32), S(36))
+        amount:SetValue(ST.bank_amount or "100")
+        amount.OnChange = function(s) ST.bank_amount = s:GetValue() end
+
+        local bw = math.floor((rw - S(32) - S(20)) / 3)
+        local function Act(label, mode, style, x)
+            local b = UI.Button(right, label, style, function()
+                PS:RequestAdmin("bank", { steamid = sel.steamid, mode = mode, amount = tonumber(amount:GetValue()) or 0 })
+            end)
+            b:SetPos(x, S(222))
+            b:SetSize(bw, S(40))
+        end
+        Act(L("give"), "add", "red", S(16))
+        Act(L("take"), "remove", "dark", S(16) + bw + S(10))
+        Act(L("set"), "set", "ghost", S(16) + (bw + S(10)) * 2)
+    end
+
+    root:RebuildList()
+    root:RebuildEditor()
+    PS:RequestAdmin("bank_list", {})
+
+    root.Refresh = function(_, what)
+        if what == "admin_bank" then
+            if ST.bank_sel and ST.bank_sel.online then
+                for _, p in ipairs(PS.AdminData.bank or {}) do
+                    if p.steamid == ST.bank_sel.steamid then ST.bank_sel.skulls = p.skulls end
+                end
+            end
+            root:RebuildList()
+            root:RebuildEditor()
+        elseif what == "admin_bank_lookup" then
+            local d = PS.AdminData.bank_lookup or {}
+            if not d.steamid then return end
+            ST.bank_sel = { steamid = d.steamid, name = d.name, skulls = d.skulls or C.StartingSkulls, found = d.found, online = d.name ~= nil }
+            root:RebuildEditor()
+        end
+    end
+end
+
+---------------------------------------------------------------------------
+-- ADMIN: CONTRACTS
+---------------------------------------------------------------------------
+
+local EVENT_KEYS = { kill = "c_event_kill", win = "c_event_win", wave = "c_event_wave" }
+
+local function BuildAdminContracts(root)
+    local W, H = root:GetSize()
+    local pad = S(16)
+    local lw = S(380)
+    local data = PS.AdminData.contracts or {}
+
+    local left = vgui.Create("DPanel", root)
+    left:SetPos(pad, pad)
+    left:SetSize(lw, H - pad * 2)
+    left.Paint = function(_, w)
+        UI.Heading(L("c_templates"), 0, 0, w, tostring(#(data.templates or {})))
+    end
+
+    local add = UI.Button(left, L("new"), "red", function()
+        ST.contract_selected = "__new"
+        root:RebuildList()
+        root:RebuildEditor()
+    end)
+    add:SetPos(lw - S(110), 0)
+    add:SetSize(S(110), S(28))
+
+    local settingsH = S(196)
+    local list = UI.Scroll(left)
+    list:SetPos(0, S(40))
+    list:SetSize(lw, left:GetTall() - S(40) - settingsH - S(10))
+
+    local settings = Card(left)
+    settings:SetPos(0, left:GetTall() - settingsH)
+    settings:SetSize(lw, settingsH)
+
+    local right = UI.Scroll(root)
+    right:SetPos(pad * 2 + lw, pad)
+    right:SetSize(W - lw - pad * 3, H - pad * 2)
+
+    function root:RebuildSettings()
+        Clear(settings)
+        settings.Paint = function(s, w, h)
+            UI.GradV(0, 0, w, h, COL.panel, COL.bg2)
+            UI.Outline(0, 0, w, h, COL.border)
+            UI.Text(PS:Upper(L("c_settings")), "HordePS_BodyBold", S(12), S(10), COL.white)
+            UI.Text(L("per_day"), "HordePS_Small", S(12), S(38), COL.muted)
+            UI.Text(L("def_reward"), "HordePS_Small", w / 2 + S(4), S(38), COL.muted)
+        end
+        local half = math.floor((lw - S(32)) / 2)
+        local per_day = UI.Entry(settings, "3")
+        per_day:SetNumeric(true)
+        per_day:SetPos(S(12), S(56))
+        per_day:SetSize(half, S(30))
+        per_day:SetValue(tostring(data.per_day or C.ContractsPerDay))
+        local reward = UI.Entry(settings, "100")
+        reward:SetNumeric(true)
+        reward:SetPos(lw / 2 + S(4), S(56))
+        reward:SetSize(half, S(30))
+        reward:SetValue(tostring(data.reward or C.ContractReward))
+
+        local save = UI.Button(settings, L("save_settings"), "dark", function()
+            PS:RequestAdmin("contract_settings", { per_day = tonumber(per_day:GetValue()), reward = tonumber(reward:GetValue()) })
+        end)
+        save:SetPos(S(12), S(98))
+        save:SetSize(lw - S(24), S(36))
+
+        local regen = UI.Button(settings, L("regen"), "ghost", function()
+            UI.Confirm(L("regen"), L("regen_body"), L("confirm"), function()
+                PS:RequestAdmin("contracts_regen", {})
+            end)
+        end)
+        regen:SetPos(S(12), S(144))
+        regen:SetSize(lw - S(24), S(36))
+    end
+
+    local function Selected()
+        for _, t in ipairs(data.templates or {}) do
+            if t.id == ST.contract_selected then return t end
+        end
+    end
+
+    function root:RebuildList()
+        list:Clear()
+        for _, t in ipairs(data.templates or {}) do
+            local row = vgui.Create("DButton", list)
+            row:SetText("")
+            row:Dock(TOP)
+            row:SetTall(S(52))
+            row:DockMargin(0, 0, S(10), S(4))
+            row.Paint = function(s, w, h)
+                local sel = ST.contract_selected == t.id
+                local off = t.enabled == false
+                UI.GradV(0, 0, w, h, sel and Color(120, 16, 16) or (s:IsHovered() and COL.panel2 or COL.panel), COL.bg)
+                UI.Outline(0, 0, w, h, sel and COL.red_light or COL.border)
+                local name = (PS:LangId() == "ru" and t.name_ru and t.name_ru ~= "") and t.name_ru or t.name or t.id
+                UI.Text(Truncate(name, "HordePS_ItemName", w - S(110)), "HordePS_ItemName", S(12), S(8), off and COL.dim or COL.white)
+                local tags = { L(EVENT_KEYS[t.event] or "c_event_kill") }
+                if off then tags[#tags + 1] = L("tag_disabled") end
+                if t.custom then tags[#tags + 1] = L("tag_custom") end
+                if t.overridden then tags[#tags + 1] = L("tag_edited") end
+                UI.Text(table.concat(tags, " · "), "HordePS_Small", S(12), S(30), COL.muted)
+                UI.Price(tonumber(t.reward) or data.reward or C.ContractReward, "HordePS_BodyBold", w - S(10), h / 2, off and COL.dim or COL.white, TEXT_ALIGN_RIGHT)
+            end
+            row.DoClick = function()
+                PS:Sound("ui/buttonclick.wav")
+                ST.contract_selected = t.id
+                root:RebuildList()
+                root:RebuildEditor()
+            end
+        end
+    end
+
+    function root:RebuildEditor()
+        right:Clear()
+        local is_new = ST.contract_selected == "__new"
+        local t = Selected()
+        local rw = right:GetWide() - S(16)
+
+        local holder = vgui.Create("DPanel", right)
+        holder:Dock(TOP)
+        holder.Paint = nil
+
+        if not is_new and not t then
+            holder:SetTall(S(120))
+            holder.Paint = function(_, w)
+                UI.Heading(L("c_templates"), 0, 0, w)
+                UI.Text(L("c_help"), "HordePS_Body", 0, S(50), COL.text)
+            end
+            return
+        end
+        t = t or { event = "kill", min = 10, max = 20, step = 5, enabled = true }
+
+        local half = math.floor((rw - S(12)) / 2)
+        local y = S(44)
+        local function Field(label, x, w)
+            local l = Label(holder, PS:Upper(label), "HordePS_Small", COL.muted)
+            l:SetPos(x or 0, y)
+            return y + S(18)
+        end
+        local function NextRow(h) y = y + S(18) + (h or S(32)) + S(12) end
+
+        holder.Paint = function(_, w)
+            UI.Heading(is_new and L("c_new_title") or L("c_edit"), 0, 0, w,
+                is_new and L("added_custom") or ((t.custom and L("src_custom", t.id)) or L("src_config", t.id)))
+        end
+
+        local top = Field(L("f_name_en"), 0)
+        Field(L("f_name_ru"), half + S(12))
+        local name_en = UI.Entry(holder, "Hulk Smasher")
+        name_en:SetPos(0, top) name_en:SetSize(half, S(32)) name_en:SetValue(t.name or "")
+        local name_ru = UI.Entry(holder, "Крушитель Халков")
+        name_ru:SetPos(half + S(12), top) name_ru:SetSize(half, S(32)) name_ru:SetValue(t.name_ru or "")
+        NextRow()
+
+        top = Field(L("f_desc_en"))
+        local desc_en = UI.Entry(holder, "Destroy %d Hulks.")
+        desc_en:SetPos(0, top) desc_en:SetSize(rw, S(32)) desc_en:SetValue(t.desc or "")
+        NextRow()
+
+        top = Field(L("f_desc_ru"))
+        local desc_ru = UI.Entry(holder, "Уничтожьте Халков: %d.")
+        desc_ru:SetPos(0, top) desc_ru:SetSize(rw, S(32)) desc_ru:SetValue(t.desc_ru or "")
+        NextRow()
+
+        top = Field(L("f_event"), 0)
+        Field(L("f_reward", PS:FormatNumber(data.reward or C.ContractReward)), half + S(12))
+        local event = UI.Combo(holder)
+        event:SetPos(0, top) event:SetSize(half, S(32))
+        for _, e in ipairs({ "kill", "win", "wave" }) do event:AddChoice(L(EVENT_KEYS[e]), e, e == t.event) end
+        local reward = UI.Entry(holder, "")
+        reward:SetNumeric(true)
+        reward:SetPos(half + S(12), top) reward:SetSize(half, S(32))
+        reward:SetValue(t.reward and tostring(t.reward) or "")
+        NextRow()
+
+        top = Field(L("f_goal"))
+        local third = math.floor((rw - S(24)) / 3)
+        local function NumEntry(x, v)
+            local e = UI.Entry(holder, "1")
+            e:SetNumeric(true)
+            e:SetPos(x, top) e:SetSize(third, S(32)) e:SetValue(tostring(v or 1))
+            return e
+        end
+        local gmin = NumEntry(0, t.min)
+        local gmax = NumEntry(third + S(12), t.max)
+        local gstep = NumEntry((third + S(12)) * 2, t.step)
+        NextRow()
+
+        top = Field(L("f_enemies"))
+        local enemies = UI.Entry(holder, "Hulk, Mutated Hulk")
+        enemies:SetPos(0, top) enemies:SetSize(rw - S(210), S(32))
+        enemies:SetValue(table.concat(t.enemy or {}, ", "))
+        local add_enemy = UI.Combo(holder)
+        add_enemy:SetPos(rw - S(200), top) add_enemy:SetSize(S(200), S(32))
+        add_enemy:SetValue(L("add_enemy"))
+        for _, n in ipairs(data.enemies or {}) do add_enemy:AddChoice(n, n) end
+        add_enemy.OnSelect = function(s, _, _, value)
+            local cur = string.Trim(enemies:GetValue())
+            enemies:SetValue(cur == "" and value or (cur .. ", " .. value))
+            s:SetValue(L("add_enemy"))
+        end
+        NextRow()
+
+        top = Field(L("f_filters"))
+        local fw3 = math.floor(rw / 3)
+        local elite = UI.Check(holder, L("only_elite"), t.elite == true)
+        elite:SetPos(0, top) elite:SetSize(fw3, S(28))
+        local boss = UI.Check(holder, L("only_boss"), t.boss == true)
+        boss:SetPos(fw3, top) boss:SetSize(fw3, S(28))
+        local per_class = UI.Check(holder, L("per_class"), t.per_class == true)
+        per_class:SetPos(fw3 * 2, top) per_class:SetSize(fw3, S(28))
+        NextRow(S(28))
+
+        local enabled = UI.Check(holder, L("c_enabled"), t.enabled ~= false)
+        enabled:SetPos(0, y) enabled:SetSize(rw, S(28))
+        y = y + S(40)
+
+        -- Live example of the description
+        local example = vgui.Create("DPanel", holder)
+        example:SetPos(0, y)
+        example:SetSize(rw, S(28))
+        example.Paint = function(_, w, h)
+            local fmt = (PS:LangId() == "ru" and string.Trim(desc_ru:GetValue()) ~= "") and desc_ru:GetValue() or desc_en:GetValue()
+            local ok, txt = pcall(string.format, fmt, tonumber(gmin:GetValue()) or 1, PS:ClassDisplayName(PS:LocalClassName() or "Assault"))
+            UI.Text(L("c_example", ok and txt or fmt), "HordePS_Body", 0, h / 2, COL.red_light, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        end
+        y = y + S(44)
+
+        local function Gather()
+            local list = {}
+            for part in string.gmatch(enemies:GetValue(), "[^,]+") do
+                local n = string.Trim(part)
+                if n ~= "" then list[#list + 1] = n end
+            end
+            local _, ev = event:GetSelected()
+            return {
+                id = (not is_new) and t.id or nil,
+                name = name_en:GetValue(), name_ru = name_ru:GetValue(),
+                desc = desc_en:GetValue(), desc_ru = desc_ru:GetValue(),
+                event = ev or t.event,
+                min = tonumber(gmin:GetValue()), max = tonumber(gmax:GetValue()), step = tonumber(gstep:GetValue()),
+                reward = reward:GetValue() ~= "" and tonumber(reward:GetValue()) or nil,
+                enemy = list,
+                elite = elite:GetValue(), boss = boss:GetValue(), per_class = per_class:GetValue(),
+                enabled = enabled:GetValue(),
+            }
+        end
+
+        local save = UI.Button(holder, L("save"), "red", function()
+            PS:RequestAdmin("contract_save", Gather())
+            if is_new then ST.contract_selected = nil end
+        end)
+        save:SetPos(0, y) save:SetSize(S(200), S(40))
+
+        if not is_new and t.config then
+            local reset = UI.Button(holder, L("reset_cfg"), "ghost", function()
+                PS:RequestAdmin("contract_reset", { id = t.id })
+            end)
+            reset:SetPos(S(210), y) reset:SetSize(S(190), S(40))
+            reset:SetEnabled(t.overridden == true)
+        elseif not is_new and t.custom then
+            local del = UI.Button(holder, L("delete"), "ghost", function()
+                UI.Confirm(L("delete_title"), L("delete_body", t.name or t.id), L("delete"), function()
+                    PS:RequestAdmin("contract_delete", { id = t.id })
+                    ST.contract_selected = nil
+                end)
+            end)
+            del:SetPos(S(210), y) del:SetSize(S(190), S(40))
+        end
+        holder:SetTall(y + S(52))
+    end
+
+    root:RebuildSettings()
+    root:RebuildList()
+    root:RebuildEditor()
+    PS:RequestAdmin("contracts_get", {})
+
+    root.Refresh = function(_, what)
+        if what == "admin_contracts" then
+            data = PS.AdminData.contracts or {}
+            root:RebuildSettings()
+            root:RebuildList()
+            root:RebuildEditor()
+        end
+    end
+end
+
+---------------------------------------------------------------------------
+-- ADMIN (sub-tabs)
+---------------------------------------------------------------------------
+
+local ADMIN_SUBS = {
+    { id = "items",     label = "admin_items",     build = BuildAdminItems },
+    { id = "bank",      label = "admin_bank",      build = BuildAdminBank },
+    { id = "contracts", label = "admin_contracts", build = BuildAdminContracts },
+}
+
+local function BuildAdmin(root)
+    local W, H = root:GetSize()
+    local barH = S(38)
+
+    local bar = vgui.Create("DPanel", root)
+    bar:SetPos(0, 0)
+    bar:SetSize(W, barH)
+    bar.Paint = function(_, w, h)
+        UI.Box(0, 0, w, h, Color(22, 22, 22))
+        UI.Box(0, h - 1, w, 1, COL.border)
+    end
+
+    local page = vgui.Create("DPanel", root)
+    page:SetPos(0, barH)
+    page:SetSize(W, H - barH)
+    page.Paint = nil
+
+    local current
+    local function Open(id)
+        ST.admin_sub = id
+        Clear(page)
+        local sub
+        for _, s in ipairs(ADMIN_SUBS) do if s.id == id then sub = s end end
+        sub = sub or ADMIN_SUBS[1]
+        current = vgui.Create("DPanel", page)
+        current:SetSize(page:GetSize())
+        current.Paint = nil
+        sub.build(current)
+    end
+
+    local x = S(16)
+    for _, sub in ipairs(ADMIN_SUBS) do
+        surface.SetFont("HordePS_Button")
+        local tw = surface.GetTextSize(PS:Upper(L(sub.label)))
+        local b = vgui.Create("DButton", bar)
+        b:SetText("")
+        b:SetPos(x, S(5))
+        b:SetSize(tw + S(32), barH - S(10))
+        x = x + tw + S(40)
+        b.Paint = function(s, w, h)
+            local active = ST.admin_sub == sub.id
+            if active then
+                UI.GradV(0, 0, w, h, COL.red, COL.red_dark)
+            elseif s:IsHovered() then
+                UI.Box(0, 0, w, h, Color(255, 255, 255, 12))
+            end
+            UI.Outline(0, 0, w, h, active and COL.red_light or COL.border)
+            UI.Text(PS:Upper(L(sub.label)), "HordePS_Button", w / 2, h / 2, active and COL.white or COL.muted, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        end
+        b.DoClick = function()
+            if ST.admin_sub == sub.id then return end
+            PS:Sound("ui/buttonclick.wav")
+            Open(sub.id)
+        end
+    end
+
+    Open(ST.admin_sub)
+    root.Refresh = function(_, what)
+        if IsValid(current) and current.Refresh then current:Refresh(what) end
+    end
+end
+
+---------------------------------------------------------------------------
 -- WINDOW
 ---------------------------------------------------------------------------
 
 local TABS = {
-    { id = "loadout",   label = "Loadout",     build = BuildLoadout },
-    { id = "inventory", label = "Inventory",   build = BuildInventory },
-    { id = "store",     label = "Daily Store", build = BuildStore },
-    { id = "contracts", label = "Contracts",   build = BuildContracts },
-    { id = "admin",     label = "Admin",       build = BuildAdmin, admin = true },
+    { id = "loadout",   label = "tab.loadout",   build = BuildLoadout },
+    { id = "inventory", label = "tab.inventory", build = BuildInventory },
+    { id = "store",     label = "tab.store",     build = BuildStore },
+    { id = "contracts", label = "tab.contracts", build = BuildContracts },
+    { id = "settings",  label = "tab.settings",  build = BuildSettings },
+    { id = "admin",     label = "tab.admin",     build = BuildAdmin, admin = true },
 }
 
 local function TabVisible(tab)
@@ -1181,35 +1760,35 @@ function PS:OpenMenu()
 
     f.Paint = function(_, pw, ph)
         Derma_DrawBackgroundBlur(f, f.Opened or SysTime())
-        UI.GradV(0, 0, pw, ph, COL.bg2, COL.bg)
-        UI.GradV(0, ph * 0.6, pw, ph * 0.4, Color(0, 0, 0, 0), Color(70, 6, 6, 70))
+        -- Plain grey window background.
+        UI.GradV(0, 0, pw, ph, Color(36, 36, 36), Color(20, 20, 20))
 
         -- Header
-        UI.GradH(0, 0, pw, headH, Color(26, 26, 26), Color(70, 8, 8))
+        UI.GradV(0, 0, pw, headH, Color(44, 44, 44), Color(28, 28, 28))
         UI.Box(0, headH - S(2), pw, S(2), COL.red)
         surface.SetFont("HordePS_Logo")
-        local lw = surface.GetTextSize("HORDE ")
-        UI.TextShadow("HORDE ", "HordePS_Logo", S(20), headH / 2, COL.white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-        UI.TextShadow("POINTSHOP", "HordePS_Logo", S(20) + lw, headH / 2, COL.red_light, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        local lw = surface.GetTextSize(L("title_a"))
+        UI.TextShadow(L("title_a"), "HordePS_Logo", S(20), headH / 2, COL.white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        UI.TextShadow(L("title_b"), "HordePS_Logo", S(20) + lw, headH / 2, COL.red_light, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
         -- Balance
         local bx = pw - S(70)
-        UI.Text(string.upper(C.CurrencyName), "HordePS_Small", bx, headH / 2 + S(12), COL.muted, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+        UI.Text(PS:Upper(PS:Currency()), "HordePS_Small", bx, headH / 2 + S(12), COL.muted, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
         UI.Price(PS.Player.skulls, "HordePS_Price", bx, headH / 2 - S(8), COL.white, TEXT_ALIGN_RIGHT)
 
         -- Tab bar background
-        UI.GradV(0, headH, pw, tabH, Color(20, 20, 20), COL.bg)
+        UI.GradV(0, headH, pw, tabH, Color(30, 30, 30), Color(24, 24, 24))
         UI.Box(0, headH + tabH - 1, pw, 1, COL.border)
 
         local cls = PS:LocalClassName()
-        UI.Text("Playing as: " .. (cls and PS:ClassDisplayName(cls) or "—"), "HordePS_Small", pw - S(20), headH + tabH / 2, COL.muted, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+        UI.Text(L("playing_as", cls and PS:ClassDisplayName(cls) or "—"), "HordePS_Small", pw - S(20), headH + tabH / 2, COL.muted, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 
         if not PS.Player.loaded then
-            UI.Text("Loading pointshop data…", "HordePS_Header", pw / 2, ph / 2, COL.muted, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            UI.Text(L("loading"), "HordePS_Header", pw / 2, ph / 2, COL.muted, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
     end
     f.PaintOver = function(_, pw, ph)
-        UI.Outline(0, 0, pw, ph, COL.red_dark)
+        UI.Outline(0, 0, pw, ph, COL.border)
     end
     f.Opened = SysTime()
 
@@ -1247,7 +1826,7 @@ function PS:OpenMenu()
         UI.Text("✕", "HordePS_Header", cw / 2, ch / 2, COL.white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
     close.DoClick = function()
-        surface.PlaySound("ui/buttonclick.wav")
+        PS:Sound("ui/buttonclick.wav")
         f:Remove()
     end
 
@@ -1267,12 +1846,13 @@ function PS:OpenMenu()
         for _, tab in ipairs(TABS) do
             if TabVisible(tab) then
                 surface.SetFont("HordePS_Tab")
-                local tw = surface.GetTextSize(string.upper(tab.label))
+                local label = PS:Upper(L(tab.label))
+                local tw = surface.GetTextSize(label)
                 local b = vgui.Create("DButton", tabbar)
                 b:SetText("")
                 b:SetPos(x, 0)
-                b:SetSize(tw + S(40), tabH)
-                x = x + tw + S(44)
+                b:SetSize(tw + S(36), tabH)
+                x = x + tw + S(40)
                 b.Paint = function(s, bw, bh)
                     local active = ST.tab == tab.id
                     if active then
@@ -1282,7 +1862,7 @@ function PS:OpenMenu()
                         UI.GradV(0, 0, bw, bh, Color(0, 0, 0, 0), Color(255, 255, 255, 14))
                     end
                     local col = active and COL.white or (s:IsHovered() and COL.text or COL.muted)
-                    UI.TextShadow(string.upper(tab.label), "HordePS_Tab", bw / 2, bh / 2, col, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                    UI.TextShadow(label, "HordePS_Tab", bw / 2, bh / 2, col, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
                     if tab.id == "contracts" then
                         local claimable = 0
@@ -1298,7 +1878,7 @@ function PS:OpenMenu()
                 end
                 b.DoClick = function()
                     if ST.tab == tab.id then return end
-                    surface.PlaySound("ui/buttonclick.wav")
+                    PS:Sound("ui/buttonclick.wav")
                     f:SetTab(tab.id)
                 end
             end
@@ -1335,18 +1915,23 @@ function PS:OpenMenu()
         end
     end
 
+    -- Rebuild everything (used after a language change).
+    function f:Rebuild()
+        self:BuildTabs()
+        self:SetTab(ST.tab)
+    end
+
     function f:OnDataUpdated(what)
-        if what == "player" then
-            if self.AdminState ~= PS.Player.admin then
-                self.AdminState = PS.Player.admin
-                self:BuildTabs()
-                if ST.tab == "admin" and not PS.Player.admin then self:SetTab("loadout") end
-            end
+        if what == "player" and self.AdminState ~= PS.Player.admin then
+            self.AdminState = PS.Player.admin
+            self:BuildTabs()
+            if ST.tab == "admin" and not PS.Player.admin then self:SetTab("loadout") end
         end
         if IsValid(self.Page) and self.Page.Refresh then self.Page:Refresh(what) end
     end
 
     f.OnKeyCodePressed = function(s, key)
+        if PS.Binding then return end
         if key == KEY_F4 or key == KEY_ESCAPE then s:Remove() end
     end
     -- ESC opens the game menu instead of reaching the panel: close when it appears.
@@ -1362,6 +1947,7 @@ function PS:OpenMenu()
     end
     f.OnRemove = function()
         UI.HideTooltip()
+        PS.Binding = false
     end
 
     f.AdminState = PS.Player.admin
