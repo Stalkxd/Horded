@@ -322,9 +322,10 @@ local MODULE_REGISTRY = {
     chatbubble         = { desc = "chatbubble",         register = LoadFile, recursive = true },
     strafe_cam         = { desc = "strafe_cam",         register = LoadFile, recursive = true },
     hammer             = { desc = "hammer map entities", register = LoadFile },
+    pointshop          = { desc = "pointshop",          register = LoadFile },
 }
 
-local FLAT_MODULE_ORDER = { "difficulties", "hammer", "infusions", "gadgets", "spells", "mutations", "subclasses", "items", "enemies", "configs", "contextual_ping", "quickchat", "waveskip", "playersend", "chatbubble", "strafe_cam" }
+local FLAT_MODULE_ORDER = { "difficulties", "hammer", "infusions", "gadgets", "spells", "mutations", "subclasses", "items", "enemies", "configs", "contextual_ping", "quickchat", "waveskip", "playersend", "chatbubble", "strafe_cam", "pointshop" }
 
 local function LoadFolder(folder_path, options)
     options = options or {}
