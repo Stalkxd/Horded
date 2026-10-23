@@ -690,7 +690,8 @@ end
 
 function plymeta:Horde_SetClass(class)
     self.Horde_class = class
-    if GetConVarNumber("horde_enable_class_models") == 0 then return end
+    if GetConVarNumber("horde_enable_class_models") == 0
+        and not (SERVER and HORDE.Pointshop and HORDE.Pointshop.ShouldApplyModel and HORDE.Pointshop:ShouldApplyModel(self, class)) then return end
     self:Horde_SetClassModel(class)
 end
 
