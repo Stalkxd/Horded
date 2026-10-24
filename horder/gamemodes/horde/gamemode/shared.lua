@@ -110,8 +110,7 @@ local nums = { "_01", "_02", "_03", "_04", "_05", "_06" }
 
 function GM:PlayerSetModel(ply)
     local class = ply:Horde_GetClass()
-    if class and ((class.model and class.model ~= nil)
-        or (SERVER and HORDE.Pointshop and HORDE.Pointshop.ShouldApplyModel and HORDE.Pointshop:ShouldApplyModel(ply, class))) then
+    if class and class.model and class.model ~= nil then
         return ply:Horde_SetClassModel(class)
     end
     return ply:SetModel("models/player/" ..
