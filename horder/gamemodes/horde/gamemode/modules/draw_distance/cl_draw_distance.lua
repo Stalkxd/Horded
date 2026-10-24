@@ -1,5 +1,8 @@
 if not CLIENT then return end
 
+-- cl_ sorts before sh_, so the shared helpers are filled in after this file loads.
+HORDE = HORDE or {}
+HORDE.DrawDistance = HORDE.DrawDistance or {}
 local DD = HORDE.DrawDistance
 
 local cv_dist = CreateClientConVar("horde_draw_distance", "8000", true, false,
