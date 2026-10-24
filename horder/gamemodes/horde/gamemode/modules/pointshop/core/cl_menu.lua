@@ -37,13 +37,20 @@ local function Truncate(text, font, width)
     return text .. "…"
 end
 
-local function DefaultModelFor(class_name)
-    local class = HORDE.classes and HORDE.classes[class_name]
+-- What a class / subclass wears without its own pointshop model: the parent class's
+-- pointshop model, Horde's class model, or the player's current model.
+local function DefaultModelFor(key)
+    local parent = PS:ParentClass(key)
+    if parent ~= key then
+        local inherited = PS:GetEquipped(parent)
+        if inherited then return inherited.model end
+    end
+    local class = HORDE.classes and HORDE.classes[parent]
     if class and class.model and class.model ~= "" then
         return player_manager.TranslatePlayerModel(class.model)
     end
     local ply = LocalPlayer()
-    if class_name == PS:LocalClassName() and IsValid(ply) and not PS:GetEquipped(class_name) then
+    if parent == PS:LocalClassName() and IsValid(ply) and not PS:GetEquipped(key) then
         return ply:GetModel()
     end
     return DEFAULT_PREVIEW
@@ -84,8 +91,11 @@ local function BuildLoadout(root)
     local W, H = root:GetSize()
     local pad = S(16)
     local classes = PS:GetClassList()
-    if not ST.class or not (HORDE.classes and HORDE.classes[ST.class]) then
-        ST.class = PS:LocalClassName() or (classes[1] and classes[1].name)
+    ST.card_sub = ST.card_sub or {}
+    local local_class, local_sub = PS:LocalClassName(), PS:LocalSubclassName()
+    if local_class and local_sub and not ST.card_sub[local_class] then ST.card_sub[local_class] = local_sub end
+    if not PS:IsLoadoutKey(ST.class) then
+        ST.class = (local_class and (ST.card_sub[local_class] or local_class)) or (classes[1] and classes[1].name)
     end
 
     -- Class selector row
@@ -99,12 +109,50 @@ local function BuildLoadout(root)
     local gap = S(4)
     local cw = math.floor((W - pad * 2 - gap * (n - 1)) / n)
     for i, class in ipairs(classes) do
+        local subs = PS:GetSubclasses(class.name)
+        local function CardKey()
+            local k = ST.card_sub[class.name]
+            return (k and PS:ParentClass(k) == class.name) and k or class.name
+        end
         local b = vgui.Create("DButton", row)
         b:SetText("")
         b:SetPos((i - 1) * (cw + gap), 0)
         b:SetSize(cw, rowH)
+
+        -- "^" in the top-right corner: switch this card to one of the class's subclasses.
+        local up
+        if #subs > 1 then
+            up = vgui.Create("DButton", b)
+            up:SetText("")
+            up:SetSize(S(22), S(20))
+            up:SetPos(cw - S(25), S(17))
+            up:SetTooltip(L("change_subclass"))
+            up.Paint = function(s, w, h)
+                if not (b:IsHovered() or s:IsHovered() or b:IsChildHovered()) then return end
+                UI.Box(0, 0, w, h, s:IsHovered() and COL.red or Color(0, 0, 0, 180))
+                UI.Outline(0, 0, w, h, s:IsHovered() and COL.red_light or COL.border_hi)
+                UI.Text("^", "HordePS_Tab", w / 2, h / 2 + S(3), COL.white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
+            up.DoClick = function()
+                PS:Sound("ui/buttonclick.wav")
+                local m = UI.Menu()
+                local ply = LocalPlayer()
+                for _, key in ipairs(subs) do
+                    local unlocked = key == class.name or not (IsValid(ply) and ply.Horde_GetSubclassUnlocked) or ply:Horde_GetSubclassUnlocked(key)
+                    local label = ((CardKey() == key) and "✓  " or "     ") .. PS:ClassDisplayName(key) .. (unlocked and "" or ("  (" .. L("locked") .. ")"))
+                    m:AddOption(label, function()
+                        ST.card_sub[class.name] = key
+                        ST.class = key
+                        root:RebuildBody()
+                    end)
+                end
+                m:Open()
+            end
+        end
+
         b.Paint = function(s, w, h)
-            local sel, hov = ST.class == class.name, s:IsHovered()
+            local key = CardKey()
+            local sel, hov = PS:ParentClass(ST.class or "") == class.name, s:IsHovered() or s:IsChildHovered()
             if sel then
                 UI.GradV(0, 0, w, h, Color(150, 18, 18), COL.red_deep)
             else
@@ -114,16 +162,18 @@ local function BuildLoadout(root)
             if sel then UI.Box(0, h - S(3), w, S(3), COL.white) end
 
             local icon = S(42)
-            surface.SetMaterial(UI.ClassIcon(class))
+            surface.SetMaterial(UI.KeyIcon(key))
             local c = (sel or hov) and 255 or 165
             surface.SetDrawColor(c, c, c)
             surface.DrawTexturedRect((w - icon) / 2, S(18), icon, icon)
 
-            local name = Truncate(PS:Upper(class.display_name or class.name), "HordePS_ItemName", w - S(8))
+            local name = Truncate(PS:Upper(PS:ClassDisplayName(key)), "HordePS_ItemName", w - S(8))
             UI.TextShadow(name, "HordePS_ItemName", w / 2, S(72), COL.white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
-            local item = PS:GetEquipped(class.name)
-            local sub = item and Truncate(item.name, "HordePS_Small", w - S(8)) or L("default")
+            local item = PS:GetEquipped(key)
+            local inherited = not item and key ~= class.name and PS:GetEquipped(class.name)
+            local shown = item or inherited
+            local sub = shown and Truncate(shown.name, "HordePS_Small", w - S(8)) or L("default")
             UI.Text(sub, "HordePS_Small", w / 2, S(91), item and UI.RarityColor(item) or COL.dim, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
             if class.name == PS:LocalClassName() then
@@ -133,9 +183,10 @@ local function BuildLoadout(root)
             end
         end
         b.DoClick = function()
-            if ST.class == class.name then return end
+            local key = CardKey()
+            if ST.class == key then return end
             PS:Sound("ui/buttonclick.wav")
-            ST.class = class.name
+            ST.class = key
             root:RebuildBody()
         end
     end
@@ -209,7 +260,13 @@ local function BuildLoadout(root)
                 UI.Text(L("usable_by", PS:ClassesText(equipped)), "HordePS_Body", 0, S(48), COL.text)
             else
                 UI.Text(L("default_model"), "HordePS_Header", 0, 0, COL.white)
-                UI.Text(L("no_equipped"), "HordePS_Body", 0, S(30), COL.muted)
+                local parent = PS:ParentClass(class_name)
+                local inherited = parent ~= class_name and PS:GetEquipped(parent)
+                if inherited then
+                    UI.Text(L("inherits", PS:ClassDisplayName(parent), inherited.name), "HordePS_Body", 0, S(30), COL.muted)
+                else
+                    UI.Text(L("no_equipped"), "HordePS_Body", 0, S(30), COL.muted)
+                end
             end
         end
 
@@ -343,12 +400,14 @@ local function EquipMenu(item)
     local m = UI.Menu()
     local any = false
     for _, class in ipairs(PS:GetClassList()) do
-        if PS:CanClassUse(item, class.name) then
-            any = true
-            local on = PS.Player.equipped[class.name] == item.id
-            m:AddOption((on and "✓  " or "     ") .. (class.display_name or class.name), function()
-                PS:RequestEquip(class.name, on and "" or item.id)
-            end)
+        for k, key in ipairs(PS:GetSubclasses(class.name)) do
+            if PS:CanClassUse(item, key) then
+                any = true
+                local on = PS.Player.equipped[key] == item.id
+                m:AddOption((on and "✓  " or "     ") .. (k > 1 and "   › " or "") .. PS:ClassDisplayName(key), function()
+                    PS:RequestEquip(key, on and "" or item.id)
+                end)
+            end
         end
     end
     if not any then m:AddOption(L("no_class_can")) end
@@ -445,7 +504,7 @@ local function BuildInventory(root)
             UI.Text(#on > 0 and Truncate(table.concat(on, ", "), "HordePS_Body", w) or L("nothing"), "HordePS_Body", 0, S(138), #on > 0 and COL.red_light or COL.dim)
         end
 
-        local cur = PS:LocalClassName()
+        local cur = PS:LocalSubclassName()
         local bw = dw - S(28)
         local b1 = UI.Button(details, cur and L("equip_on", PS:ClassDisplayName(cur)) or L("equip_current"), "red", function()
             PS:RequestEquip(cur, item.id)
@@ -459,8 +518,15 @@ local function BuildInventory(root)
         b2:SetPos(S(14), dh - S(92))
 
         local b3 = UI.Button(details, L("unequip_all"), "ghost", function()
+            -- One request at a time: the server rate-limits equip requests.
+            local n = 0
             for _, class in ipairs(PS:GetClassList()) do
-                if PS.Player.equipped[class.name] == item.id then PS:RequestEquip(class.name, "") end
+                for _, key in ipairs(PS:GetSubclasses(class.name)) do
+                    if PS.Player.equipped[key] == item.id then
+                        timer.Simple(n * 0.3, function() PS:RequestEquip(key, "") end)
+                        n = n + 1
+                    end
+                end
             end
         end)
         b3:SetSize(bw, S(34))
@@ -500,7 +566,7 @@ local function BuildInventory(root)
                     root:RebuildDetails()
                 end
                 s.DoDoubleClick = function()
-                    local cur = PS:LocalClassName()
+                    local cur = PS:LocalSubclassName()
                     if cur and PS:CanClassUse(item, cur) then PS:RequestEquip(cur, item.id) end
                 end
                 s.DoRightClick = function() EquipMenu(item) end
@@ -706,7 +772,9 @@ local function BuildStore(root)
     class_cb:SetSize(S(200), S(30))
     class_cb:AddChoice(L("all_classes"), "all", ST.store_class == "all")
     for _, class in ipairs(PS:GetClassList()) do
-        class_cb:AddChoice(class.display_name or class.name, class.name, ST.store_class == class.name)
+        for k, key in ipairs(PS:GetSubclasses(class.name)) do
+            class_cb:AddChoice((k > 1 and "   › " or "") .. PS:ClassDisplayName(key), key, ST.store_class == key)
+        end
     end
 
     local sort_cb = UI.Combo(bar)
@@ -937,11 +1005,6 @@ local function BuildSettings(root)
     snd:SetPos(S(16), S(130))
     snd:SetSize(cw - S(32), S(30))
 
-    local spin = UI.Check(gen, L("autospin"), PS.SpinConVar:GetBool(), function(v)
-        RunConsoleCommand("horde_ps_autospin", v and "1" or "0")
-    end)
-    spin:SetPos(S(16), S(168))
-    spin:SetSize(cw - S(32), S(30))
 
     -- Controls
     local ctl = Card(root)
@@ -953,21 +1016,46 @@ local function BuildSettings(root)
         UI.Heading(L("controls"), S(16), S(14), w - S(32))
         UI.Text(PS:Upper(L("keybind")), "HordePS_Small", S(16), S(58), COL.muted)
         UI.Text(L("keybind_hint"), "HordePS_Small", S(16), S(126), COL.dim)
-        UI.Text("F4 · !ps · horde_pointshop_toggle", "HordePS_Small", S(16), S(146), COL.dim)
+        UI.Text("!ps · horde_pointshop · horde_pointshop_toggle", "HordePS_Small", S(16), S(146), COL.dim)
     end
 
     local binder = UI.Binder(ctl, PS.KeyConVar:GetInt(), function(code)
-        RunConsoleCommand("horde_ps_menu_key", tostring(code))
+        RunConsoleCommand("horde_ps_open_key", tostring(code))
     end)
     binder:SetPos(S(16), S(78))
     binder:SetSize(cw - S(32) - S(130), S(36))
 
     local clear = UI.Button(ctl, L("clear"), "ghost", function()
-        RunConsoleCommand("horde_ps_menu_key", "0")
+        RunConsoleCommand("horde_ps_open_key", "0")
         binder:SetValue(0)
     end)
     clear:SetPos(cw - S(16) - S(120), S(78))
     clear:SetSize(S(120), S(36))
+
+    -- HUD: contract tracker
+    local hud = Card(root)
+    hud:SetPos(pad, pad * 2 + S(250))
+    hud:SetSize(cw, S(190))
+    local hpaint = hud.Paint
+    hud.Paint = function(s, w, h)
+        hpaint(s, w, h)
+        UI.Heading(L("hud"), S(16), S(14), w - S(32))
+        UI.Text(PS:Upper(L("tracker_pos")), "HordePS_Small", S(16), S(100), COL.muted)
+    end
+
+    local tracker = UI.Check(hud, L("tracker"), PS.TrackerConVar:GetBool(), function(v)
+        RunConsoleCommand("horde_ps_tracker", v and "1" or "0")
+    end)
+    tracker:SetPos(S(16), S(58))
+    tracker:SetSize(cw - S(32), S(30))
+
+    local pos = UI.Combo(hud)
+    pos:SetPos(S(16), S(120))
+    pos:SetSize(cw - S(32), S(32))
+    local cur_pos = PS.TrackerPosConVar:GetString()
+    pos:AddChoice(L("pos_right"), "right", cur_pos ~= "left")
+    pos:AddChoice(L("pos_left"), "left", cur_pos == "left")
+    pos.OnSelect = function(_, _, _, value) RunConsoleCommand("horde_ps_tracker_pos", value) end
 end
 
 ---------------------------------------------------------------------------
@@ -1132,21 +1220,28 @@ local function BuildAdminItems(root)
             enabled:SetPos(0, Field(L("f_avail"), S(28)))
             enabled:SetSize(fw, S(28))
 
-            local classes = PS:GetClassList()
+            -- Classes and their subclasses ("›"), grouped in columns.
+            local keys = {}
+            for _, class in ipairs(PS:GetClassList()) do
+                for k, key in ipairs(PS:GetSubclasses(class.name)) do keys[#keys + 1] = { key = key, sub = k > 1 } end
+            end
             local set = item and item.classes or nil
-            local ctop = Field(L("f_usable"), S(28) * (1 + math.ceil(#classes / 3)))
+            local rows = math.ceil(#keys / 3)
+            local rowh = S(25)
+            local ctop = Field(L("f_usable") .. " · " .. L("subclass_hint"), S(28) + rowh * rows)
             local checks = {}
             local all = UI.Check(right, L("all_classes"), set == nil)
             all:SetPos(0, ctop)
-            all:SetSize(fw, S(28))
+            all:SetSize(fw, S(26))
             local cwid = math.floor(fw / 3)
-            for i, class in ipairs(classes) do
-                local chk = UI.Check(right, class.display_name or class.name, set ~= nil and set[class.name] == true, function(v)
+            for i, e in ipairs(keys) do
+                local chk = UI.Check(right, (e.sub and "› " or "") .. PS:ClassDisplayName(e.key), set ~= nil and set[e.key] == true, function(v)
                     if v then all:SetValue(false) end
                 end)
-                chk:SetPos(((i - 1) % 3) * cwid, ctop + S(28) * (1 + math.floor((i - 1) / 3)))
-                chk:SetSize(cwid, S(28))
-                checks[class.name] = chk
+                local col, r = math.floor((i - 1) / rows), (i - 1) % rows
+                chk:SetPos(col * cwid + (e.sub and S(14) or 0), ctop + S(28) + rowh * r)
+                chk:SetSize(cwid - (e.sub and S(14) or 0), rowh)
+                checks[e.key] = chk
             end
             all.DoClick = function(s)
                 s:SetValue(not s:GetValue())
@@ -1932,7 +2027,7 @@ function PS:OpenMenu()
 
     f.OnKeyCodePressed = function(s, key)
         if PS.Binding then return end
-        if key == KEY_F4 or key == KEY_ESCAPE then s:Remove() end
+        if key == KEY_ESCAPE then s:Remove() end
     end
     -- ESC opens the game menu instead of reaching the panel: close when it appears.
     f.GameUIWas = gui.IsGameUIVisible()

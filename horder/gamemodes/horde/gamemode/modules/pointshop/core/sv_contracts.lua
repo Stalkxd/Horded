@@ -162,13 +162,12 @@ end
 function PS:ContractTexts(entry)
     local t = Template(entry.tid)
     if not t then return { en = "?", ru = "?" }, { en = "", ru = "" } end
-    local class = entry.class and self:ClassDisplayName(entry.class) or ""
-    local function desc(fmt)
-        if t.per_class then return SafeFormat(fmt, entry.goal, class) end
+    local function desc(fmt, lang)
+        if t.per_class then return SafeFormat(fmt, entry.goal, entry.class and self:ClassName(entry.class, lang) or "") end
         return SafeFormat(fmt, entry.goal)
     end
     local name = { en = t.name or t.id, ru = (t.name_ru ~= nil and t.name_ru ~= "") and t.name_ru or (t.name or t.id) }
-    local text = { en = desc(t.desc), ru = desc((t.desc_ru ~= nil and t.desc_ru ~= "") and t.desc_ru or t.desc) }
+    local text = { en = desc(t.desc, "en"), ru = desc((t.desc_ru ~= nil and t.desc_ru ~= "") and t.desc_ru or t.desc, "ru") }
     return name, text
 end
 
@@ -195,7 +194,7 @@ function PS:SyncContracts(ply)
     d.contracts_sync = false
     net.Start("Horde_PS_Contracts")
     net.WriteUInt(self:SecondsUntilReset(), 32)
-    self:WriteTable(out)
+    self:WriteTable({ list = out, paused = self:ContractPauseReason() })
     net.Send(ply)
 end
 
@@ -203,10 +202,17 @@ end
 -- Progress
 ---------------------------------------------------------------------------
 
+-- Why contract progress is paused (translation key), or nil when it counts.
+-- Singleplayer always counts; on servers cheats / sandbox mode pause it (C.ContractsBlockCheats).
+function PS:ContractPauseReason()
+    if game.SinglePlayer() or not C.ContractsBlockCheats then return nil end
+    if GetConVar("sv_cheats"):GetBool() then return "paused_cheats" end
+    if GetConVar("horde_enable_sandbox"):GetBool() then return "paused_sandbox" end
+    return nil
+end
+
 local function ProgressAllowed()
-    if GetConVar("sv_cheats"):GetBool() then return false end
-    if not C.ContractsInSandbox and GetConVar("horde_enable_sandbox"):GetBool() then return false end
-    return true
+    return PS:ContractPauseReason() == nil
 end
 
 function PS:AddContractProgress(ply, matcher, amount)
@@ -237,10 +243,34 @@ local function NameSet(list)
     return set
 end
 
-hook.Add("Horde_OnEnemyKilled", "Horde_PS_ContractKill", function(victim, killer)
-    if not IsValid(killer) or not killer:IsPlayer() or killer:IsBot() then return end
+-- Finds the player responsible for a kill: the attacker itself, the owner of a minion /
+-- turret / projectile, or the last player Horde saw damaging the enemy.
+local function OwnerPlayer(ent)
+    for _ = 1, 4 do
+        if not IsValid(ent) then return nil end
+        if ent:IsPlayer() then return ent end
+        local minion_owner = HORDE.GetMinionOwner and HORDE:GetMinionOwner(ent)
+        if IsValid(minion_owner) and minion_owner:IsPlayer() then return minion_owner end
+        local owner = ent.GetOwner and ent:GetOwner()
+        if not IsValid(owner) or owner == ent then return nil end
+        ent = owner
+    end
+end
+
+local function KillerOf(victim, attacker)
+    local ply = OwnerPlayer(attacker)
+    if IsValid(ply) then return ply end
+    local last = victim.Horde_GetMostRecentAttacker and victim:Horde_GetMostRecentAttacker()
+    return OwnerPlayer(last)
+end
+
+function PS:CountKill(victim, attacker)
+    if not IsValid(victim) or victim.Horde_PS_Counted or victim:IsPlayer() then return end
+    if HORDE.IsMinion and HORDE:IsMinion(victim) then return end -- friendly units
+    local killer = KillerOf(victim, attacker)
+    if not IsValid(killer) or killer:IsBot() then return end
+    victim.Horde_PS_Counted = true
     if (HORDE.current_wave or 0) <= 0 or not ProgressAllowed() then return end
-    if not IsValid(victim) or victim.Horde_NoReward then return end
 
     local name = string.lower(victim.Horde_GetName and victim:Horde_GetName() or "")
     local elite = victim.Horde_IsElite and victim:Horde_IsElite() or false
@@ -249,7 +279,7 @@ hook.Add("Horde_OnEnemyKilled", "Horde_PS_ContractKill", function(victim, killer
     local class = killer:Horde_GetClass()
     local class_name = class and class.name
 
-    PS:AddContractProgress(killer, function(t, entry)
+    self:AddContractProgress(killer, function(t, entry)
         if t.event ~= "kill" then return false end
         if istable(t.enemy) and #t.enemy > 0 then
             t._names = t._names or NameSet(t.enemy)
@@ -260,6 +290,21 @@ hook.Add("Horde_OnEnemyKilled", "Horde_PS_ContractKill", function(victim, killer
         if t.per_class and entry.class ~= class_name then return false end
         return true
     end, 1)
+end
+
+-- Several sources so no kill is missed; Horde_PS_Counted stops double counting.
+hook.Add("Horde_OnEnemyKilled", "Horde_PS_ContractKill", function(victim, killer)
+    PS:CountKill(victim, killer)
+end)
+
+hook.Add("OnNPCKilled", "Horde_PS_ContractNPCKilled", function(victim, attacker)
+    PS:CountKill(victim, attacker)
+end)
+
+hook.Add("EntityRemoved", "Horde_PS_ContractRemoved", function(ent)
+    if ent.Horde_PS_Counted or not (ent:IsNPC() or ent:IsNextBot()) then return end
+    if ent:Health() > 0 then return end -- removed alive (e.g. wave cleanup), not a kill
+    PS:CountKill(ent, nil)
 end)
 
 hook.Add("HordeWaveEnd", "Horde_PS_ContractWave", function()
@@ -473,9 +518,13 @@ hook.Add("Horde_PS_NewDay", "Horde_PS_ContractsNewDay", function(day)
     end
 end)
 
+local last_pause
 timer.Create("Horde_PS_ContractSync", SYNC_INTERVAL, 0, function()
+    local pause = PS:ContractPauseReason()
+    local changed = pause ~= last_pause
+    last_pause = pause
     for _, ply in ipairs(player.GetHumans()) do
-        if ply.Horde_PS and ply.Horde_PS.contracts_sync then PS:SyncContracts(ply) end
+        if ply.Horde_PS and ply.Horde_PS.loaded and (changed or ply.Horde_PS.contracts_sync) then PS:SyncContracts(ply) end
     end
 end)
 

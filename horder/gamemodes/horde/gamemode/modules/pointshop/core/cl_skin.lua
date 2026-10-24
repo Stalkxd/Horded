@@ -41,6 +41,20 @@ UI.Mat = {
 local MAT = UI.Mat
 
 local class_icons = {}
+-- Icon for a class or subclass name.
+function UI.KeyIcon(key)
+    local sub = HORDE.subclasses and HORDE.subclasses[key]
+    local class = HORDE.classes and HORDE.classes[key]
+    if class then return UI.ClassIcon(class) end
+    local path = sub and sub.Icon or (tostring(key) .. ".png")
+    if class_icons[path] == nil then
+        local mat = Material(string.lower(path), "smooth mips")
+        if mat:IsError() then mat = Material(path, "smooth mips") end
+        class_icons[path] = mat
+    end
+    return class_icons[path]
+end
+
 function UI.ClassIcon(class)
     local key = class.icon or (class.name .. ".png")
     if class_icons[key] == nil then
@@ -518,10 +532,30 @@ function PREVIEW:SetPlayerModel(mdl)
     if seq <= 0 then seq = ent:LookupSequence("idle_all") end
     if seq > 0 then ent:ResetSequence(seq) end
     local mn, mx = ent:GetRenderBounds()
-    local height = math.max(mx.z - mn.z, 40)
-    self.LookCenter = Vector(0, 0, mn.z + height * 0.5)
-    self:SetCamPos(Vector(height * 1.95, 0, height * 0.55 + mn.z))
+    self.ModelMin, self.ModelHeight = mn.z, math.max(mx.z - mn.z, 40)
+    self:FitCamera()
+end
+
+-- Frames the whole model (head to feet) for the panel's current shape. The FOV of a
+-- model panel is horizontal, so wide panels need the camera further back.
+function PREVIEW:FitCamera()
+    if not self.ModelHeight then return end
+    local w, h = self:GetSize()
+    if w <= 0 or h <= 0 then return end
+    local height = self.ModelHeight
+    local hfov = math.rad(self:GetFOV())
+    local vfov = 2 * math.atan(math.tan(hfov / 2) * h / w)
+    local dist_v = (height * 0.56) / math.tan(vfov / 2)       -- full height plus a little margin
+    local dist_h = (height * 0.32) / math.tan(hfov / 2)       -- arms / shoulders fit sideways
+    local dist = math.max(dist_v, dist_h)
+    self.LookCenter = Vector(0, 0, self.ModelMin + height * 0.5)
+    -- Eye at head height, looking at the middle of the body.
+    self:SetCamPos(Vector(dist, 0, self.ModelMin + height * 0.85))
     self:SetLookAt(self.LookCenter)
+end
+
+function PREVIEW:PerformLayout()
+    self:FitCamera()
 end
 
 function PREVIEW:OnMousePressed(code)
@@ -542,7 +576,7 @@ function PREVIEW:LayoutEntity(ent)
         self.Yaw = self.Yaw + (mx - self.Dragging) * 0.6
         self.Dragging = mx
         self.LastDrag = RealTime()
-    elseif self.AutoSpin and PS.SpinConVar:GetBool() and RealTime() - (self.LastDrag or 0) > 2 then
+    elseif self.AutoSpin and RealTime() - (self.LastDrag or 0) > 2 then
         self.Yaw = self.Yaw + FrameTime() * 18
     end
     ent:SetAngles(Angle(0, self.Yaw, 0))
