@@ -19,6 +19,8 @@
 
     Class names: Survivor, Assault, Heavy, Medic, Demolition, Ghost,
                  Engineer, Berserker, Warden, Cremator
+    Subclass names work too (e.g. "SpecOps", "Hatcher", "Samurai").
+    A class name also covers all of that class's subclasses.
 ---------------------------------------------------------------------------]]
 
 local PS = HORDE.Pointshop
@@ -54,12 +56,13 @@ C.ResetUTCOffset    = 0
 -- Daily contracts (both can also be changed in ADMIN > CONTRACTS).
 C.ContractsPerDay   = 3
 C.ContractReward    = 100
--- Count contract progress while sandbox mode (horde_enable_sandbox 1) is on?
-C.ContractsInSandbox = false
+-- Multiplayer only: block contract progress while sv_cheats 1 or sandbox mode
+-- (horde_enable_sandbox 1) is on, so nobody farms Skulls with cheats.
+-- Singleplayer always counts progress. The contract tracker shows when progress is paused.
+C.ContractsBlockCheats = true
 
--- Open the pointshop with F4 (gm_showspare2) in addition to !ps / !pointshop / horde_pointshop.
--- Players can also bind their own key in the SETTINGS tab.
-C.OpenWithF4        = true
+-- The menu opens with the backslash key by default (players can rebind it in the SETTINGS tab),
+-- with the chat commands below, or with the console command horde_pointshop.
 C.ChatCommands      = { "!ps", "!pointshop", "!store", "/ps", "/pointshop" }
 
 -- Who can use the ADMIN tab (prices, class restrictions, models, bank, contracts).

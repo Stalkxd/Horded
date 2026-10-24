@@ -53,15 +53,16 @@ end)
 
 net.Receive("Horde_PS_Contracts", function()
     local left = net.ReadUInt(32)
-    local list = PS:ReadTable()
-    PS.Contracts = { list = istable(list) and list or {}, reset_at = RealTime() + left }
+    local data = PS:ReadTable() or {}
+    PS.Contracts = { list = istable(data.list) and data.list or {}, paused = data.paused, reset_at = RealTime() + left }
     Changed("contracts")
 end)
 
 -- UI sound helper (respects the Settings toggle).
 PS.SoundConVar   = CreateClientConVar("horde_ps_sounds", "1", true, false, "Pointshop interface sounds")
-PS.SpinConVar    = CreateClientConVar("horde_ps_autospin", "1", true, false, "Rotate pointshop model previews")
-PS.KeyConVar     = CreateClientConVar("horde_ps_menu_key", "0", true, false, "Key code that toggles the pointshop (0 = none)")
+PS.KeyConVar     = CreateClientConVar("horde_ps_open_key", tostring(KEY_BACKSLASH), true, false, "Key code that toggles the pointshop (0 = none, default: backslash)")
+PS.TrackerConVar = CreateClientConVar("horde_ps_tracker", "1", true, false, "Show the contract tracker on the HUD")
+PS.TrackerPosConVar = CreateClientConVar("horde_ps_tracker_pos", "right", true, false, "Contract tracker position: right or left")
 
 function PS:Sound(path)
     if self.SoundConVar:GetBool() then surface.PlaySound(path) end
@@ -137,10 +138,13 @@ function PS:GetEquipped(class_name)
 end
 
 -- Classes an item is currently equipped on.
+-- Classes / subclasses an item is currently equipped on (display names).
 function PS:EquippedOn(id)
     local list = {}
     for _, class in ipairs(self:GetClassList()) do
-        if self.Player.equipped[class.name] == id then list[#list + 1] = class.display_name or class.name end
+        for _, key in ipairs(self:GetSubclasses(class.name)) do
+            if self.Player.equipped[key] == id then list[#list + 1] = self:ClassDisplayName(key) end
+        end
     end
     return list
 end
@@ -149,6 +153,14 @@ function PS:LocalClassName()
     local ply = LocalPlayer()
     local class = IsValid(ply) and ply.Horde_GetClass and ply:Horde_GetClass()
     return class and class.name or nil
+end
+
+-- Current subclass ("Hatcher"), or the class name when playing the base class.
+function PS:LocalSubclassName()
+    local ply = LocalPlayer()
+    local sub = IsValid(ply) and ply.Horde_GetCurrentSubclass and ply:Horde_GetCurrentSubclass()
+    if sub and self:IsLoadoutKey(sub) then return sub end
+    return self:LocalClassName()
 end
 
 function PS:RequestBuy(id)

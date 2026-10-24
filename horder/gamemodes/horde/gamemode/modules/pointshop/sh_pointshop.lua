@@ -16,6 +16,7 @@ local FILES = {
     { "cl_pointshop.lua", "cl" },
     { "cl_skin.lua",      "cl" },
     { "cl_menu.lua",      "cl" },
+    { "cl_tracker.lua",   "cl" },
 }
 
 for _, entry in ipairs(FILES) do

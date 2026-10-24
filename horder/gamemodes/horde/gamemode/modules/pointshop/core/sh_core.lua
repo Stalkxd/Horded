@@ -64,26 +64,78 @@ function PS:GetClassList()
     return list
 end
 
-function PS:ClassDisplayName(class_name)
-    local class = HORDE.classes and HORDE.classes[class_name]
-    return class and (class.display_name or class.name) or tostring(class_name)
+-- Loadout keys are class names ("Medic") or subclass names ("Hatcher").
+-- A subclass's parent class, or the name itself for a base class.
+function PS:ParentClass(name)
+    local sub = HORDE.subclasses and HORDE.subclasses[name]
+    if sub and sub.ParentClass then return sub.ParentClass end
+    return name
 end
 
--- item.classes is nil (every class) or a set { [class_name] = true }.
-function PS:CanClassUse(item, class_name)
+function PS:IsLoadoutKey(name)
+    if not isstring(name) then return false end
+    return (HORDE.classes and HORDE.classes[name] ~= nil) or (HORDE.subclasses and HORDE.subclasses[name] ~= nil and HORDE.classes[self:ParentClass(name)] ~= nil)
+end
+
+-- Base class first, then its subclasses by Horde's sort order.
+function PS:GetSubclasses(class_name)
+    local list = { class_name }
+    local subs = {}
+    for name, sub in pairs(HORDE.subclasses or {}) do
+        if sub.ParentClass == class_name then subs[#subs + 1] = sub end
+    end
+    table.sort(subs, function(a, b)
+        if (a.SortOrder or 0) == (b.SortOrder or 0) then return a.PrintName < b.PrintName end
+        return (a.SortOrder or 0) < (b.SortOrder or 0)
+    end)
+    for _, sub in ipairs(subs) do list[#list + 1] = sub.PrintName end
+    return list
+end
+
+-- Class / subclass name in a language (sh_lang.lua has the translations).
+function PS:ClassName(name, lang)
+    lang = lang or self:LangId()
+    local t = self.ClassNames and self.ClassNames[lang]
+    if t and t[name] then return t[name] end
+    local class = HORDE.classes and HORDE.classes[name]
+    if class then return class.display_name or class.name end
+    return tostring(name)
+end
+
+function PS:ClassDisplayName(name)
+    return self:ClassName(name)
+end
+
+-- { en = ..., ru = ... } so server messages show class names in each client's language.
+function PS:ClassNameArg(name)
+    local out = {}
+    for _, l in ipairs(self.Languages or { { id = "en" } }) do out[l.id] = self:ClassName(name, l.id) end
+    return out
+end
+
+-- item.classes is nil (every class) or a set of class / subclass names.
+-- A class name also allows that class's subclasses.
+function PS:CanClassUse(item, key)
     if not item then return false end
     if not item.classes or table.IsEmpty(item.classes) then return true end
-    return item.classes[class_name] == true
+    if item.classes[key] then return true end
+    local parent = self:ParentClass(key)
+    return parent ~= key and item.classes[parent] == true
 end
 
 function PS:ClassesText(item)
     if not item.classes or table.IsEmpty(item.classes) then return self.L and self:L("all_classes") or "All classes" end
-    local names = {}
+    local names, seen = {}, {}
     for _, class in ipairs(self:GetClassList()) do
-        if item.classes[class.name] then names[#names + 1] = class.display_name or class.name end
+        for _, key in ipairs(self:GetSubclasses(class.name)) do
+            if item.classes[key] then
+                names[#names + 1] = self:ClassName(key)
+                seen[key] = true
+            end
+        end
     end
     for name in pairs(item.classes) do
-        if not (HORDE.classes and HORDE.classes[name]) then names[#names + 1] = name end
+        if not seen[name] then names[#names + 1] = self:ClassName(name) end
     end
     return table.concat(names, ", ")
 end

@@ -288,11 +288,24 @@ function PS:GetEquippedModel(ply, class_name)
     return item and item.model or nil
 end
 
+-- The model a player should wear right now: the one equipped for their current
+-- subclass, otherwise the one equipped for its parent class.
+function PS:GetActiveItem(ply, class)
+    class = class or ply:Horde_GetClass()
+    if not class then return nil end
+    local sub = ply.Horde_GetCurrentSubclass and ply:Horde_GetCurrentSubclass() or class.name
+    if sub and sub ~= class.name and self:ParentClass(sub) == class.name then
+        local item = self:GetEquippedItem(ply, sub)
+        if item then return item end
+    end
+    return self:GetEquippedItem(ply, class.name)
+end
+
 -- True when Horde should route the class model through Horde_SetClassModel for this player:
--- either a pointshop model is equipped for the class, or a previous one has to be removed.
+-- either a pointshop model is equipped for the class / subclass, or a previous one has to be removed.
 function PS:ShouldApplyModel(ply, class)
     if not class then return false end
-    return self:GetEquippedModel(ply, class.name) ~= nil or ply.Horde_PS_Applied ~= nil
+    return self:GetActiveItem(ply, class) ~= nil or ply.Horde_PS_Applied ~= nil
 end
 
 local function FixHands(ply, mdl)
@@ -327,7 +340,7 @@ local plymeta = FindMetaTable("Player")
 PS.Base_SetClassModel = PS.Base_SetClassModel or plymeta.Horde_SetClassModel
 
 function plymeta:Horde_SetClassModel(class)
-    local item = class and PS:GetEquippedItem(self, class.name)
+    local item = class and PS:GetActiveItem(self, class)
     if item then return PS:ApplyModel(self, item.model) end
 
     if self.Horde_PS_Applied then
@@ -345,10 +358,24 @@ function plymeta:Horde_SetClassModel(class)
     if PS.Base_SetClassModel then return PS.Base_SetClassModel(self, class) end
 end
 
-function PS:RefreshModel(ply, class_name)
+-- key: the class or subclass whose loadout changed (nil = always refresh).
+function PS:RefreshModel(ply, key)
     local class = ply:Horde_GetClass()
-    if not class or class.name ~= class_name or not ply:Alive() then return end
+    if not class or not ply:Alive() then return end
+    if key and self:ParentClass(key) ~= class.name then return end
     if self:ShouldApplyModel(ply, class) then ply:Horde_SetClassModel(class) end
+end
+
+-- Subclass changes don't go through Horde_SetClass, so refresh the model afterwards.
+PS.Base_SetSubclass = PS.Base_SetSubclass or plymeta.Horde_SetSubclass
+function plymeta:Horde_SetSubclass(...)
+    local ok = PS.Base_SetSubclass(self, ...)
+    if ok then
+        timer.Simple(0, function()
+            if IsValid(self) then PS:RefreshModel(self) end
+        end)
+    end
+    return ok
 end
 
 ---------------------------------------------------------------------------
@@ -389,7 +416,7 @@ function PS:Buy(ply, id)
 
     -- First model bought for the player's current class gets equipped automatically.
     local class = ply:Horde_GetClass()
-    if class and not d.equipped[class.name] and self:CanClassUse(item, class.name) then
+    if class and not self:GetActiveItem(ply, class) and self:CanClassUse(item, class.name) then
         self:Equip(ply, class.name, id)
     end
 
@@ -400,20 +427,20 @@ end
 function PS:Equip(ply, class_name, id)
     local d = self:Data(ply)
     if not d.loaded then return false, "err.not_loaded" end
-    if not (HORDE.classes and HORDE.classes[class_name]) then return false, "err.unknown_class" end
+    if not self:IsLoadoutKey(class_name) then return false, "err.unknown_class" end
     local sid = SteamKey(ply)
 
     if id == nil or id == "" then
         d.equipped[class_name] = nil
         DB.Query(DB.Prepare("DELETE FROM horde_ps_equipped WHERE steamid = ? AND class_name = ?;", sid, class_name))
         self:RefreshModel(ply, class_name)
-        return true, "ok.default_model", { self:ClassDisplayName(class_name) }
+        return true, "ok.default_model", { self:ClassNameArg(class_name) }
     end
 
     local item = self.Catalog[id]
     if not item or not d.owned[id] then return false, "err.not_owned" end
     if not self:CanClassUse(item, class_name) then
-        return false, "err.class_cannot_wear", { item.name, self:ClassDisplayName(class_name) }
+        return false, "err.class_cannot_wear", { item.name, self:ClassNameArg(class_name) }
     end
 
     d.equipped[class_name] = id
@@ -422,7 +449,7 @@ function PS:Equip(ply, class_name, id)
         ON CONFLICT(steamid, class_name) DO UPDATE SET item_id = excluded.item_id;
     ]], sid, class_name, id))
     self:RefreshModel(ply, class_name)
-    return true, "ok.equipped", { item.name, self:ClassDisplayName(class_name) }
+    return true, "ok.equipped", { item.name, self:ClassNameArg(class_name) }
 end
 
 ---------------------------------------------------------------------------
@@ -433,7 +460,7 @@ local function CleanClasses(list)
     if not istable(list) then return {} end
     local out, seen = {}, {}
     for _, name in ipairs(list) do
-        if isstring(name) and HORDE.classes[name] and not seen[name] then
+        if PS:IsLoadoutKey(name) and not seen[name] then
             seen[name] = true
             out[#out + 1] = name
         end
@@ -705,9 +732,7 @@ end
 
 concommand.Add("horde_pointshop", function(ply) PS:Open(ply) end)
 
-hook.Add("ShowSpare2", "Horde_PS_OpenF4", function(ply)
-    if C.OpenWithF4 then PS:Open(ply) end
-end)
+hook.Remove("ShowSpare2", "Horde_PS_OpenF4")
 
 hook.Add("PlayerSay", "Horde_PS_ChatCommand", function(ply, text)
     local cmd = string.lower(string.Trim(text))
