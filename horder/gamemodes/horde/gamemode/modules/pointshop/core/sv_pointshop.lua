@@ -263,6 +263,7 @@ function PS:SendAdminData(ply, kind, tbl)
 end
 
 function PS:SyncAll(ply)
+    if self.SendConfig then self:SendConfig(ply) end
     self:SendCatalog(ply)
     self:SendDaily(ply)
     self:SyncPlayer(ply)
@@ -388,7 +389,7 @@ function PS:Buy(ply, id)
     local item = self.Catalog[id]
     if not item or not item.enabled then return false, "err.not_for_sale" end
     if d.owned[id] then return false, "err.already_own", { item.name } end
-    if #self:GetInventory(ply) >= C.InventorySlots then return false, "err.inventory_full" end
+    if #self:GetInventory(ply) >= self:SlotCount() then return false, "err.inventory_full" end
 
     local price = self:GetPrice(id)
     if d.skulls < price then
@@ -664,6 +665,7 @@ local function Throttle(ply, key, delay)
     last_msg[ply][key] = now
     return false
 end
+PS.Throttle = Throttle
 
 net.Receive("Horde_PS_Request", function(_, ply)
     if not IsValid(ply) or Throttle(ply, "request", 1) then return end

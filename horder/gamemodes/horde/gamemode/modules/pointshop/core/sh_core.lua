@@ -7,6 +7,7 @@ PS.CatalogOrder = PS.CatalogOrder or {}
 PS.MAX_PRICE      = 10000000
 PS.MAX_NAME_LEN   = 48
 PS.MAX_MODEL_LEN  = 160
+PS.MAX_SLOTS      = 256
 
 if SERVER then
     for _, name in ipairs({
@@ -23,6 +24,10 @@ if SERVER then
         "Horde_PS_Notify",
         "Horde_PS_Admin",
         "Horde_PS_AdminData",
+        "Horde_PS_Config",
+        "Horde_PS_Sell",
+        "Horde_PS_Spin",
+        "Horde_PS_SpinResult",
     }) do
         util.AddNetworkString(name)
     end
@@ -144,6 +149,20 @@ function PS:DailyPrice(price, discount)
     return math.max(0, math.floor(price * (100 - discount) / 100))
 end
 
+-- Backpack size, always within 1 .. PS.MAX_SLOTS.
+function PS:SlotCount()
+    return math.Clamp(math.floor(tonumber(C.InventorySlots) or 64), 1, self.MAX_SLOTS)
+end
+
+-- Refund for selling an owned skin: C.SellPercent of what it costs in the store right now
+-- (daily discounts included, so a discounted skin can never be sold for a profit).
+function PS:SellPrice(id)
+    local price = self:GetPrice(id)
+    if not price then return 0 end
+    local pct = math.Clamp(math.floor(tonumber(C.SellPercent) or 0), 0, 100)
+    return math.max(0, math.floor(price * pct / 100))
+end
+
 function PS:FormatNumber(n)
     local s = tostring(math.floor(tonumber(n) or 0))
     local neg = s:sub(1, 1) == "-"
@@ -197,6 +216,95 @@ function RNG:Pick(list)
     if #list == 0 then return nil, nil end
     local i = self:Range(1, #list)
     return list[i], i
+end
+
+---------------------------------------------------------------------------
+-- Casino (slot machine) rules, shared so the CASINO tab shows exactly what the
+-- server pays. The server rolls the reels; clients only animate the result.
+---------------------------------------------------------------------------
+
+function PS:CasinoSymbols()
+    local list = {}
+    for _, s in ipairs(C.CasinoSymbols or {}) do
+        if isstring(s.id) and (tonumber(s.weight) or 0) > 0 then list[#list + 1] = s end
+    end
+    return list
+end
+
+function PS:CasinoSymbol(id)
+    for _, s in ipairs(C.CasinoSymbols or {}) do
+        if s.id == id then return s end
+    end
+end
+
+-- reels: three symbol ids. Returns the payout multiplier and the combination key
+-- ("three:<id>", "special2", "special1") or nil for a loss.
+function PS:CasinoEvaluate(reels)
+    local a, b, c = reels[1], reels[2], reels[3]
+    if a == b and b == c then
+        local s = self:CasinoSymbol(a)
+        if s then return tonumber(s.pay) or 0, "three:" .. a end
+    end
+    local special = C.CasinoSpecial
+    local n = 0
+    for i = 1, 3 do if reels[i] == special then n = n + 1 end end
+    if n == 2 and (tonumber(C.CasinoSpecialTwo) or 0) > 0 then return tonumber(C.CasinoSpecialTwo), "special2" end
+    if n == 1 and (tonumber(C.CasinoSpecialOne) or 0) > 0 then return tonumber(C.CasinoSpecialOne), "special1" end
+    return 0, nil
+end
+
+-- Every winning combination with its multiplier and probability (highest payout first),
+-- plus the overall return-to-player (0..1) and hit rate.
+function PS:CasinoPaytable()
+    local syms = self:CasinoSymbols()
+    local total = 0
+    for _, s in ipairs(syms) do total = total + s.weight end
+    local combos, by_key = {}, {}
+    local rtp, hit = 0, 0
+    if total <= 0 then return combos, 0, 0 end
+    for _, a in ipairs(syms) do
+        for _, b in ipairs(syms) do
+            for _, c in ipairs(syms) do
+                local p = (a.weight / total) * (b.weight / total) * (c.weight / total)
+                local mult, key = self:CasinoEvaluate({ a.id, b.id, c.id })
+                if key and mult > 0 then
+                    rtp = rtp + p * mult
+                    hit = hit + p
+                    local e = by_key[key]
+                    if not e then
+                        e = { key = key, mult = mult, p = 0, symbol = key:match("^three:(.+)$") }
+                        by_key[key] = e
+                        combos[#combos + 1] = e
+                    end
+                    e.p = e.p + p
+                end
+            end
+        end
+    end
+    table.sort(combos, function(x, y)
+        if x.mult == y.mult then return x.key < y.key end
+        return x.mult > y.mult
+    end)
+    return combos, rtp, hit
+end
+
+-- Quick bet buttons inside the current min / max limits.
+function PS:CasinoBets()
+    local lo, hi = math.max(1, math.floor(tonumber(C.CasinoMinBet) or 1)), math.floor(tonumber(C.CasinoMaxBet) or 0)
+    local list, seen = {}, {}
+    for _, v in ipairs(C.CasinoBets or {}) do
+        v = math.floor(tonumber(v) or 0)
+        if v >= lo and v <= hi and not seen[v] then
+            seen[v] = true
+            list[#list + 1] = v
+        end
+    end
+    if #list == 0 and hi >= lo then
+        list[1] = lo
+        if hi > lo then list[2] = hi end
+    end
+    table.sort(list)
+    return list
 end
 
 ---------------------------------------------------------------------------

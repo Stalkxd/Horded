@@ -39,9 +39,22 @@ C.DefaultLanguage   = "auto"
 -- Skulls every new player starts with.
 C.StartingSkulls    = 1000
 
--- Inventory size (playermodel slots) and how many slots are shown per page.
-C.InventorySlots    = 64
+-- Backpack size (playermodel slots, at most 256) and how many slots are shown per page.
+-- The slot count can also be changed in ADMIN > ECONOMY.
+C.InventorySlots    = 256
 C.SlotsPerPage      = 32
+
+-- Playtime reward: every PlaytimeInterval minutes on the server a player gets PlaytimeAmount Skulls.
+-- Players who press no keys for PlaytimeAFKTime seconds stop earning (0 = never counts as AFK).
+-- All of these can also be changed in ADMIN > ECONOMY.
+C.PlaytimeEnabled   = true
+C.PlaytimeAmount    = 25
+C.PlaytimeInterval  = 10
+C.PlaytimeAFKTime   = 300
+
+-- Selling skins: players get this percent of the skin's current store price back (0 = selling off).
+-- Also in ADMIN > ECONOMY.
+C.SellPercent       = 15
 
 -- Daily store: how many random skins are featured each day and their discount range (percent).
 C.DailyCount        = 3
@@ -69,6 +82,30 @@ C.ChatCommands      = { "!ps", "!pointshop", "!store", "/ps", "/pointshop" }
 C.IsAdmin = function(ply)
     return IsValid(ply) and ply:IsAdmin()
 end
+
+-- Casino (slot machine). Enabled state and bet limits can also be changed in ADMIN > ECONOMY.
+-- Each spin stops three reels; every reel picks a symbol by weight (higher = more common).
+--   Three of a kind pays bet x pay.
+--   Otherwise CasinoSpecial on two reels pays bet x CasinoSpecialTwo, on one reel bet x CasinoSpecialOne.
+-- With the values below the machine pays back about 93% of all bets over time (house edge ~7%);
+-- the CASINO tab shows the exact odds of every combination. icon = material path.
+C.CasinoEnabled     = true
+C.CasinoMinBet      = 10
+C.CasinoMaxBet      = 1000
+C.CasinoBets        = { 10, 25, 50, 100, 250, 500, 1000 }  -- quick bet buttons (outside min/max are hidden)
+C.CasinoAnnounce    = 100   -- wins of at least bet x this are announced to everyone (0 = never)
+C.CasinoSpecial     = "skull"
+C.CasinoSpecialTwo  = 10
+C.CasinoSpecialOne  = 1
+C.CasinoSymbols = {
+    { id = "ammo",     icon = "ammo.png",     name = "Ammo",     name_ru = "Патроны",  weight = 30, pay = 8    },
+    { id = "survivor", icon = "survivor.png", name = "Survivor", name_ru = "Выживший", weight = 22, pay = 15   },
+    { id = "medic",    icon = "medic.png",    name = "Medic",    name_ru = "Медик",    weight = 17, pay = 25   },
+    { id = "heavy",    icon = "heavy.png",    name = "Heavy",    name_ru = "Тяжёлый",  weight = 12, pay = 50   },
+    { id = "ghost",    icon = "ghost.png",    name = "Ghost",    name_ru = "Призрак",  weight = 9,  pay = 100  },
+    { id = "star",     icon = "star.png",     name = "Star",     name_ru = "Звезда",   weight = 6,  pay = 250  },
+    { id = "skull",    icon = "skull.png",    name = "Skull",    name_ru = "Череп",    weight = 4,  pay = 1000 },
+}
 
 -- Item rarities (TF2-like quality colours, kept in the black / white / red palette).
 C.Rarities = {
