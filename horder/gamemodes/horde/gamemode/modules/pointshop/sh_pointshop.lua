@@ -13,8 +13,11 @@ local FILES = {
     { "sh_core.lua",      "sh" },
     { "sv_pointshop.lua", "sv" },
     { "sv_contracts.lua", "sv" },
+    { "sv_economy.lua",   "sv" },
+    { "sv_casino.lua",    "sv" },
     { "cl_pointshop.lua", "cl" },
     { "cl_skin.lua",      "cl" },
+    { "cl_casino.lua",    "cl" },
     { "cl_menu.lua",      "cl" },
     { "cl_tracker.lua",   "cl" },
 }

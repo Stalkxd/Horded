@@ -418,7 +418,8 @@ local function BuildInventory(root)
     local W, H = root:GetSize()
     local pad = S(16)
     local per_page = math.max(1, C.SlotsPerPage)
-    local pages = math.max(1, math.ceil(C.InventorySlots / per_page))
+    local slots = PS:SlotCount()
+    local pages = math.max(1, math.ceil(slots / per_page))
     local cols = 8
     local rows = math.ceil(per_page / cols)
 
@@ -427,7 +428,7 @@ local function BuildInventory(root)
     left:SetPos(pad, pad)
     left:SetSize(lw, H - pad * 2)
     left.Paint = function(_, w)
-        UI.Heading(L("backpack"), 0, 0, w, L("slots_used", #PS.Player.inventory, C.InventorySlots))
+        UI.Heading(L("backpack"), 0, 0, w, L("slots_used", #PS.Player.inventory, slots))
     end
 
     local sort = UI.Combo(left)
@@ -443,6 +444,16 @@ local function BuildInventory(root)
     grid:SetPos(0, S(44))
     grid:SetSize(lw, left:GetTall() - S(44) - S(52))
     grid.Paint = nil
+    -- Mouse wheel flips pages (the slots forward their wheel events here).
+    grid.OnMouseWheeled = function(_, delta)
+        local page = math.Clamp(ST.inv_page - delta, 1, pages)
+        if page ~= ST.inv_page then
+            ST.inv_page = page
+            PS:Sound("ui/buttonrollover.wav")
+            root:RebuildGrid()
+        end
+        return true
+    end
 
     local nav = vgui.Create("DPanel", left)
     nav:SetPos(0, left:GetTall() - S(42))
@@ -484,7 +495,7 @@ local function BuildInventory(root)
         end
         details.PaintOver = nil
 
-        local ph = math.floor(dh * 0.5)
+        local ph = math.floor(dh * 0.45)
         local pv = vgui.Create("HordePS_Preview", details)
         pv:SetPos(S(10), S(10))
         pv:SetSize(dw - S(20), ph)
@@ -492,7 +503,7 @@ local function BuildInventory(root)
 
         local info = vgui.Create("DPanel", details)
         info:SetPos(S(14), ph + S(22))
-        info:SetSize(dw - S(28), dh - ph - S(22) - S(140))
+        info:SetSize(dw - S(28), dh - ph - S(22) - S(184))
         info.Paint = function(_, w)
             local r = PS:GetRarity(item.rarity)
             UI.Text(Truncate(item.name, "HordePS_Big", w), "HordePS_Big", 0, 0, r.color)
@@ -510,12 +521,12 @@ local function BuildInventory(root)
             PS:RequestEquip(cur, item.id)
         end)
         b1:SetSize(bw, S(38))
-        b1:SetPos(S(14), dh - S(136))
+        b1:SetPos(S(14), dh - S(180))
         b1:SetEnabled(cur ~= nil and PS:CanClassUse(item, cur) and PS.Player.equipped[cur] ~= item.id)
 
         local b2 = UI.Button(details, L("equip_on_class"), "dark", function() EquipMenu(item) end)
         b2:SetSize(bw, S(38))
-        b2:SetPos(S(14), dh - S(92))
+        b2:SetPos(S(14), dh - S(136))
 
         local b3 = UI.Button(details, L("unequip_all"), "ghost", function()
             -- One request at a time: the server rate-limits equip requests.
@@ -530,8 +541,23 @@ local function BuildInventory(root)
             end
         end)
         b3:SetSize(bw, S(34))
-        b3:SetPos(S(14), dh - S(48))
+        b3:SetPos(S(14), dh - S(92))
         b3:SetEnabled(#PS:EquippedOn(item.id) > 0)
+
+        local refund = PS:SellPrice(item.id)
+        local selling = (tonumber(C.SellPercent) or 0) > 0
+        local b4 = UI.Button(details, selling and L("sell", PS:FormatNumber(refund) .. " " .. PS:Currency()) or L("sell_off"), "ghost", function()
+            local body = L("sell_body", item.name, PS:FormatNumber(refund))
+            local on = PS:EquippedOn(item.id)
+            if #on > 0 then body = body .. "\n" .. L("sell_equipped", table.concat(on, ", ")) end
+            UI.Confirm(L("sell_title"), body, L("sell_short"), function()
+                ST.inv_selected = nil
+                PS:RequestSell(item.id)
+            end)
+        end)
+        b4:SetSize(bw, S(34))
+        b4:SetPos(S(14), dh - S(48))
+        b4:SetEnabled(selling)
     end
 
     function root:RebuildGrid()
@@ -545,12 +571,13 @@ local function BuildInventory(root)
 
         for i = 1, per_page do
             local index = (ST.inv_page - 1) * per_page + i
-            if index > C.InventorySlots then break end
+            if index > slots then break end
             local item = items[index]
             local col, r = (i - 1) % cols, math.floor((i - 1) / cols)
             local s = vgui.Create("HordePS_Slot", grid)
             s:SetPos(ox + col * (size + gap), r * (size + gap))
             s:SetSize(size, size)
+            s.OnMouseWheeled = function(_, delta) return grid:OnMouseWheeled(delta) end
             if item then
                 local on = PS:EquippedOn(item.id)
                 s:SetItem(item, {
@@ -604,7 +631,7 @@ local function BuyButton(parent, item)
     local b = UI.Button(parent, L("buy"), "red", function() ConfirmBuy(item) end)
     b.Think = function(s)
         local owned = PS:Owns(item.id)
-        local full = #PS.Player.inventory >= C.InventorySlots
+        local full = #PS.Player.inventory >= PS:SlotCount()
         s:SetEnabled(not owned and not full)
         s:SetLabel(owned and L("owned") or (full and L("inv_full") or L("buy")))
     end
@@ -1749,6 +1776,106 @@ local function BuildAdminContracts(root)
 end
 
 ---------------------------------------------------------------------------
+-- ADMIN: ECONOMY (playtime reward, backpack size, selling, casino)
+---------------------------------------------------------------------------
+
+local function BuildAdminEconomy(root)
+    local W = root:GetWide()
+    local pad = S(16)
+    local cw = math.floor((W - pad * 4) / 3)
+    local ch = S(330)
+    local fw = cw - S(32)
+    local values = {}
+
+    local function Section(x, title, lines)
+        local card = Card(root)
+        card:SetPos(x, pad)
+        card:SetSize(cw, ch)
+        local base = card.Paint
+        card.Paint = function(s, w, h)
+            base(s, w, h)
+            UI.Heading(title, S(16), S(14), w - S(32))
+            for _, line in ipairs(lines) do
+                UI.Text(isfunction(line[1]) and line[1]() or line[1], line[3] or "HordePS_Small", S(16), line[2], line[4] or COL.muted)
+            end
+        end
+        return card
+    end
+
+    local function Number(card, key, y)
+        local e = UI.Entry(card, tostring(C[key] or 0))
+        e:SetNumeric(true)
+        e:SetPos(S(16), y)
+        e:SetSize(fw, S(30))
+        e:SetValue(tostring(C[key] or 0))
+        values[key] = function() return tonumber(e:GetValue()) end
+        return e
+    end
+
+    local function Toggle(card, key, label, y)
+        local value = C[key] and true or false
+        local c = UI.Check(card, label, value, function(v) value = v end)
+        c:SetPos(S(16), y)
+        c:SetSize(fw, S(30))
+        values[key] = function() return value end
+    end
+
+    -- Playtime
+    local amount, interval
+    local pt = Section(pad, L("eco_playtime"), {
+        { PS:Upper(L("eco_pt_amount")), S(100) },
+        { PS:Upper(L("eco_pt_interval")), S(160) },
+        { PS:Upper(L("eco_pt_afk")), S(220) },
+        { function()
+            local a, m = tonumber(amount:GetValue()) or 0, math.max(1, tonumber(interval:GetValue()) or 1)
+            return L("eco_pt_preview", PS:FormatNumber(math.floor(a * 60 / m)))
+        end, S(286), "HordePS_Body", COL.text },
+    })
+    Toggle(pt, "PlaytimeEnabled", L("eco_pt_enabled"), S(56))
+    amount = Number(pt, "PlaytimeAmount", S(118))
+    interval = Number(pt, "PlaytimeInterval", S(178))
+    Number(pt, "PlaytimeAFKTime", S(238))
+
+    -- Backpack & selling
+    local sell
+    local bp = Section(pad * 2 + cw, L("eco_backpack"), {
+        { PS:Upper(L("eco_slots", PS.MAX_SLOTS)), S(58) },
+        { PS:Upper(L("eco_sell")), S(118) },
+        { function()
+            local pct = math.Clamp(tonumber(sell:GetValue()) or 0, 0, 100)
+            return L("eco_sell_example", PS:FormatNumber(math.floor(1000 * pct / 100)))
+        end, S(184), "HordePS_Body", COL.text },
+        { L("eco_slots_note"), S(220), "HordePS_Small", COL.dim },
+    })
+    Number(bp, "InventorySlots", S(76))
+    sell = Number(bp, "SellPercent", S(136))
+
+    -- Casino
+    local _, rtp, hit = PS:CasinoPaytable()
+    local cs = Section(pad * 3 + cw * 2, L("eco_casino"), {
+        { PS:Upper(L("eco_min_bet")), S(100) },
+        { PS:Upper(L("eco_max_bet")), S(160) },
+        { L("casino_rtp", string.format("%.1f", rtp * 100)), S(224), "HordePS_Small", COL.text },
+        { L("casino_hit", string.format("%.1f", hit * 100)), S(242), "HordePS_Small", COL.text },
+        { L("eco_casino_info"), S(272), "HordePS_Small", COL.dim },
+        { "sh_config.lua · C.CasinoSymbols", S(290), "HordePS_Small", COL.dim },
+    })
+    Toggle(cs, "CasinoEnabled", L("eco_casino_enabled"), S(56))
+    Number(cs, "CasinoMinBet", S(118))
+    Number(cs, "CasinoMaxBet", S(178))
+
+    local save = UI.Button(root, L("eco_save"), "red", function()
+        local data = {}
+        for key, get in pairs(values) do data[key] = get() end
+        PS:RequestAdmin("economy_save", data)
+    end)
+    save:SetPos(pad, pad * 2 + ch)
+    save:SetSize(S(320), S(40))
+
+    root.Refresh = function() end
+end
+
+---------------------------------------------------------------------------
 -- ADMIN (sub-tabs)
 ---------------------------------------------------------------------------
 
@@ -1756,6 +1883,7 @@ local ADMIN_SUBS = {
     { id = "items",     label = "admin_items",     build = BuildAdminItems },
     { id = "bank",      label = "admin_bank",      build = BuildAdminBank },
     { id = "contracts", label = "admin_contracts", build = BuildAdminContracts },
+    { id = "economy",   label = "admin_economy",   build = BuildAdminEconomy },
 }
 
 local function BuildAdmin(root)
@@ -1829,11 +1957,13 @@ local TABS = {
     { id = "inventory", label = "tab.inventory", build = BuildInventory },
     { id = "store",     label = "tab.store",     build = BuildStore },
     { id = "contracts", label = "tab.contracts", build = BuildContracts },
+    { id = "casino",    label = "tab.casino",    build = function(root) PS.BuildCasino(root) end, casino = true },
     { id = "settings",  label = "tab.settings",  build = BuildSettings },
     { id = "admin",     label = "tab.admin",     build = BuildAdmin, admin = true },
 }
 
 local function TabVisible(tab)
+    if tab.casino and not C.CasinoEnabled then return false end
     return not tab.admin or PS.Player.admin
 end
 
@@ -1869,7 +1999,7 @@ function PS:OpenMenu()
         -- Balance
         local bx = pw - S(70)
         UI.Text(PS:Upper(PS:Currency()), "HordePS_Small", bx, headH / 2 + S(12), COL.muted, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
-        UI.Price(PS.Player.skulls, "HordePS_Price", bx, headH / 2 - S(8), COL.white, TEXT_ALIGN_RIGHT)
+        UI.Price(PS:ShownSkulls(), "HordePS_Price", bx, headH / 2 - S(8), COL.white, TEXT_ALIGN_RIGHT)
 
         -- Tab bar background
         UI.GradV(0, headH, pw, tabH, Color(30, 30, 30), Color(24, 24, 24))
@@ -2021,6 +2151,12 @@ function PS:OpenMenu()
             self.AdminState = PS.Player.admin
             self:BuildTabs()
             if ST.tab == "admin" and not PS.Player.admin then self:SetTab("loadout") end
+        end
+        -- Economy settings change slot counts, casino limits and which tabs exist.
+        if what == "config" then
+            self:BuildTabs()
+            self:SetTab(ST.tab, true)
+            return
         end
         if IsValid(self.Page) and self.Page.Refresh then self.Page:Refresh(what) end
     end

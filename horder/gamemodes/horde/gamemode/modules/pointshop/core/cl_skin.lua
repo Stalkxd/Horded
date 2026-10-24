@@ -507,6 +507,68 @@ end
 vgui.Register("HordePS_Slot", SLOT, "DButton")
 
 ---------------------------------------------------------------------------
+-- Studio backdrop for model previews.
+-- The stock gradient textures are tiny 8-bit images: stretched over a tall panel and
+-- stacked on top of each other they showed visible steps and a hard edge where the
+-- floor shadow began. This draws everything from thin strips and soft ellipses whose
+-- colours follow smooth curves, so there are no seams.
+---------------------------------------------------------------------------
+
+local function Smooth(t)
+    t = math.Clamp(t, 0, 1)
+    return t * t * (3 - 2 * t)
+end
+
+local ellipse_cache = {}
+local function Ellipse(cx, cy, rx, ry)
+    local key = math.floor(cx) .. ":" .. math.floor(cy) .. ":" .. math.floor(rx) .. ":" .. math.floor(ry)
+    local poly = ellipse_cache[key]
+    if not poly then
+        poly = {}
+        for i = 0, 39 do
+            local a = math.rad(i * 9)
+            poly[#poly + 1] = { x = cx + math.cos(a) * rx, y = cy + math.sin(a) * ry }
+        end
+        if table.Count(ellipse_cache) > 512 then ellipse_cache = {} end
+        ellipse_cache[key] = poly
+    end
+    surface.DrawPoly(poly)
+end
+
+-- Many faint layers that shrink towards the centre add up to a soft, round falloff.
+local function SoftEllipse(cx, cy, rx, ry, col, layers)
+    draw.NoTexture()
+    for i = layers, 1, -1 do
+        local f = i / layers
+        surface.SetDrawColor(col)
+        Ellipse(cx, cy, rx * f, ry * f)
+    end
+end
+
+function UI.Backdrop(w, h)
+    -- Base: lighter at the top, easing into a dark floor.
+    local strips = math.min(h, 120)
+    local step = h / strips
+    for i = 0, strips - 1 do
+        local t = (i + 0.5) / strips
+        local v = 15 + 25 * (1 - Smooth(t * 1.1))
+        surface.SetDrawColor(v, v, v + 1)
+        surface.DrawRect(0, math.floor(i * step), w, math.ceil(step) + 1)
+    end
+
+    -- Key light behind the model and a contact shadow under its feet.
+    SoftEllipse(w * 0.5, h * 0.42, w * 0.62, h * 0.55, Color(255, 255, 255, 1), 28)
+    SoftEllipse(w * 0.5, h * 0.93, w * 0.3, h * 0.05, Color(0, 0, 0, 14), 12)
+
+    -- Side vignette.
+    local vw = math.floor(w * 0.22)
+    surface.SetMaterial(MAT.grad_r)
+    surface.SetDrawColor(0, 0, 0, 110)
+    surface.DrawTexturedRect(0, 0, vw, h)
+    surface.DrawTexturedRectUV(w - vw, 0, vw, h, 1, 0, 0, 1)
+end
+
+---------------------------------------------------------------------------
 -- Rotating playermodel preview
 ---------------------------------------------------------------------------
 
@@ -585,12 +647,7 @@ function PREVIEW:LayoutEntity(ent)
 end
 
 function PREVIEW:Paint(w, h)
-    -- Neutral grey stage with a soft floor.
-    UI.GradV(0, 0, w, h, Color(52, 52, 52), Color(24, 24, 24))
-    UI.GradV(0, h * 0.62, w, h * 0.38, Color(0, 0, 0, 0), Color(0, 0, 0, 90))
-    surface.SetMaterial(MAT.center)
-    surface.SetDrawColor(255, 255, 255, 10)
-    surface.DrawTexturedRect(0, 0, w, h)
+    UI.Backdrop(w, h)
     if self.Current then BaseModelPanel.Paint(self, w, h) end
     UI.Outline(0, 0, w, h, COL.border)
 end

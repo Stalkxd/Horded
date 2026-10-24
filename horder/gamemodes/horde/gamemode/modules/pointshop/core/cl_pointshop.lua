@@ -51,6 +51,40 @@ net.Receive("Horde_PS_Daily", function()
     Changed("daily")
 end)
 
+-- Economy settings from ADMIN > ECONOMY (playtime, selling, backpack size, casino).
+net.Receive("Horde_PS_Config", function()
+    local data = PS:ReadTable()
+    if not istable(data) then return end
+    for key, value in pairs(data) do
+        if isstring(key) and (isnumber(value) or isbool(value)) then C[key] = value end
+    end
+    Changed("config")
+end)
+
+-- Casino spin: the result is shown once the reels stop, so the balance in the header
+-- keeps the winnings hidden until then (see PS:ShownSkulls).
+net.Receive("Horde_PS_SpinResult", function()
+    local reels = { net.ReadString(), net.ReadString(), net.ReadString() }
+    local bet, win = net.ReadUInt(32), net.ReadUInt(32)
+    local combo = net.ReadString()
+    PS.CasinoSpin = { reels = reels, bet = bet, win = win, combo = combo ~= "" and combo or nil, start = RealTime() }
+    PS.CasinoWaiting = nil
+    Changed("casino")
+end)
+
+-- Seconds until each reel stops (the last one reveals the result).
+PS.CasinoReelStops = { 1.0, 1.55, 2.1 }
+
+function PS:CasinoRevealed()
+    local spin = self.CasinoSpin
+    return not spin or RealTime() - spin.start >= self.CasinoReelStops[3]
+end
+
+function PS:ShownSkulls()
+    if not self:CasinoRevealed() then return math.max(0, self.Player.skulls - self.CasinoSpin.win) end
+    return self.Player.skulls
+end
+
 net.Receive("Horde_PS_Contracts", function()
     local left = net.ReadUInt(32)
     local data = PS:ReadTable() or {}
@@ -77,6 +111,7 @@ net.Receive("Horde_PS_Result", function()
     local ok, key = net.ReadBool(), net.ReadString()
     local args = ReadArgs()
     local msg = PS:L(key, unpack(args))
+    if not ok then PS.CasinoWaiting = nil end
     PS:Sound(ok and "buttons/button14.wav" or "buttons/button10.wav")
     if PS.UI and PS.UI.Toast and IsValid(PS.Menu) then
         PS.UI.Toast(msg, ok)
@@ -173,6 +208,19 @@ function PS:RequestEquip(class_name, id)
     net.Start("Horde_PS_Equip")
     net.WriteString(class_name)
     net.WriteString(id or "")
+    net.SendToServer()
+end
+
+function PS:RequestSell(id)
+    net.Start("Horde_PS_Sell")
+    net.WriteString(id)
+    net.SendToServer()
+end
+
+function PS:RequestSpin(bet)
+    PS.CasinoWaiting = RealTime()
+    net.Start("Horde_PS_Spin")
+    net.WriteUInt(bet, 32)
     net.SendToServer()
 end
 
