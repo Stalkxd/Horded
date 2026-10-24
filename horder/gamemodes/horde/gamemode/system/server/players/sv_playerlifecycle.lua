@@ -87,7 +87,6 @@ end
 
 function HORDE:GameEnd(status)
     if HORDE.game_end then return end
-    hook.Run("Horde_OnGameEnd", status)
     timer.Simple(HORDE.vote_remaining_time + 3, function ()
         map_list = HORDE:GetNextMaps()
 
