@@ -406,8 +406,7 @@ hook.Add("EntityTakeDamage", "Horde_EntityTakeDamage", function(target, dmg)
             if dmg:IsDamageType(DMG_CRUSH) then
                 dmg:SetDamage(math.min(dmg:GetDamage(), 20))
             end
-            local hundred_dmg = HORDE:IsExtendedWave()
-                and (1 + HORDE.hundred_scale_per_wave * (HORDE.current_wave - HORDE.max_max_waves)) or 1
+            local hundred_dmg = HORDE:IsExtendedWave() and (HORDE.extended_damage_multiplier or 1) or 1
             local scale = diff.DamageMult * hundred_dmg
             dmg:ScaleDamage(scale)
             if dmg:GetAttacker():GetVar("damage_scale") then
@@ -431,8 +430,7 @@ hook.Add("EntityTakeDamage", "Horde_EntityTakeDamage", function(target, dmg)
                 target:SetHealth(target:Health() - dmg:GetDamage())
                 if target:Health() <= 0 then target:Fire("selfdestruct") end
             end
-            local hundred_dmg = HORDE:IsExtendedWave()
-                and (1 + HORDE.hundred_scale_per_wave * (HORDE.current_wave - HORDE.max_max_waves)) or 1
+            local hundred_dmg = HORDE:IsExtendedWave() and (HORDE.extended_damage_multiplier or 1) or 1
             local scale = diff.DamageMult * hundred_dmg
             dmg:ScaleDamage(scale)
             if dmg:GetAttacker():GetVar("damage_scale") then
