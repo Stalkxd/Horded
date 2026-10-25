@@ -454,6 +454,7 @@ function HORDE:SpawnEnemy(enemy, pos)
     local npc_info = HORDE.NPCS[enemy.class]
     if not npc_info then
         HORDE:SendNotification("NPC " .. enemy.class .. " does not exist.", 1)
+        return
     end
 
     local spawned_enemy = ents.Create(enemy.class)
@@ -586,7 +587,10 @@ function HORDE:SpawnEnemy(enemy, pos)
     spawned_enemy:SetLagCompensated(true)
 
     if enemy.mutation and enemy.mutation ~= "" then
-        timer.Simple(0.1, function() spawned_enemy:Horde_SetMutation(enemy.mutation) end)
+        timer.Simple(0.1, function()
+            if ! IsValid(spawned_enemy) then return end
+            spawned_enemy:Horde_SetMutation(enemy.mutation)
+        end)
     else
         local mut_prob = 0
         if enemy.is_elite and enemy.is_elite == true then
@@ -622,7 +626,10 @@ function HORDE:SpawnEnemy(enemy, pos)
                 p = math.random()
                 if p <= 0.25 then
                     local mut = mutation_pool[math.random(1, #mutation_pool)]
-                    timer.Simple(0.2, function() spawned_enemy:Horde_SetMutation(mut) end)
+                    timer.Simple(0.2, function()
+                        if ! IsValid(spawned_enemy) then return end
+                        spawned_enemy:Horde_SetMutation(mut)
+                    end)
                 end
             end
         end
@@ -933,7 +940,7 @@ function HORDE:SpawnEnemies(enemies, valid_nodes)
                             else
                                 spawned_enemy = HORDE:SpawnEnemy(enemy, spawn_pos)
                                 table.insert(enemies, spawned_enemy)
-                                spawned_enemy.Horde_Forced_Spawn_Flag = name
+                                if IsValid(spawned_enemy) then spawned_enemy.Horde_Forced_Spawn_Flag = name end
                                 if count then
                                     HORDE.spawned_enemies_count[name] = count + 1
                                 else
@@ -944,7 +951,7 @@ function HORDE:SpawnEnemies(enemies, valid_nodes)
                         else
                             spawned_enemy = HORDE:SpawnEnemy(enemy, spawn_pos)
                             table.insert(enemies, spawned_enemy)
-                            spawned_enemy.Horde_Forced_Spawn_Flag = name
+                            if IsValid(spawned_enemy) then spawned_enemy.Horde_Forced_Spawn_Flag = name end
                             goto cont2
                         end
                     end

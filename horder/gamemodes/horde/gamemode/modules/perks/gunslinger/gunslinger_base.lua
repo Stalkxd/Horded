@@ -63,6 +63,7 @@ end
 PERK.Hooks.Horde_OnEnemyKilled = function(victim, killer, wpn)
     if not IsValid(victim.Horde_Has_Hunter_Mark) then return end
     if not victim.Horde_Has_Hunter_Mark:Horde_GetPerk("gunslinger_base") then return end
+    if HORDE.wave666_mode or HORDE.purism_mode or HORDE.budget_mode then return end
     local p = math.random()
     if p <= 0.5 then
         local money = ents.Create("horde_money")
