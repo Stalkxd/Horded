@@ -22,4 +22,18 @@ HORDE:RegisterDifficulty({
     EnemiesPerSpawnWaveAmount = V("EnemiesPerSpawnWaveAmount", 1),
     EnemiesPerSpawnWaveCap    = V("EnemiesPerSpawnWaveCap", 4),
 
+    -- Wave size curve (multiplies the per-wave enemy total).
+    -- Waves 1..CountEarlyEndWave use CountEarlyMult, then a linear ramp up to
+    -- CountRampEndMult by CountFinalWave - 1, and CountFinalMult from CountFinalWave on.
+    CountEarlyEndWave = V("CountEarlyEndWave", 60),
+    CountEarlyMult    = V("CountEarlyMult", 0.5),
+    CountRampEndMult  = V("CountRampEndMult", 1),
+    CountFinalWave    = V("CountFinalWave", 90),
+    CountFinalMult    = V("CountFinalMult", 2),
+
+    -- Player scaling of the wave total: the first PlayerScaleFullPlayers each add
+    -- a full share, every player after that adds PlayerScaleExtraShare.
+    PlayerScaleFullPlayers = V("PlayerScaleFullPlayers", 4),
+    PlayerScaleExtraShare  = V("PlayerScaleExtraShare", 0.5),
+
 })

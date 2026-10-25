@@ -1236,6 +1236,33 @@ function HORDE:ResolveEnemyWaveIndex()
     return ((w - 1) % HORDE.max_max_waves) + 1
 end
 
+function HORDE:GetHundredCountMult(wave)
+    local diff = HORDE._difficulties and HORDE._difficulties[HORDE.difficulty]
+    if not (HORDE.hundred_mode and istable(diff)) then return 1 end
+
+    local early_end  = tonumber(diff.CountEarlyEndWave) or 60
+    local early_mult = tonumber(diff.CountEarlyMult) or 0.5
+    local ramp_mult  = tonumber(diff.CountRampEndMult) or 1
+    local final_wave = tonumber(diff.CountFinalWave) or 90
+    local final_mult = tonumber(diff.CountFinalMult) or 2
+
+    if wave >= final_wave then return final_mult end
+    if wave <= early_end then return early_mult end
+    local t = (wave - early_end) / math.max(1, final_wave - early_end)
+    return early_mult + (ramp_mult - early_mult) * t
+end
+
+function HORDE:GetWavePlayerScale(players)
+    players = math.max(1, players or 1)
+    local diff = HORDE._difficulties and HORDE._difficulties[HORDE.difficulty]
+    if not (HORDE.hundred_mode and istable(diff)) then return players end
+
+    local full  = math.max(1, tonumber(diff.PlayerScaleFullPlayers) or 4)
+    local share = tonumber(diff.PlayerScaleExtraShare) or 0.5
+    if players <= full then return players end
+    return full + (players - full) * share
+end
+
 local function CountReadyPlayers()
     local ready, total = 0, 0
     for _, ply in pairs(player.GetAll()) do
@@ -1318,7 +1345,8 @@ function HORDE:WaveStart()
         _enemy_src = found or HORDE.enemies_normalized[9] or HORDE.enemies_normalized[HORDE.max_max_waves] or {}
     end
     horde_current_enemies_list = table.Copy(_enemy_src)
-    local player_scale = math.max(1, horde_players_count)
+    local player_scale = HORDE:GetWavePlayerScale(horde_players_count)
+    local count_mult = HORDE:GetHundredCountMult(HORDE.current_wave)
 
     if HORDE.wave666_mode then
         HORDE._hundred_mutation_bonus = 0
@@ -1331,7 +1359,7 @@ function HORDE:WaveStart()
         HORDE.total_enemies_this_wave = HORDE.wave666_kill_quota
     elseif HORDE:IsExtendedWave() then
         local over = HORDE.current_wave - HORDE.max_max_waves
-        HORDE.total_enemies_this_wave = (HORDE.total_enemies_per_wave[HORDE.max_max_waves] + 5 * over) * player_scale
+        HORDE.total_enemies_this_wave = math.max(1, math.floor((HORDE.total_enemies_per_wave[HORDE.max_max_waves] + 5 * over) * player_scale * count_mult))
         local scale_per_wave = HORDE.hundred_scale_per_wave or 0.025
         local hp_dmg_scale = math.min(1 + scale_per_wave * over, 1.5)
         HORDE.extended_health_multiplier = hp_dmg_scale
@@ -1341,7 +1369,7 @@ function HORDE:WaveStart()
         HORDE._hundred_mutation_bonus = mutation_bonus
     else
         HORDE._hundred_mutation_bonus = 0
-        HORDE.total_enemies_this_wave = HORDE.total_enemies_per_wave[HORDE.current_wave] * player_scale
+        HORDE.total_enemies_this_wave = math.max(1, math.floor(HORDE.total_enemies_per_wave[HORDE.current_wave] * player_scale * count_mult))
     end
 
     HORDE.current_mutations = {}
