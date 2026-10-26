@@ -12,8 +12,10 @@ HORDE:RegisterDifficulty({
     MaxWaves     = 100,
     ScalePerWave = 0.025,
 
-    SpawnInterval            = V("SpawnInterval", 1),
-    SpawnIntervalWaveStep    = V("SpawnIntervalWaveStep", 5),
+    -- Fixed spawn director interval. It used to start at 1s and drop by 0.075s
+    -- every 5 waves down to 0.25s, running the whole director 4x a second late game.
+    SpawnInterval            = V("SpawnInterval", 3),
+    SpawnIntervalWaveStep    = V("SpawnIntervalWaveStep", 0),
     SpawnIntervalWaveAmount  = V("SpawnIntervalWaveAmount", 0.075),
     SpawnIntervalWaveCap     = V("SpawnIntervalWaveCap", 0.25),
 
