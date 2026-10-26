@@ -653,31 +653,43 @@ function HORDE:ScanEnemies()
     return enemies
 end
 
+local function GetAlivePlayerPositions()
+    local plys, positions = {}, {}
+    for _, ply in ipairs(player.GetAll()) do
+        if ply:Alive() then
+            plys[#plys + 1] = ply
+            positions[#positions + 1] = ply:GetPos()
+        end
+    end
+    return plys, positions
+end
+
 function HORDE:RemoveDistantEnemies(enemies)
     if HORDE.found_horde_nodes then return end
+    local plys, ply_positions = GetAlivePlayerPositions()
+    local max_z = GetConVarNumber("horde_max_spawn_z_distance")
+    local max_dist_sqr = HORDE.max_spawn_distance * HORDE.max_spawn_distance
     for _, enemy in pairs(enemies) do
         local boss_properties = enemy:Horde_GetBossProperties()
-        local closest = 99999
-        local closest_z = 99999
+        local closest = math.huge
+        local closest_z = math.huge
         local closest_ply = nil
         local enemy_pos = enemy:GetPos()
 
-        for _, ply in pairs(player.GetAll()) do
-            if ply:Alive() then
-                local dist = enemy_pos:Distance(ply:GetPos())
-                local z_dist = math.abs(ply:GetPos().z - enemy_pos.z)
+        for i, ply_pos in ipairs(ply_positions) do
+            local dist = enemy_pos:DistToSqr(ply_pos)
+            local z_dist = math.abs(ply_pos.z - enemy_pos.z)
 
-                if dist < closest then
-                    closest_ply = ply
-                    closest = dist
-                end
-                if z_dist < closest_z then
-                    closest_z = z_dist
-                end
+            if dist < closest then
+                closest_ply = plys[i]
+                closest = dist
+            end
+            if z_dist < closest_z then
+                closest_z = z_dist
             end
         end
 
-        if closest > HORDE.max_spawn_distance or (closest_z > GetConVarNumber("horde_max_spawn_z_distance")) then
+        if closest > max_dist_sqr or (closest_z > max_z) then
             if boss_properties and boss_properties.is_boss and boss_properties.is_boss == true then
                 horde_boss_reposition = true
             else
@@ -688,7 +700,7 @@ function HORDE:RemoveDistantEnemies(enemies)
                 end
             end
         else
-            if enemy:IsValid() and enemy:IsNPC() then
+            if enemy:IsValid() and enemy:IsNPC() and closest_ply then
                 enemy:SetLastPosition(closest_ply:GetPos())
                 enemy:SetTarget(closest_ply)
             end
@@ -796,26 +808,33 @@ function HORDE:GetValidNodes(enemies)
         return valid_nodes
     end
 
+    local _, ply_positions = GetAlivePlayerPositions()
+    local enemy_positions = {}
+    for _, enemy in pairs(enemies) do
+        enemy_positions[#enemy_positions + 1] = enemy:GetPos()
+    end
+    local max_z = GetConVarNumber("horde_max_spawn_z_distance")
+    local min_dist_sqr = HORDE.min_spawn_distance * HORDE.min_spawn_distance
+    local max_dist_sqr = HORDE.max_spawn_distance * HORDE.max_spawn_distance
+    local radius_sqr = HORDE.spawn_radius * HORDE.spawn_radius
+
     for _, node in ipairs(active_nodes) do
         local valid = false
-        local z_dist
         local within_z = false
+        local node_pos = node["pos"]
 
-        for _, ply in pairs(player.GetAll()) do
-            if ply:Alive() then
-                local dist = node["pos"]:Distance(ply:GetPos())
-                z_dist = math.abs(node["pos"].z - ply:GetPos().z)
+        for _, ply_pos in ipairs(ply_positions) do
+            local dist = node_pos:DistToSqr(ply_pos)
 
-                if dist <= HORDE.min_spawn_distance then
-                    valid = false
-                    break
-                elseif dist < HORDE.max_spawn_distance then
-                    valid = true
-                end
+            if dist <= min_dist_sqr then
+                valid = false
+                break
+            elseif dist < max_dist_sqr then
+                valid = true
+            end
 
-                if z_dist < GetConVarNumber("horde_max_spawn_z_distance") then
-                    within_z = true
-                end
+            if math.abs(node_pos.z - ply_pos.z) < max_z then
+                within_z = true
             end
         end
 
@@ -824,22 +843,21 @@ function HORDE:GetValidNodes(enemies)
         end
 
         if not valid then
-            table.insert(invalid_nodes, node["pos"])
+            table.insert(invalid_nodes, node_pos)
             goto cont
         end
 
-        for _, enemy in pairs(enemies) do
-            local dist = node["pos"]:Distance(enemy:GetPos())
-            if dist <= HORDE.spawn_radius then
+        for _, enemy_pos in ipairs(enemy_positions) do
+            if node_pos:DistToSqr(enemy_pos) <= radius_sqr then
                 valid = false
                 break
             end
         end
 
         if valid then
-            table.insert(valid_nodes, node["pos"])
+            table.insert(valid_nodes, node_pos)
         else
-            table.insert(invalid_nodes, node["pos"])
+            table.insert(invalid_nodes, node_pos)
         end
 
         ::cont::
@@ -851,13 +869,15 @@ function HORDE:GetValidNodes(enemies)
     end
 
     if #valid_nodes <= 0 and #invalid_nodes > 0 then
-        local sorted = {}
-        for _, pos in ipairs(invalid_nodes) do table.insert(sorted, pos) end
-        table.sort(sorted, function(a, b)
-            local _, da = NearestAlivePlayer(a)
-            local _, db = NearestAlivePlayer(b)
-            return (da or 0) > (db or 0)
-        end)
+        local sorted, nearest = {}, {}
+        for _, pos in ipairs(invalid_nodes) do
+            if nearest[pos] == nil then
+                local _, d = NearestAlivePlayer(pos)
+                nearest[pos] = d or 0
+                table.insert(sorted, pos)
+            end
+        end
+        table.sort(sorted, function(a, b) return nearest[a] > nearest[b] end)
         local forced = math.min(#sorted, HORDE.forced_spawn_nodes or 3)
         for i = 1, forced do
             table.insert(valid_nodes, sorted[i])
