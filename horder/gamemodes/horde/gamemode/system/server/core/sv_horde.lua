@@ -905,6 +905,45 @@ function HORDE:GetEnemiesPerSpawn()
     return math.max(1, 1 + extra)
 end
 
+local SPAWN_HULL_MINS = Vector(-16, -16, 0)
+local SPAWN_HULL_MAXS = Vector(16, 16, 72)
+local SPAWN_RING_STEP = 40
+local SPAWN_TRIES = 4
+
+-- Enemies in the same batch used to land within 14 units of each other on one
+-- node, spawning NPCs inside each other. Spread the batch out in rings around
+-- the node and only spawn where the NPC hull is free.
+local function FindFreeBatchSpawnPos(pos, index)
+    local origin = pos + Vector(0, 0, HORDE.enemy_spawn_z)
+    local tr_data = { mins = SPAWN_HULL_MINS, maxs = SPAWN_HULL_MAXS, mask = MASK_NPCSOLID }
+    for try = 1, SPAWN_TRIES do
+        local target
+        if index == 1 and try == 1 then
+            target = origin
+        else
+            local ring = math.ceil(index / 6) + math.floor((try - 1) / 2)
+            local ang = math.Rand(0, math.pi * 2)
+            target = origin + Vector(math.cos(ang), math.sin(ang), 0) * (SPAWN_RING_STEP * ring)
+        end
+        local blocked = false
+        if target ~= origin then
+            local wall = util.TraceLine({ start = origin + Vector(0, 0, 36), endpos = target + Vector(0, 0, 36), mask = MASK_SOLID_BRUSHONLY })
+            local floor = util.TraceLine({ start = target, endpos = target - Vector(0, 0, 64), mask = MASK_SOLID_BRUSHONLY })
+            blocked = wall.Hit or not floor.Hit
+        end
+        if not blocked then
+            tr_data.start = target
+            tr_data.endpos = target
+            local tr = util.TraceHull(tr_data)
+            if not tr.Hit and not tr.StartSolid then return target end
+            -- The node itself was always spawnable before; only refuse it when
+            -- something other than the world (another NPC, a player) stands there.
+            if target == origin and tr.HitWorld and not IsValid(tr.Entity) then return target end
+        end
+    end
+    return nil
+end
+
 function HORDE:SpawnEnemies(enemies, valid_nodes)
     local add_pack = HORDE.difficulty_additional_pack[HORDE.difficulty] or 0
     local min_base = HORDE.min_base_enemy_spawns_per_think or 4
@@ -943,7 +982,8 @@ function HORDE:SpawnEnemies(enemies, valid_nodes)
             local p_cum = 0
             local spawned_enemy
             local renormalize = nil
-            local spawn_pos = pos + Vector(math.Rand(-14, 14), math.Rand(-14, 14), HORDE.enemy_spawn_z)
+            local spawn_pos = FindFreeBatchSpawnPos(pos, _batch)
+            if not spawn_pos then break end
 
             for name, orders in pairs(horde_force_spawn_enemies) do
                 for idx, order in pairs(orders) do
