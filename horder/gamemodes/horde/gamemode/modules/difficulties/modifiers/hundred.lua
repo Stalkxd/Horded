@@ -19,6 +19,9 @@ HORDE:RegisterDifficulty({
     SpawnIntervalWaveAmount  = V("SpawnIntervalWaveAmount", 0.075),
     SpawnIntervalWaveCap     = V("SpawnIntervalWaveCap", 0.25),
 
+    -- Hard limit on enemies alive at once (base 20 + 5 per player, capped here).
+    MaxEnemiesAliveCap        = V("MaxEnemiesAliveCap", 35),
+
     AdditionalEnemiesPerSpawn = V("AdditionalEnemiesPerSpawn", 0),
     EnemiesPerSpawnWaveStep   = V("EnemiesPerSpawnWaveStep", 10),
     EnemiesPerSpawnWaveAmount = V("EnemiesPerSpawnWaveAmount", 1),
