@@ -83,7 +83,14 @@ function ENT:Init()
 	self.model:Spawn()
 	self.model:SetParent(self, attach_id)
 	self.model:SetModelScale(1.5)
-	timer.Create("Equip", 0.5, 0, function() self.Weapon_MaxDistance = 80 end)
+	-- One timer per berserker, removed with it. The shared "Equip" name made
+	-- every berserker replace the last one's timer, which then kept running
+	-- forever against a removed entity.
+	local equip_timer = "Horde_Berserker_Equip_" .. self:EntIndex()
+	timer.Create(equip_timer, 0.5, 0, function()
+		if not IsValid(self) then timer.Remove(equip_timer) return end
+		self.Weapon_MaxDistance = 80
+	end)
 
 	self:EmitSound("npc/combine_gunship/see_enemy.wav", 3000, 100, 2, CHAN_STATIC)
 end

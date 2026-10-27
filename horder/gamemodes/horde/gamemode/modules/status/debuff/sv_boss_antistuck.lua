@@ -126,8 +126,12 @@ local function CountBlockingCrowd(boss)
     return n
 end
 
+-- Bosses are only spawned through HORDE:SpawnEnemy, so walking the wave enemy
+-- list finds them without scanning every entity on the map each second.
 timer.Create("Horde_BossAntiStuck", CHECK_INTERVAL, 0, function()
-    for _, ent in ipairs(ents.GetAll()) do
+    if not HORDE.spawned_enemies then return end
+    for idx in pairs(HORDE.spawned_enemies) do
+        local ent = Entity(idx)
         if not IsBoss(ent) then continue end
         if ent:Health() <= 0 then continue end
 

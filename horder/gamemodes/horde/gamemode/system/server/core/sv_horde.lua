@@ -669,7 +669,10 @@ function HORDE:RemoveDistantEnemies(enemies)
     local plys, ply_positions = GetAlivePlayerPositions()
     local max_z = GetConVarNumber("horde_max_spawn_z_distance")
     local max_dist_sqr = HORDE.max_spawn_distance * HORDE.max_spawn_distance
-    for _, enemy in pairs(enemies) do
+    -- Removing from the list while walking it skipped the enemy after each
+    -- removed one, so collect removals and compact the list afterwards.
+    local removed = {}
+    for _, enemy in ipairs(enemies) do
         local boss_properties = enemy:Horde_GetBossProperties()
         local closest = math.huge
         local closest_z = math.huge
@@ -693,7 +696,7 @@ function HORDE:RemoveDistantEnemies(enemies)
             if boss_properties and boss_properties.is_boss and boss_properties.is_boss == true then
                 horde_boss_reposition = true
             else
-                table.RemoveByValue(enemies, enemy)
+                removed[enemy] = true
                 if enemy:IsValid() then
                     enemy:Horde_SetMostRecentAttacker(nil)
                     enemy:Remove()
@@ -703,6 +706,18 @@ function HORDE:RemoveDistantEnemies(enemies)
             if enemy:IsValid() and enemy:IsNPC() and closest_ply then
                 enemy:SetLastPosition(closest_ply:GetPos())
                 enemy:SetTarget(closest_ply)
+            end
+        end
+    end
+
+    if next(removed) then
+        local j = 0
+        for i = 1, #enemies do
+            local enemy = enemies[i]
+            enemies[i] = nil
+            if not removed[enemy] then
+                j = j + 1
+                enemies[j] = enemy
             end
         end
     end
@@ -756,6 +771,9 @@ function HORDE:FindFreeSpawnPos(ent, opts)
     local mins = ent and ent:OBBMins() or Vector(-16, -16, 0)
     local maxs = ent and ent:OBBMaxs() or Vector(16, 16, 72)
 
+    local others = (not opts.ignore_enemies) and self:ScanEnemies() or nil
+    local radius_sqr = self.spawn_radius * self.spawn_radius
+
     for i = 1, math.min(tries, #candidates) do
         local pos = candidates[i]
         local free = true
@@ -774,9 +792,9 @@ function HORDE:FindFreeSpawnPos(ent, opts)
                 if tr.Hit or tr.StartSolid then free = false end
             end
         end
-        if free and (not opts.ignore_enemies) then
-            for _, enemy in ipairs(self:ScanEnemies()) do
-                if enemy ~= ent and pos:Distance(enemy:GetPos()) <= self.spawn_radius then
+        if free and others then
+            for _, enemy in ipairs(others) do
+                if enemy ~= ent and pos:DistToSqr(enemy:GetPos()) <= radius_sqr then
                     free = false
                     break
                 end
