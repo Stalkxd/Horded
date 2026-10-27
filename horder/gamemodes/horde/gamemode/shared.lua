@@ -117,20 +117,38 @@ function GM:PlayerSetModel(ply)
         table.Random(groups) .. "/" .. table.Random(sex) .. table.Random(nums) .. ".mdl")
 end
 
+local cv_player_collision = GetConVar("horde_enable_player_collision")
+
+local function IsNPCOrNextBot(ent)
+    return ent:IsNPC() or ent:IsNextBot()
+end
+
+-- Every wave enemy has a custom collision check, so the engine calls this for
+-- every movement trace, bullet trace and physics contact that touches one.
+-- Keep the common cases cheap and only run the hook chain when it can matter.
 function GM:ShouldCollide(ent1, ent2)
     if not IsValid(ent1) or not IsValid(ent2) then return true end
+
+    -- Wave enemies never collide with each other (see Horde_EnemyNoCollide),
+    -- so answer that pair before paying for GetClass and hook.Run.
+    local spawned = HORDE and HORDE.spawned_enemies
+    if spawned and spawned[ent1:EntIndex()] and spawned[ent2:EntIndex()]
+        and IsNPCOrNextBot(ent1) and IsNPCOrNextBot(ent2) then
+        return false
+    end
 
     if ent1:GetClass() == "prop_combine_ball" or ent2:GetClass() == "prop_combine_ball" then
         return false
     end
 
-    if ent1:IsPlayer() or ent2:IsPlayer() then
-        if GetConVar("horde_enable_player_collision"):GetInt() == 0 and ent1:IsPlayer() and ent2:IsPlayer() then
+    local ply1, ply2 = ent1:IsPlayer(), ent2:IsPlayer()
+    if ply1 or ply2 then
+        if ply1 and ply2 and cv_player_collision:GetInt() == 0 then
             return false
         end
         local res = hook.Run("Horde_ShouldCollide", ent1, ent2)
         if res ~= nil then return res end
-    elseif (ent1:IsNPC() or ent1:IsNextBot()) and (ent2:IsNPC() or ent2:IsNextBot()) then
+    elseif IsNPCOrNextBot(ent1) and IsNPCOrNextBot(ent2) then
         local res = hook.Run("Horde_ShouldCollide", ent1, ent2)
         if res ~= nil then return res end
     end
