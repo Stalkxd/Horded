@@ -653,31 +653,43 @@ function HORDE:ScanEnemies()
     return enemies
 end
 
+local function GetAlivePlayerPositions()
+    local plys, positions = {}, {}
+    for _, ply in ipairs(player.GetAll()) do
+        if ply:Alive() then
+            plys[#plys + 1] = ply
+            positions[#positions + 1] = ply:GetPos()
+        end
+    end
+    return plys, positions
+end
+
 function HORDE:RemoveDistantEnemies(enemies)
     if HORDE.found_horde_nodes then return end
+    local plys, ply_positions = GetAlivePlayerPositions()
+    local max_z = GetConVarNumber("horde_max_spawn_z_distance")
+    local max_dist_sqr = HORDE.max_spawn_distance * HORDE.max_spawn_distance
     for _, enemy in pairs(enemies) do
         local boss_properties = enemy:Horde_GetBossProperties()
-        local closest = 99999
-        local closest_z = 99999
+        local closest = math.huge
+        local closest_z = math.huge
         local closest_ply = nil
         local enemy_pos = enemy:GetPos()
 
-        for _, ply in pairs(player.GetAll()) do
-            if ply:Alive() then
-                local dist = enemy_pos:Distance(ply:GetPos())
-                local z_dist = math.abs(ply:GetPos().z - enemy_pos.z)
+        for i, ply_pos in ipairs(ply_positions) do
+            local dist = enemy_pos:DistToSqr(ply_pos)
+            local z_dist = math.abs(ply_pos.z - enemy_pos.z)
 
-                if dist < closest then
-                    closest_ply = ply
-                    closest = dist
-                end
-                if z_dist < closest_z then
-                    closest_z = z_dist
-                end
+            if dist < closest then
+                closest_ply = plys[i]
+                closest = dist
+            end
+            if z_dist < closest_z then
+                closest_z = z_dist
             end
         end
 
-        if closest > HORDE.max_spawn_distance or (closest_z > GetConVarNumber("horde_max_spawn_z_distance")) then
+        if closest > max_dist_sqr or (closest_z > max_z) then
             if boss_properties and boss_properties.is_boss and boss_properties.is_boss == true then
                 horde_boss_reposition = true
             else
@@ -688,7 +700,7 @@ function HORDE:RemoveDistantEnemies(enemies)
                 end
             end
         else
-            if enemy:IsValid() and enemy:IsNPC() then
+            if enemy:IsValid() and enemy:IsNPC() and closest_ply then
                 enemy:SetLastPosition(closest_ply:GetPos())
                 enemy:SetTarget(closest_ply)
             end
@@ -796,26 +808,33 @@ function HORDE:GetValidNodes(enemies)
         return valid_nodes
     end
 
+    local _, ply_positions = GetAlivePlayerPositions()
+    local enemy_positions = {}
+    for _, enemy in pairs(enemies) do
+        enemy_positions[#enemy_positions + 1] = enemy:GetPos()
+    end
+    local max_z = GetConVarNumber("horde_max_spawn_z_distance")
+    local min_dist_sqr = HORDE.min_spawn_distance * HORDE.min_spawn_distance
+    local max_dist_sqr = HORDE.max_spawn_distance * HORDE.max_spawn_distance
+    local radius_sqr = HORDE.spawn_radius * HORDE.spawn_radius
+
     for _, node in ipairs(active_nodes) do
         local valid = false
-        local z_dist
         local within_z = false
+        local node_pos = node["pos"]
 
-        for _, ply in pairs(player.GetAll()) do
-            if ply:Alive() then
-                local dist = node["pos"]:Distance(ply:GetPos())
-                z_dist = math.abs(node["pos"].z - ply:GetPos().z)
+        for _, ply_pos in ipairs(ply_positions) do
+            local dist = node_pos:DistToSqr(ply_pos)
 
-                if dist <= HORDE.min_spawn_distance then
-                    valid = false
-                    break
-                elseif dist < HORDE.max_spawn_distance then
-                    valid = true
-                end
+            if dist <= min_dist_sqr then
+                valid = false
+                break
+            elseif dist < max_dist_sqr then
+                valid = true
+            end
 
-                if z_dist < GetConVarNumber("horde_max_spawn_z_distance") then
-                    within_z = true
-                end
+            if math.abs(node_pos.z - ply_pos.z) < max_z then
+                within_z = true
             end
         end
 
@@ -824,22 +843,21 @@ function HORDE:GetValidNodes(enemies)
         end
 
         if not valid then
-            table.insert(invalid_nodes, node["pos"])
+            table.insert(invalid_nodes, node_pos)
             goto cont
         end
 
-        for _, enemy in pairs(enemies) do
-            local dist = node["pos"]:Distance(enemy:GetPos())
-            if dist <= HORDE.spawn_radius then
+        for _, enemy_pos in ipairs(enemy_positions) do
+            if node_pos:DistToSqr(enemy_pos) <= radius_sqr then
                 valid = false
                 break
             end
         end
 
         if valid then
-            table.insert(valid_nodes, node["pos"])
+            table.insert(valid_nodes, node_pos)
         else
-            table.insert(invalid_nodes, node["pos"])
+            table.insert(invalid_nodes, node_pos)
         end
 
         ::cont::
@@ -851,13 +869,15 @@ function HORDE:GetValidNodes(enemies)
     end
 
     if #valid_nodes <= 0 and #invalid_nodes > 0 then
-        local sorted = {}
-        for _, pos in ipairs(invalid_nodes) do table.insert(sorted, pos) end
-        table.sort(sorted, function(a, b)
-            local _, da = NearestAlivePlayer(a)
-            local _, db = NearestAlivePlayer(b)
-            return (da or 0) > (db or 0)
-        end)
+        local sorted, nearest = {}, {}
+        for _, pos in ipairs(invalid_nodes) do
+            if nearest[pos] == nil then
+                local _, d = NearestAlivePlayer(pos)
+                nearest[pos] = d or 0
+                table.insert(sorted, pos)
+            end
+        end
+        table.sort(sorted, function(a, b) return nearest[a] > nearest[b] end)
         local forced = math.min(#sorted, HORDE.forced_spawn_nodes or 3)
         for i = 1, forced do
             table.insert(valid_nodes, sorted[i])
@@ -883,6 +903,45 @@ function HORDE:GetEnemiesPerSpawn()
     end
 
     return math.max(1, 1 + extra)
+end
+
+local SPAWN_HULL_MINS = Vector(-16, -16, 0)
+local SPAWN_HULL_MAXS = Vector(16, 16, 72)
+local SPAWN_RING_STEP = 40
+local SPAWN_TRIES = 4
+
+-- Enemies in the same batch used to land within 14 units of each other on one
+-- node, spawning NPCs inside each other. Spread the batch out in rings around
+-- the node and only spawn where the NPC hull is free.
+local function FindFreeBatchSpawnPos(pos, index)
+    local origin = pos + Vector(0, 0, HORDE.enemy_spawn_z)
+    local tr_data = { mins = SPAWN_HULL_MINS, maxs = SPAWN_HULL_MAXS, mask = MASK_NPCSOLID }
+    for try = 1, SPAWN_TRIES do
+        local target
+        if index == 1 and try == 1 then
+            target = origin
+        else
+            local ring = math.ceil(index / 6) + math.floor((try - 1) / 2)
+            local ang = math.Rand(0, math.pi * 2)
+            target = origin + Vector(math.cos(ang), math.sin(ang), 0) * (SPAWN_RING_STEP * ring)
+        end
+        local blocked = false
+        if target ~= origin then
+            local wall = util.TraceLine({ start = origin + Vector(0, 0, 36), endpos = target + Vector(0, 0, 36), mask = MASK_SOLID_BRUSHONLY })
+            local floor = util.TraceLine({ start = target, endpos = target - Vector(0, 0, 64), mask = MASK_SOLID_BRUSHONLY })
+            blocked = wall.Hit or not floor.Hit
+        end
+        if not blocked then
+            tr_data.start = target
+            tr_data.endpos = target
+            local tr = util.TraceHull(tr_data)
+            if not tr.Hit and not tr.StartSolid then return target end
+            -- The node itself was always spawnable before; only refuse it when
+            -- something other than the world (another NPC, a player) stands there.
+            if target == origin and tr.HitWorld and not IsValid(tr.Entity) then return target end
+        end
+    end
+    return nil
 end
 
 function HORDE:SpawnEnemies(enemies, valid_nodes)
@@ -923,7 +982,8 @@ function HORDE:SpawnEnemies(enemies, valid_nodes)
             local p_cum = 0
             local spawned_enemy
             local renormalize = nil
-            local spawn_pos = pos + Vector(math.Rand(-14, 14), math.Rand(-14, 14), HORDE.enemy_spawn_z)
+            local spawn_pos = FindFreeBatchSpawnPos(pos, _batch)
+            if not spawn_pos then break end
 
             for name, orders in pairs(horde_force_spawn_enemies) do
                 for idx, order in pairs(orders) do
@@ -1236,6 +1296,33 @@ function HORDE:ResolveEnemyWaveIndex()
     return ((w - 1) % HORDE.max_max_waves) + 1
 end
 
+function HORDE:GetHundredCountMult(wave)
+    local diff = HORDE._difficulties and HORDE._difficulties[HORDE.difficulty]
+    if not (HORDE.hundred_mode and istable(diff)) then return 1 end
+
+    local early_end  = tonumber(diff.CountEarlyEndWave) or 60
+    local early_mult = tonumber(diff.CountEarlyMult) or 0.5
+    local ramp_mult  = tonumber(diff.CountRampEndMult) or 1
+    local final_wave = tonumber(diff.CountFinalWave) or 90
+    local final_mult = tonumber(diff.CountFinalMult) or 2
+
+    if wave >= final_wave then return final_mult end
+    if wave <= early_end then return early_mult end
+    local t = (wave - early_end) / math.max(1, final_wave - early_end)
+    return early_mult + (ramp_mult - early_mult) * t
+end
+
+function HORDE:GetWavePlayerScale(players)
+    players = math.max(1, players or 1)
+    local diff = HORDE._difficulties and HORDE._difficulties[HORDE.difficulty]
+    if not (HORDE.hundred_mode and istable(diff)) then return players end
+
+    local full  = math.max(1, tonumber(diff.PlayerScaleFullPlayers) or 4)
+    local share = tonumber(diff.PlayerScaleExtraShare) or 0.5
+    if players <= full then return players end
+    return full + (players - full) * share
+end
+
 local function CountReadyPlayers()
     local ready, total = 0, 0
     for _, ply in pairs(player.GetAll()) do
@@ -1318,7 +1405,8 @@ function HORDE:WaveStart()
         _enemy_src = found or HORDE.enemies_normalized[9] or HORDE.enemies_normalized[HORDE.max_max_waves] or {}
     end
     horde_current_enemies_list = table.Copy(_enemy_src)
-    local player_scale = math.max(1, horde_players_count)
+    local player_scale = HORDE:GetWavePlayerScale(horde_players_count)
+    local count_mult = HORDE:GetHundredCountMult(HORDE.current_wave)
 
     if HORDE.wave666_mode then
         HORDE._hundred_mutation_bonus = 0
@@ -1331,7 +1419,7 @@ function HORDE:WaveStart()
         HORDE.total_enemies_this_wave = HORDE.wave666_kill_quota
     elseif HORDE:IsExtendedWave() then
         local over = HORDE.current_wave - HORDE.max_max_waves
-        HORDE.total_enemies_this_wave = (HORDE.total_enemies_per_wave[HORDE.max_max_waves] + 5 * over) * player_scale
+        HORDE.total_enemies_this_wave = math.max(1, math.floor((HORDE.total_enemies_per_wave[HORDE.max_max_waves] + 5 * over) * player_scale * count_mult))
         local scale_per_wave = HORDE.hundred_scale_per_wave or 0.025
         local hp_dmg_scale = math.min(1 + scale_per_wave * over, 1.5)
         HORDE.extended_health_multiplier = hp_dmg_scale
@@ -1341,7 +1429,7 @@ function HORDE:WaveStart()
         HORDE._hundred_mutation_bonus = mutation_bonus
     else
         HORDE._hundred_mutation_bonus = 0
-        HORDE.total_enemies_this_wave = HORDE.total_enemies_per_wave[HORDE.current_wave] * player_scale
+        HORDE.total_enemies_this_wave = math.max(1, math.floor(HORDE.total_enemies_per_wave[HORDE.current_wave] * player_scale * count_mult))
     end
 
     HORDE.current_mutations = {}

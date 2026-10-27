@@ -47,7 +47,7 @@ MUTATION.Hooks.Horde_OnSetMutation = function(ent, mutation)
                 render.SetMaterial(shldmat)
                 local pos = ent:GetPos()
                 pos.z = pos.z + height / 2
-                render.DrawSphere(pos, radius + 5, 50, 50)
+                render.DrawSphere(pos, radius + 5, 16, 16)
             end)
         end
 

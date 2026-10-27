@@ -9,7 +9,9 @@ MUTATION.Hooks.Horde_OnSetMutation = function(ent, mutation)
         local c = ent:GetColor()
         ent:SetColor(Color(c.r/2, c.g/2, c.b/2, 150))
         ent:SetRenderMode(RENDERMODE_TRANSCOLOR)
-        ParticleEffectAttach("ice_smoke", PATTACH_ABSORIGIN_FOLLOW, ent, 0)
+        if CLIENT then
+            ParticleEffectAttach("ice_smoke", PATTACH_ABSORIGIN_FOLLOW, ent, 0)
+        end
     end
 end
 
