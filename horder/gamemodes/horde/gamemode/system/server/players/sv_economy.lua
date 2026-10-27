@@ -527,7 +527,9 @@ hook.Add("PlayerCanPickupWeapon", "Horde_Economy_Pickup", function (ply, wpn)
             end
             return false
         end
-        if unarmed_loot then return true end
+        -- Scavenged weapons are only picked up with +use (see
+        -- Horde_Unarmed_UsePickup), never by walking over them.
+        if unarmed_loot then return ply.Horde_UnarmedUsePickup == wpn end
         if ply:Horde_GetCurrentSubclass() == "Gunslinger" and item.category == "Pistol" then return true end
 
         if item.whitelist and not item.whitelist[ply:Horde_GetCurrentSubclass()] then

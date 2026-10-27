@@ -52,3 +52,20 @@ net.Receive("Horde_UnarmedSyncLooted", function()
         LocalPlayer().Horde_UnarmedLooted = t
     end
 end)
+
+-- Scavenged weapons are picked up with +use, so tell the player when one is in reach.
+local USE_HINT_RANGE_SQR = 96 * 96
+hook.Add("HUDPaint", "Horde_UnarmedUseHint", function()
+    if not HORDE or not HORDE.unarmed_mode then return end
+    local ply = LocalPlayer()
+    if not IsValid(ply) or not ply:Alive() then return end
+    local ent = ply:GetEyeTrace().Entity
+    if not IsValid(ent) or not ent:GetNWBool("Horde_UnarmedDrop", false) or IsValid(ent:GetOwner()) then return end
+    if ply:GetShootPos():DistToSqr(ent:WorldSpaceCenter()) > USE_HINT_RANGE_SQR then return end
+
+    local key = string.upper(input.LookupBinding("+use") or "E")
+    local name = language.GetPhrase(ent.PrintName or ent:GetClass())
+    draw.SimpleTextOutlined("[" .. key .. "] Pick up " .. name, "Trebuchet24",
+        ScrW() / 2, ScrH() / 2 + 60, QualityColor(ent:GetNWString("Horde_UnarmedQuality", "Common")),
+        TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, color_black)
+end)
