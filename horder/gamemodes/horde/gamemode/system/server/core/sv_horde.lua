@@ -810,13 +810,21 @@ function HORDE:GetValidNodes(enemies)
     local invalid_nodes = {}
 
     local active_nodes = {}
-    for _, node in ipairs(HORDE.ai_nodes or {}) do
-        if node["pos"] and HORDE:IsNodeActive(node) then
-            local weight = HORDE:GetNodeWeight(node)
-            for _ = 1, math.max(1, weight) do
-                active_nodes[#active_nodes + 1] = node
+    local function AddActive(nodes, ignore_disabled)
+        for _, node in ipairs(nodes or {}) do
+            if node["pos"] and HORDE:IsNodeActive(node, ignore_disabled) then
+                local weight = HORDE:GetNodeWeight(node)
+                for _ = 1, math.max(1, weight) do
+                    active_nodes[#active_nodes + 1] = node
+                end
             end
         end
+    end
+    AddActive(HORDE.ai_nodes)
+    -- On maps with enemy spawn entities, use the disabled ones when none are
+    -- enabled rather than spawning anywhere else.
+    if #active_nodes == 0 and HORDE.found_horde_nodes then
+        AddActive(HORDE.disabled_spawn_nodes, true)
     end
 
     if HORDE.spawn_distribution == HORDE.SPAWN_UNIFORM then
@@ -1806,11 +1814,13 @@ function HORDE:Direct()
         end
     end
 
-    if not HORDE.found_ai_nodes then
+    if not HORDE.found_ai_nodes and not HORDE.has_horde_spawn_entities then
         ParseFile()
     end
 
-    if not HORDE.ai_nodes or table.IsEmpty(HORDE.ai_nodes) then
+    local has_spawn_nodes = (HORDE.ai_nodes and not table.IsEmpty(HORDE.ai_nodes))
+        or (HORDE.found_horde_nodes and HORDE.disabled_spawn_nodes and not table.IsEmpty(HORDE.disabled_spawn_nodes))
+    if not has_spawn_nodes then
         if not HORDE._no_nodes_warned then
             HORDE._no_nodes_warned = true
             print("[HORDE] No info_node(s) in map! NPCs will not spawn.")

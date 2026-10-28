@@ -397,6 +397,39 @@ hook.Add("HordeWaveEnd", "Horde_Unarmed_WaveEnd", function()
     StopWaveSpawn()
 end)
 
+local USE_PICKUP_RANGE = 96
+local USE_PICKUP_HULL  = Vector(8, 8, 8)
+
+local function IsUnarmedDrop(ent)
+    return IsValid(ent) and ent.Horde_UnarmedDrop and ent:IsWeapon() and not IsValid(ent:GetOwner())
+end
+
+-- Walking over a scavenged weapon no longer picks it up (PlayerCanPickupWeapon
+-- refuses it); pressing +use while looking at one does.
+hook.Add("KeyPress", "Horde_Unarmed_UsePickup", function(ply, key)
+    if key ~= IN_USE or not HORDE.unarmed_mode then return end
+    if not IsValid(ply) or not ply:Alive() then return end
+
+    local start = ply:GetShootPos()
+    local tr = util.TraceHull({
+        start  = start,
+        endpos = start + ply:GetAimVector() * USE_PICKUP_RANGE,
+        mins   = -USE_PICKUP_HULL,
+        maxs   = USE_PICKUP_HULL,
+        filter = ply,
+        mask   = MASK_SHOT,
+    })
+    local wpn = tr.Entity
+    if not IsUnarmedDrop(wpn) then return end
+
+    -- Run the usual pickup rules (weight, class limits) with the +use flag set.
+    ply.Horde_UnarmedUsePickup = wpn
+    if hook.Run("PlayerCanPickupWeapon", ply, wpn) ~= false then
+        ply:PickupWeapon(wpn)
+    end
+    ply.Horde_UnarmedUsePickup = nil
+end)
+
 local function IsKeptClass(class)
     return (HORDE.unarmed_kept_weapons and HORDE.unarmed_kept_weapons[class])
         or (HORDE.relic_weapon_subclass and HORDE.relic_weapon_subclass[class] ~= nil)

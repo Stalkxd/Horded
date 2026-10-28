@@ -75,13 +75,13 @@ function HORDE:Horde_BuildBossNodeRecord(ent)
     }
 end
 
-function HORDE:IsNodeActive(node)
+function HORDE:IsNodeActive(node, ignore_disabled)
     if not istable(node) then return false end
 
     local ent = node.ent
     if ent ~= nil then
         if not IsValid(ent) then return false end
-        if ent.Disabled then return false end
+        if ent.Disabled and not ignore_disabled then return false end
     end
 
     local wave = HORDE.current_wave or 0
@@ -118,18 +118,24 @@ function HORDE:RecomputeSpawnNodes()
 
     HORDE.has_horde_spawn_entities = (#spawn_ents > 0)
 
-    local records = {}
+    local records, disabled = {}, {}
     for _, ent in ipairs(spawn_ents) do
-        if IsValid(ent) and not ent.Disabled then
-            records[#records + 1] = HORDE:Horde_BuildNodeRecord(ent)
+        if IsValid(ent) then
+            local list = ent.Disabled and disabled or records
+            list[#list + 1] = HORDE:Horde_BuildNodeRecord(ent)
         end
     end
 
     if HORDE.has_horde_spawn_entities then
+        -- Maps with info_horde_enemy_spawn never fall back to nodegraph nodes,
+        -- even while every spawn is disabled: that broke maps that toggle
+        -- spawns on and off. Disabled spawns are kept as the fallback instead.
         HORDE.ai_nodes = records
+        HORDE.disabled_spawn_nodes = disabled
         HORDE.found_horde_nodes = true
-        HORDE.found_ai_nodes = (#records > 0)
+        HORDE.found_ai_nodes = true
     else
+        HORDE.disabled_spawn_nodes = {}
         HORDE.ai_nodes = EnsureNodegraphNodes()
         HORDE.found_horde_nodes = false
         HORDE.found_ai_nodes = (#HORDE.ai_nodes > 0)
@@ -190,7 +196,7 @@ local function NearestNodeTo(pos, nodes)
 end
 
 function HORDE:Horde_NotifyNodeSpawn(pos)
-    local node = NearestNodeTo(pos, HORDE.ai_nodes)
+    local node = NearestNodeTo(pos, HORDE.ai_nodes) or NearestNodeTo(pos, HORDE.disabled_spawn_nodes)
     if not node or not node.id then return end
     local st = NodeState(node.id)
     st.spawned = (st.spawned or 0) + 1
