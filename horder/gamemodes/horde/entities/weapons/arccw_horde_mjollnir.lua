@@ -145,28 +145,27 @@ SWEP.ChargeEffect = nil
 -- Right click stacks up to 3 charges, paid for with Energy. Left click spends them:
 -- 1 charge: the next hit discharges lightning (the original charged hit).
 -- 2 charges: Thunder Hand, hold left click to fire lightning bolts from the hammer.
--- 3 charges: a big lightning explosion around you, then a lightning storm from the sky.
+-- 3 charges: Thunder Storm, hold left click to call lightning from the sky around you.
+-- There are no cooldowns, Energy is the only limit.
 SWEP.EnergyMax = 100
 SWEP.EnergyRegen = 4
 SWEP.ChargeCosts = {20, 30, 50}
+SWEP.LightningColor = "0 100 255"
 
 SWEP.BoltDuration = 6
-SWEP.BoltInterval = 0.2
-SWEP.BoltRange = 900
-SWEP.BoltDamage = 50
-SWEP.BoltChainDamage = 30
-SWEP.BoltChainRange = 250
-SWEP.BoltChainCount = 2
-SWEP.BoltCooldown = 3
+SWEP.BoltInterval = 0.1
+SWEP.BoltRange = 1200
+SWEP.BoltDamage = 90
+SWEP.BoltChainDamage = 60
+SWEP.BoltChainRange = 300
+SWEP.BoltChainCount = 4
 
-SWEP.SlamRadius = 300
-SWEP.SlamDamage = 400
 SWEP.StormDuration = 10
-SWEP.StormInterval = 0.4
-SWEP.StormRadius = 450
-SWEP.StormDamage = 120
-SWEP.StormStrikeRadius = 90
-SWEP.StormCooldown = 30
+SWEP.StormInterval = 0.15
+SWEP.StormStrikesPerTick = 2
+SWEP.StormRadius = 600
+SWEP.StormDamage = 250
+SWEP.StormStrikeRadius = 130
 
 SWEP.ThunderSound = Sound("ambient/atmosphere/thunder1.wav")
 
@@ -205,7 +204,7 @@ function SWEP:SecondaryAttack()
     self.Charged = true
     self.Mjollner_Charged = true
     self.ChargeLoopCooldown = CurTime() + 1.25
-    self.Weapon:SetNextSecondaryFire(CurTime() + 0.5)
+    self.Weapon:SetNextSecondaryFire(CurTime() + 0.3)
 
     if not IsFirstTimePredicted() then return end
     self:EmitSound(self.ChargeSound, 75, 90 + level * 10)
@@ -223,23 +222,17 @@ function SWEP:PrimaryAttack()
     if self:GetNextPrimaryFire() > CurTime() then return end
 
     local level = self:GetNWInt("HordeMjolnirCharge", 0)
-    if level == 2 then
+    if level >= 2 then
+        local duration = level == 2 and self.BoltDuration or self.StormDuration
         self:SetNWInt("HordeMjolnirCharge", 0)
+        self:SetNWInt("HordeMjolnirMode", level)
         self.Charged = nil
         self.Mjollner_Charged = nil
-        self:SetNWFloat("HordeMjolnirBoltUntil", CurTime() + self.BoltDuration)
-        self:SetMjolnirBusy(self.BoltDuration)
+        self:SetNWFloat("HordeMjolnirBoltUntil", CurTime() + duration)
+        self:SetMjolnirBusy(duration)
         self.Mjolnir_NextBolt = CurTime()
-        self.Weapon:SetNextSecondaryFire(CurTime() + self.BoltDuration + self.BoltCooldown)
         if IsFirstTimePredicted() then self:EmitSound(self.ThunderSound, 90) end
         return
-    elseif level == 3 then
-        self:SetNWInt("HordeMjolnirCharge", 0)
-        self.Charged = nil
-        self.Mjollner_Charged = nil
-        self:SetMjolnirBusy(self.StormDuration)
-        self.Weapon:SetNextSecondaryFire(CurTime() + self.StormDuration + self.StormCooldown)
-        if SERVER then self:ThunderSlam() end
     end
 
     BaseClass.PrimaryAttack(self)
@@ -305,7 +298,6 @@ function SWEP:Hook_HordePostCleaving(info)
         self.Mjollner_Charged = nil
         self:SetNWInt("HordeMjolnirCharge", 0)
         self.Weapon:EmitSound(self.ChargeHitSound)
-        self.Weapon:SetNextSecondaryFire(CurTime() + 1.5)
     end
 end
 
@@ -319,8 +311,15 @@ function SWEP:Hook_Think()
     if SERVER and self:GetNWFloat("HordeMjolnirBoltUntil", 0) > CurTime() then
         local owner = self:GetOwner()
         if IsValid(owner) and owner:KeyDown(IN_ATTACK) and (self.Mjolnir_NextBolt or 0) <= CurTime() then
-            self.Mjolnir_NextBolt = CurTime() + self.BoltInterval
-            self:FireBolt()
+            if self:GetNWInt("HordeMjolnirMode", 2) == 3 then
+                self.Mjolnir_NextBolt = CurTime() + self.StormInterval
+                for _ = 1, self.StormStrikesPerTick do
+                    self:StormStrike(owner)
+                end
+            else
+                self.Mjolnir_NextBolt = CurTime() + self.BoltInterval
+                self:FireBolt()
+            end
         end
     end
 end
@@ -347,7 +346,7 @@ function SWEP:ShockDamage(ent, damage, pos)
     ent:TakeDamageInfo(dmg)
 end
 
-function SWEP:Beam(from, to, width, life)
+function SWEP:Beam(from, to, width, life, noise)
     local LT = ents.Create("info_target")
     local idx = LT:EntIndex()
     LT:SetKeyValue("targetname", "mjolner_beam_" .. idx)
@@ -357,16 +356,30 @@ function SWEP:Beam(from, to, width, life)
 
     local LA = ents.Create("env_laser")
     LA:SetKeyValue("lasertarget", "mjolner_beam_" .. idx)
-    LA:SetKeyValue("rendercolor", "0 100 255")
+    LA:SetKeyValue("rendercolor", self.LightningColor)
     LA:SetKeyValue("texture", "sprites/laserbeam.spr")
     LA:SetKeyValue("width", tostring(width))
     LA:SetKeyValue("damage", "0")
     LA:SetKeyValue("spawnflags", "32")
-    LA:SetKeyValue("noiseamplitude", "6")
+    LA:SetKeyValue("noiseamplitude", tostring(noise or 6))
     LA:SetPos(from)
     LA:SetOwner(self)
     LA:Spawn()
     LA:Fire("kill", "", life)
+end
+
+-- Several jagged beams between two points, so one bolt reads as a thick lightning arc.
+function SWEP:Lightning(from, to, width, life, count)
+    for i = 1, count do
+        self:Beam(from, to, i == 1 and width or width * 0.5, life, 4 + i * 4)
+    end
+end
+
+-- Small blue spark burst at an impact, like the charged hit's discharge.
+function SWEP:Burst(pos, count, spread)
+    for _ = 1, count do
+        self:Beam(pos, pos + VectorRand() * spread, 2, 0.2, 10)
+    end
 end
 
 function SWEP:FireBolt()
@@ -376,12 +389,13 @@ function SWEP:FireBolt()
         start = src,
         endpos = src + owner:GetAimVector() * self.BoltRange,
         filter = {owner, self},
-        mins = Vector(-8, -8, -8),
-        maxs = Vector(8, 8, 8),
+        mins = Vector(-12, -12, -12),
+        maxs = Vector(12, 12, 12),
         mask = MASK_SHOT,
     })
     local muzzle = src + owner:GetRight() * 8 - owner:GetUp() * 6 + owner:GetForward() * 20
-    self:Beam(muzzle, tr.HitPos, 4, 0.15)
+    self:Lightning(muzzle, tr.HitPos, 6, 0.15, 3)
+    self:Burst(tr.HitPos, 4, 40)
     self:EmitSound("ambient/energy/zap" .. math.random(1, 9) .. ".wav", 75, math.random(90, 110))
 
     local target = tr.Entity
@@ -393,43 +407,11 @@ function SWEP:FireBolt()
         if chained >= self.BoltChainCount then break end
         if ent ~= target and self:IsMjolnirTarget(ent) then
             local pos = ent:GetPos() + ent:OBBCenter()
-            self:Beam(tr.HitPos, pos, 2, 0.15)
+            self:Lightning(tr.HitPos, pos, 3, 0.15, 2)
             self:ShockDamage(ent, self.BoltChainDamage, pos)
             chained = chained + 1
         end
     end
-end
-
-function SWEP:ThunderSlam()
-    local owner = self:GetOwner()
-    if not IsValid(owner) then return end
-    local pos = owner:GetPos()
-
-    local e = EffectData()
-    e:SetOrigin(pos)
-    e:SetRadius(self.SlamRadius)
-    util.Effect("horde_status_shock", e, true, true)
-    util.Effect("explosion_shock", e, true, true)
-    sound.Play(self.ChargeHitSound, pos, 100, 90)
-    sound.Play(self.ThunderSound, pos, 140, 100)
-    util.ScreenShake(pos, 10, 5, 1, self.SlamRadius * 2)
-
-    for _, ent in ipairs(ents.FindInSphere(pos, self.SlamRadius)) do
-        if self:IsMjolnirTarget(ent) then
-            self:ShockDamage(ent, self.SlamDamage)
-            ent:Horde_AddDebuffBuildup(HORDE.Status_Shock, 50, owner)
-        end
-    end
-
-    local strikes = math.floor(self.StormDuration / self.StormInterval)
-    local timer_name = "Horde_MjolnirStorm_" .. self:EntIndex()
-    timer.Create(timer_name, self.StormInterval, strikes, function()
-        if not IsValid(self) or not IsValid(owner) or not owner:Alive() then
-            timer.Remove(timer_name)
-            return
-        end
-        self:StormStrike(owner)
-    end)
 end
 
 function SWEP:StormStrike(owner)
@@ -451,10 +433,8 @@ function SWEP:StormStrike(owner)
     if ground.Hit then pos = ground.HitPos end
     local sky = util.TraceLine({start = pos, endpos = pos + Vector(0, 0, 800), mask = MASK_SOLID_BRUSHONLY})
 
-    self:Beam(sky.HitPos, pos, 10, 0.25)
-    local e = EffectData()
-    e:SetOrigin(pos)
-    util.Effect("explosion_shock", e, true, true)
+    self:Lightning(sky.HitPos, pos, 14, 0.25, 3)
+    self:Burst(pos + Vector(0, 0, 10), 6, self.StormStrikeRadius)
     sound.Play("ambient/atmosphere/thunder" .. math.random(1, 4) .. ".wav", pos, 90, math.random(95, 110))
 
     for _, ent in ipairs(ents.FindInSphere(pos, self.StormStrikeRadius)) do
