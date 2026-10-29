@@ -407,6 +407,7 @@ local SYSTEMS_MANIFEST = {
 
     { path = "server/combat/sv_damage.lua",    server_only = true, desc = "Damage processing" },
     { path = "server/combat/sv_heal.lua",      server_only = true, desc = "Healing" },
+    { path = "server/combat/sv_melee_bursts.lua", server_only = true, desc = "Jotunn/Inferno kill bursts" },
 
     { STATUS_PHASE = true },
 
