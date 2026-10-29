@@ -13,5 +13,5 @@ ITEM.EntityProperties = {
             is_arccw_attachment = true,
             arccw_attachment_type = "Barrel",
             arccw_attachment_wpn =
-            "arccw_go_g3"
+            "arccw_horde_g3"
         }

@@ -1,7 +1,7 @@
 ITEM = {}
 
 ITEM.Category = "Attachment"
-ITEM.Name = "[G3] 650mm SG1 Barrel"
+ITEM.Name = "[SCAR-H] 650mm SG1 Barrel"
 ITEM.Class = "go_scar_barrel_long"
 ITEM.Price = 100
 ITEM.Weight = 0
@@ -13,5 +13,5 @@ ITEM.EntityProperties = {
             is_arccw_attachment = true,
             arccw_attachment_type = "Barrel",
             arccw_attachment_wpn =
-            "arccw_go_g3"
+            "arccw_horde_scarh"
         }
