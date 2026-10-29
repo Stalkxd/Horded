@@ -373,8 +373,17 @@ function HORDE:GetDefaultItemInfusions()
     HORDE.items["arccw_horde_9mm"].infusions = ballistic_infusions_light
     HORDE.items["arccw_horde_medic_9mm"].infusions = ballistic_infusions_light
     HORDE.items["arccw_horde_357"].infusions = ballistic_infusions_light
+    HORDE.items["arccw_go_glock"].infusions = ballistic_infusions_light
+    HORDE.items["arccw_go_usp"].infusions = ballistic_infusions_light
+    HORDE.items["arccw_go_p2000"].infusions = ballistic_infusions_light
+    HORDE.items["arccw_go_p250"].infusions = ballistic_infusions_light
+    HORDE.items["arccw_go_r8"].infusions = ballistic_infusions_light
+    HORDE.items["arccw_go_deagle"].infusions = ballistic_infusions_light
     HORDE.items["arccw_horde_m1911"].infusions = ballistic_infusions_light
     HORDE.items["arccw_horde_anaconda"].infusions = ballistic_infusions_light
+    HORDE.items["arccw_go_cz75"].infusions = ballistic_infusions_light
+    HORDE.items["arccw_go_m9"].infusions = ballistic_infusions_light
+    HORDE.items["arccw_go_fiveseven"].infusions = ballistic_infusions_light
     HORDE.items["arccw_horde_tec9"].infusions = ballistic_infusions_light
     HORDE.items["arccw_horde_tmp"].infusions = ballistic_infusions_light
     HORDE.items["arccw_horde_akimbo_glock17"].infusions = ballistic_infusions_light
@@ -384,8 +393,13 @@ function HORDE:GetDefaultItemInfusions()
     local ballistic_infusions_smgs = { HORDE.Infusion_Ruination, HORDE.Infusion_Chrono, HORDE.Infusion_Impaling, HORDE
         .Infusion_Quality, HORDE.Infusion_Quicksilver }
     HORDE.items["arccw_horde_smg1"].infusions = ballistic_infusions_light
+    HORDE.items["arccw_go_mac10"].infusions = ballistic_infusions_smgs
     HORDE.items["arccw_horde_mp40"].infusions = ballistic_infusions_smgs
     HORDE.items["arccw_horde_uzi"].infusions = ballistic_infusions_smgs
+    HORDE.items["arccw_go_mp5"].infusions = ballistic_infusions_smgs
+    HORDE.items["arccw_go_ump"].infusions = ballistic_infusions_smgs
+    HORDE.items["arccw_go_bizon"].infusions = ballistic_infusions_smgs
+    HORDE.items["arccw_go_p90"].infusions = ballistic_infusions_smgs
 
     local infusions_medic = { HORDE.Infusion_Ruination, HORDE.Infusion_Chrono, HORDE.Infusion_Impaling, HORDE
         .Infusion_Quality, HORDE.Infusion_Rejuvenating, HORDE.Infusion_Septic }

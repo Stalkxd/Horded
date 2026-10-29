@@ -13,5 +13,5 @@ ITEM.EntityProperties = {
             is_arccw_attachment = true,
             arccw_attachment_type = "Magazine",
             arccw_attachment_wpn =
-            "arccw_horde_tec9"
+            "arccw_go_tec9"
         }
