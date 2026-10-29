@@ -402,12 +402,10 @@ local SYSTEMS_MANIFEST = {
     { path = "shared/world/sh_specialwaves.lua", desc = "Special Waves data model (presets, sanitize)" },
     { path = "shared/world/sh_gameplayconfig.lua", desc = "Gameplay config (hidden difficulties, default controls)" },
     { path = "shared/world/sh_attachments.lua",desc = "ArcCW attachment config" },
-    { path = "shared/world/sh_arccw_slots.lua", desc = "ArcCW cross-pack attachment slots" },
     { path = "shared/world/sh_custom.lua",     desc = "External config hooks" },
 
     { path = "server/combat/sv_damage.lua",    server_only = true, desc = "Damage processing" },
     { path = "server/combat/sv_heal.lua",      server_only = true, desc = "Healing" },
-    { path = "server/combat/sv_melee_bursts.lua", server_only = true, desc = "Jotunn/Inferno kill bursts" },
 
     { STATUS_PHASE = true },
 
