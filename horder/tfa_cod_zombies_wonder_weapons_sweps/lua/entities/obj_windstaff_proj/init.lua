@@ -51,7 +51,7 @@ function ENT:Think()
 	for _, v in ipairs(ents.FindInSphere(self:GetPos(), 72)) do
 		if v:GetInternalVariable("m_takedamage") < 1 then continue end
 		if v:Health() <= 0 then 
-			if v.Kill then v:Kill() end
+			if not HORDE and v.Kill then v:Kill() end
 			continue 
 		end
 		if v:IsPlayer() and (v == self.Owner or !hook.Run("PlayerShouldTakeDamage",v,self.Owner)) then continue end

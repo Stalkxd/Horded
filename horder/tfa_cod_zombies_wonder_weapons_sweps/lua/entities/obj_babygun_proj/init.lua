@@ -28,7 +28,7 @@ function ENT:StartTouch(ent)
 		v:SetNW2Bool("IsBaby",true)
 		v:SetNW2Bool("ShouldKickBaby",true)
 		v:SetNW2Int("backuphealth", v:Health())
-		v:SetHealth(1)
+		if not HORDE then v:SetHealth(1) end
 		v:SetNW2Bool("BabyOnGround",false)
 		if v:IsPlayer() then
 			v:SetViewOffset(Vector(0,0,25))

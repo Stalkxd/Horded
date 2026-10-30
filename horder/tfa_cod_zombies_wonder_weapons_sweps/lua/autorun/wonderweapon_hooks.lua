@@ -212,7 +212,8 @@ end)
 hook.Add( "EntityTakeDamage", "vr11_insta_hook", function(ent, dmginfo) 
 	local attacker = dmginfo:GetAttacker()
 	if IsValid(attacker) and attacker:GetNW2Bool("vr11_instakill") then
-		dmginfo:AddDamage( ent:Health() )
+		-- Horde: a damage boost instead of instakills
+		if HORDE then dmginfo:ScaleDamage(1.5) else dmginfo:AddDamage( ent:Health() ) end
 	end
 end)
 

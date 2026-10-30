@@ -129,6 +129,8 @@ function HORDE:ApplyDamage(npc, hitgroup, dmginfo)
     local ply = dmginfo:GetAttacker()
     if not ply:IsPlayer() then return end
 
+    HORDE:CapWonderWeaponDamage(dmginfo)
+
     local minion_inflictor = dmginfo:GetInflictor()
     if IsValid(minion_inflictor) and minion_inflictor:GetClass() == "npc_manhack" then
         local manhack_dmg = minion_inflictor:GetNWFloat("Horde_UpgradeDamage", 0)

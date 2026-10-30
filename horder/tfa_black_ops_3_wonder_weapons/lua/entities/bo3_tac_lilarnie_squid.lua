@@ -164,7 +164,7 @@ function ENT:InflictDamage(ent, hitpos, norm)
 	damage:SetDamagePosition(hitpos or ent:WorldSpaceCenter())
 
 	ent:SetNW2Bool("OctoBombed", true)
-	ent:SetHealth(1)
+	if not HORDE then ent:SetHealth(1) end
 	ent:TakeDamageInfo(damage)
 end
 

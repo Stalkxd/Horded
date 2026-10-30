@@ -225,7 +225,7 @@ ENT.InflictDamage = function(self, ent)
 		damage:SetDamage(math.max(1600, ent:GetMaxHealth() / 6))
 		//damage:ScaleDamage(math.Round(nzRound:GetNumber()/8) + 1)
 	else
-		ent:SetHealth(1)
+		if not HORDE then ent:SetHealth(1) end
 		if nzombies then
 			ent:SetNW2Bool("WavePopKilled", true)
 		else

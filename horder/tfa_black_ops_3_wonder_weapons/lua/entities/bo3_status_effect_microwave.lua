@@ -165,7 +165,7 @@ ENT.InflictDamage = function(self, ent)
 	damage:SetDamageForce(ent:GetUp()*200)
 
 	if ent:IsNPC() then ent:SetSchedule(SCHED_ALERT_STAND) end
-	ent:SetHealth(1)
+	if not HORDE then ent:SetHealth(1) end
 	ent:TakeDamageInfo(damage)
 end
 
