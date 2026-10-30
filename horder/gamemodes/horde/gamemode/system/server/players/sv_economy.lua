@@ -610,6 +610,13 @@ net.Receive("Horde_BuyItem", function (len, ply)
             end
         end
     end
+    if item.CanPurchase then
+        local ok, reason = item.CanPurchase(ply, item)
+        if ok == false then
+            if reason then HORDE:SendNotification(reason, 1, ply) end
+            return
+        end
+    end
     if ply:Horde_GetMoney() >= price and ply:Horde_GetWeight() >= weight and ply:Horde_GetSkullTokens() >= skull_tokens and level_satisfy then
         if item.entity_properties then
             if item.entity_properties.type == HORDE.ENTITY_PROPERTY_WPN then
@@ -645,13 +652,7 @@ net.Receive("Horde_BuyItem", function (len, ply)
                     return
                 end
 
-                if item.CanPurchase then
-                    local ok, reason = item.CanPurchase(ply, item)
-                    if ok == false then
-                        if reason then HORDE:SendNotification(reason, 1, ply) end
-                        return
-                    end
-                elseif item.class == "npc_turret_floor" and ply:Horde_GetPerk("engineer_manhack") then
+                if not item.CanPurchase and item.class == "npc_turret_floor" and ply:Horde_GetPerk("engineer_manhack") then
                     return
                 end
 
