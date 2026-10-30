@@ -460,6 +460,7 @@ function SWEP:PrimaryAttack()
 			own:SetVelocity(aimvec*16)
 			for k, v in pairs(ents.FindInSphere(shootpos+aimvec*200, 200)) do
 				if v == own or (v:IsPlayer() and !hook.Run("PlayerShouldTakeDamage", v, own)) then continue end
+				if TFAWW_SkipEffect and TFAWW_SkipEffect(v) then continue end -- Horde: no pull on players, bosses or elites
 				if v:IsNextBot() then
 					v.loco:SetVelocity((own:GetPos() - v:GetPos()) * 4)
 				elseif v:GetMoveType() < 7 then

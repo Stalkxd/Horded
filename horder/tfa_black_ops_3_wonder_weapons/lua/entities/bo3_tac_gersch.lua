@@ -216,6 +216,7 @@ function ENT:Think()
 			local pos = self:GetPos()
 			for k, v in pairs(ents.FindInSphere(core:GetPos(), 1024)) do
 				if v == self:GetOwner() then continue end
+				if TFAWW_SkipEffect and TFAWW_SkipEffect(v) then continue end
 
 				if v:IsNPC() then
 					v:SetGroundEntity(nil)
@@ -244,6 +245,7 @@ function ENT:Think()
 					self:InflictDamage(v)
 				end
 
+				if v:IsPlayer() and TFAWW_SkipPlayer and TFAWW_SkipPlayer(v, self:GetOwner()) then continue end
 				if v:IsPlayer() and not v:IsOnGround() and math.abs(v:GetVelocity()[3]) > 0 then //fix for... something
 					local vel = v:GetVelocity()
 					v:SetPos(self:GetTelePos() + Vector(0,0,4))
@@ -331,6 +333,7 @@ function ENT:MonkeyBomb()
 
 	for k, v in pairs(ents.FindInSphere(self:GetPos(), 2048)) do
 		if v == self:GetOwner() then continue end
+		if TFAWW_Resists and TFAWW_Resists(v) then continue end -- Horde: bosses and elites ignore the lure
 		if IsValid(v) and v:IsNPC() then
 			if v:GetEnemy() ~= self then
 				v:ClearSchedule()
@@ -351,6 +354,7 @@ function ENT:MonkeyBombNXB()
 
 	for k, v in pairs(ents.FindInSphere(self:GetPos(), 2048)) do
 		if v == self:GetOwner() then continue end
+		if TFAWW_Resists and TFAWW_Resists(v) then continue end -- Horde: bosses and elites ignore the lure
 		if IsValid(v) and v:IsNextBot() then
 			v.loco:FaceTowards(self:GetPos())
 			v.loco:Approach(self:GetPos(), 99)

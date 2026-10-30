@@ -370,6 +370,11 @@ function SWEP:PrimaryAttack()
 		
 		if !v:IsPlayer() and !v:IsNPC() and !v:IsNextBot() then continue end -- and uninteresting entities.
 		if v:IsPlayer() and (v == self.Owner or !hook.Run("PlayerShouldTakeDamage", v, own)) then continue end -- Don't hit the owner and avoid friendly fire.
+		if HORDE and v:IsPlayer() then continue end -- Horde: never freeze players
+		if TFAWW_Resists and TFAWW_Resists(v) then -- Horde: bosses and elites take the damage but don't freeze
+			if SERVER then v:TakeDamageInfo(dmg) end
+			continue
+		end
 		--tr.endpos = v:WorldSpaceCenter()
 		--local tr1 = util.TraceLine(tr)
 		--if tr1.Hit then continue end -- Don't hit objects behind cover.

@@ -31,6 +31,7 @@ local nzombies = engine.ActiveGamemode() == "nzombies"
 
 if SERVER then
 	entMeta.BO3Microwave = function(self, duration, attacker, inflictor)
+		if TFAWW_SkipEffect and TFAWW_SkipEffect(self) then return end -- Horde: not on players, bosses or elites
 		if nzombies and self.IsAATTurned and self:IsAATTurned() then return end
 		if nzombies and string.find(self:GetClass(), "zombie_boss") then return end
 

@@ -1,5 +1,6 @@
 local nzombies = engine.ActiveGamemode() == "nzombies"
 local inf_cvar = GetConVar("sv_tfa_bo3ww_inf_specialist")
+local melee_cvar = GetConVar("sv_tfa_bo3ww_free_melee")
 local dlight_cvar = GetConVar("cl_tfa_fx_wonderweapon_dlights")
 
 SWEP.Base = "tfa_melee_base"
@@ -49,7 +50,7 @@ SWEP.Primary.Automatic = true
 SWEP.Primary.RPM = 100
 SWEP.Primary.Damage = 115
 SWEP.Primary.NumShots = 1
-SWEP.Primary.AmmoConsumption = inf_cvar:GetBool() and 0 or 5
+SWEP.Primary.AmmoConsumption = (inf_cvar:GetBool() or melee_cvar:GetBool()) and 0 or 5
 SWEP.Secondary.AmmoConsumption = inf_cvar:GetBool() and 0 or 10
 SWEP.Primary.Knockback = 0
 SWEP.Primary.ClipSize = 100
@@ -358,7 +359,7 @@ function SWEP:ApplyDamage(trace, dmginfo, attk)
 		ParticleEffect("bo3_keepersword_hit", trace.HitPos, force:Angle())
 	end
 
-	if SERVER and ent.Ignite then
+	if SERVER and ent.Ignite and not (TFAWW_SkipPlayer and TFAWW_SkipPlayer(ent, self:GetOwner())) then
 		if nzombies then
 			if IsValid(ent) and ent:IsValidZombie() then
 				ent:Ignite(3)

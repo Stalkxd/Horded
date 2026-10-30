@@ -10,6 +10,11 @@ function ENT:FreezeNearby(radius)
 		
 		if !v:IsPlayer() and !v:IsNPC() and !v:IsNextBot() then continue end
 		if v:IsPlayer() and (v == self.Owner or !hook.Run("PlayerShouldTakeDamage", v, self.Owner)) then continue end
+		if HORDE and v:IsPlayer() then continue end -- Horde: never freeze players
+		if TFAWW_Resists and TFAWW_Resists(v) then -- Horde: bosses and elites take the damage but don't freeze
+			if SERVER then v:TakeDamageInfo(self.DamageInfo) end
+			continue
+		end
 		
 		if v:Health() > self.DamageInfo:GetDamage() + 1 then
 			v:SetMaterial("models/weapons/black_ops_1/freeze_gun/rus_ter_ice_slush")

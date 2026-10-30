@@ -447,6 +447,7 @@ function SWEP:PrimaryAttack()
 		for k, v in pairs(ents.FindInCone(own:GetShootPos(), own:GetAimVector(), 300, 0.8)) do
 			
 			if v:IsPlayer() and v != own then
+				if TFAWW_SkipPlayer and TFAWW_SkipPlayer(v, own) then continue end
 				if !v:OnGround() then
 					v:SetVelocity(own:GetAimVector()*-pushforce)
 				end
@@ -454,6 +455,7 @@ function SWEP:PrimaryAttack()
 			end
 			
 			if v:Health() <= 0 or (!v:IsNPC() and !v:IsNextBot()) then continue end
+			if TFAWW_Resists and TFAWW_Resists(v) then continue end -- Horde: bosses and elites aren't slowed
 			
 			if !timer.Exists(v:EntIndex().."paralyzerrestore") then
 				timer.Create(v:EntIndex().."paralyzerrestore", 5, 1, function()

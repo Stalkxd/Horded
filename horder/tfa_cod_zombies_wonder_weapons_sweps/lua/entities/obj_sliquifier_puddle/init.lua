@@ -20,6 +20,7 @@ function ENT:Think()
 end
 
 function ENT:Touch( ent )
+	if TFAWW_SkipEffect and TFAWW_SkipEffect(ent) then return end -- Horde: not on players, bosses or elites
 	if !ent.SliquifierRestore then
 		ent.SliquifierRestore = {
 			Friction = ent:GetFriction(),

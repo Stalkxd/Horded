@@ -31,6 +31,7 @@ local nzombies = engine.ActiveGamemode() == "nzombies"
 
 if SERVER then
 	entMeta.BO3Spore = function(self, duration, attacker, inflictor, upgrade)
+		if HORDE and self:IsPlayer() then return end -- Horde: never on players
 		if nzombies and self.IsAATTurned and self:IsAATTurned() then return end
 		if upgrade == nil then
 			upgrade = false

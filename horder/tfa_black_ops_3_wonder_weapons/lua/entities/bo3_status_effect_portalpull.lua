@@ -31,6 +31,7 @@ local nzombies = engine.ActiveGamemode() == "nzombies"
 
 if SERVER then
 	entMeta.BO3PortalPull = function(self, duration, attacker, inflictor, vector)
+		if TFAWW_SkipEffect and TFAWW_SkipEffect(self) then return end -- Horde: not on players, bosses or elites
 		if nzombies and self.IsAATTurned and self:IsAATTurned() then return end
 
 		if duration == nil then

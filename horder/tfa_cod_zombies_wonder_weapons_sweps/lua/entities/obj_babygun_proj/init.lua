@@ -18,6 +18,7 @@ function ENT:StartTouch(ent)
 	for k, v in pairs(ents.FindInSphere(data.HitPos, 128)) do
 		if !v:IsNPC() and !v:IsNextBot() and !(v:IsPlayer() and cvars.Bool("nz_shrinkray_shrinkplayers")) then continue end
 		if v:GetNW2Bool("IsBaby") then continue end
+		if TFAWW_SkipEffect and TFAWW_SkipEffect(v) then continue end -- Horde: not on players, bosses or elites
 		
 		v:SetModelScale(0.4,0.5)
 		v:EmitSound( "weapons/shrinkray/effects/evt_shrink.ogg" )

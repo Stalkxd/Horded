@@ -67,7 +67,8 @@ function ENT:Attach(tgt, pos)
 		end
 	end
 	
-	if tgt:IsNextBot() then
+	if TFAWW_Resists and TFAWW_Resists(tgt) then -- Horde: bosses and elites aren't stunned
+	elseif tgt:IsNextBot() then
 		local oldThread = tgt.BehaveThread
 		tgt.BehaveThread = coroutine.create(function() -- Make the nextbot do nothing for 3 seconds
 			coroutine.wait(3.2)

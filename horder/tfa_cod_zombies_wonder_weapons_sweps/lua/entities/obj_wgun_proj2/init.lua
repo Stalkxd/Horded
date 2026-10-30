@@ -43,6 +43,12 @@ function ENT:Explode(ent, pos, normal)
 		
 		if !(v:IsNPC() or v:IsNextBot()) then continue end
 		if v:GetNW2Bool("IsInflating") then continue end
+
+		if TFAWW_Resists and TFAWW_Resists(v) then -- Horde: bosses and elites take damage instead of inflating
+			d:SetDamage(v:GetMaxHealth()/3)
+			v:TakeDamageInfo(d)
+			continue
+		end
 		
 		if string.find( v:GetClass(), "boss", 1, true) then
 			d:SetDamage( v:GetMaxHealth()/3 )
