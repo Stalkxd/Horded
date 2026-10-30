@@ -2,7 +2,9 @@ if not ArcCWInstalled then return end
 
 -- Base for the wonder weapon swords: Horde's melee base (lag compensated cleaving hits) plus the
 -- shared wonder weapon behaviour in horde_ww/sh_mixin.lua. Clip1 is the special attack charge.
-SWEP.Base = "arccw_horde_base_melee"
+-- Horde's melee base (lag compensated cleaving, perk hooks) when running Horde, ArcCW's own
+-- melee base anywhere else, so the swords also work in sandbox
+SWEP.Base = (HORDE or engine.ActiveGamemode() == "horde") and "arccw_horde_base_melee" or "arccw_base_melee"
 SWEP.Spawnable = false
 SWEP.AdminOnly = false
 SWEP.PrintName = "Horde wonder melee base"

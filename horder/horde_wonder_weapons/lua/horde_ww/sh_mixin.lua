@@ -95,7 +95,8 @@ end
 local function FindBaseFunc(base, key)
     local seen = 0
     while base and seen < 16 do
-        local stored = weapons.GetStored(base)
+        -- A missing base (the Horde melee base outside Horde) falls back to plain ArcCW
+        local stored = weapons.GetStored(base) or weapons.GetStored("arccw_base")
         if not stored then return end
         local value = rawget(stored, key)
         if value ~= nil then return value end
@@ -139,8 +140,10 @@ function HORDE_WW.Mixin(SWEP)
         return ret
     end
 
+    -- The second gun's clip size lives in its own field: ArcCW rewrites Secondary.ClipSize to -1
+    -- whenever attachments change (it keeps that slot for underbarrel launchers).
     function SWEP:WW_MaxClip2()
-        return self.Secondary.ClipSize or 0
+        return self.WW_Clip2Size or 0
     end
 
     function SWEP:FireAnimationEvent(pos, ang, event, options)
