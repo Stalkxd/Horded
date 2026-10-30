@@ -40,6 +40,10 @@ if GetConVar("sv_tfa_bo3ww_inf_specialist") == nil then
 	CreateReplConVar("sv_tfa_bo3ww_inf_specialist", "0", "Enable or disable infinite ammo on zombie specific specialist weapons. REQURIES MAP RESTART (0 false, 1 true), Default is 0.")
 end
 
+if GetConVar("sv_tfa_bo3ww_free_melee") == nil then
+	CreateReplConVar("sv_tfa_bo3ww_free_melee", "1", "Sword swings (Keeper Sword, Apothicon Sword) don't use ammo; their special attacks still do. REQURIES MAP RESTART (0 false, 1 true), Default is 1.")
+end
+
 if nzombies then
 	if GetConVar("nz_difficulty_bo3_tacticalkills") == nil then
 		CreateReplConVar("nz_difficulty_bo3_tacticalkills", "50", "Amount of kills required to upgrade Monkeybombs in nZombies. Default is 50.")
