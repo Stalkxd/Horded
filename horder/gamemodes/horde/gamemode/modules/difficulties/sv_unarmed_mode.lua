@@ -128,6 +128,10 @@ local function IsAccessiblePosition(pos)
     return true, floor
 end
 
+-- Weapon origins sit near the middle of the model, so spawning right on the
+-- floor sank long guns into it. Drop them from a little higher instead.
+local DROP_LIFT = Vector(0, 0, 32)
+
 local function Jitter(pos, r)
     return pos + Vector(math.random(-r, r), math.random(-r, r), 0)
 end
@@ -251,7 +255,7 @@ local function ScheduleRespawn(info)
         if not IsValid(ent) or IsValid(ent:GetOwner()) then return end
         local pos = FindSpawnPosition(CurrentDropPositions(), GetEnemySpawnPositions())
         if pos then
-            ent:SetPos(pos)
+            ent:SetPos(pos + DROP_LIFT)
             ent:SetAngles(Angle(0, math.random(0, 359), 0))
             local phys = ent:GetPhysicsObject()
             if IsValid(phys) then phys:SetVelocity(vector_origin) phys:Wake() end
@@ -266,10 +270,12 @@ local function SpawnWeaponDrop(class, pos, quality)
         print("[Horde Unarmed] Failed to create: " .. tostring(class))
         return nil
     end
-    ent:SetPos(pos)
+    ent:SetPos(pos + DROP_LIFT)
     ent:SetAngles(Angle(0, math.random(0, 359), 0))
     ent:Spawn()
     ent:Activate()
+    local phys = ent:GetPhysicsObject()
+    if IsValid(phys) then phys:Wake() end
     ent.Horde_UnarmedDrop = true
     ent:SetNWBool("Horde_UnarmedDrop", true)
     ent:SetNWString("Horde_UnarmedQuality", quality or "Common")

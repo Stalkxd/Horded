@@ -71,6 +71,7 @@ function PANEL:SetData(class, description_panel)
 end
 
 local star = Material("star.png", "mips smooth")
+local limit_full_color = Color(220, 60, 60)
 function PANEL:Paint()
     if self.class ~= nil then
         surface.SetDrawColor(self.bg_color)
@@ -80,6 +81,13 @@ function PANEL:Paint()
         surface.SetTextColor(Color(255,255,255))
         surface.SetTextPos(10, self:GetTall() / 2 - 10)
         surface.DrawText(translate.Get("Class_" .. self.subclass.PrintName) or self.subclass.PrintName)
+
+        -- Players currently on this class, against the server's limit for it.
+        local count = HORDE:CountClassPlayers(self.class.name)
+        local limit = HORDE:GetClassPlayerLimit(self.class.name)
+        local full = limit < math.huge and count >= limit
+        local count_text = limit < math.huge and (count .. "/" .. limit) or tostring(count)
+        draw.SimpleText(count_text, "Item", self:GetWide() - 10, self:GetTall() / 2, full and limit_full_color or self.text_color, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 
         surface.SetDrawColor(255, 255, 255, 255)
         local level = MySelf:Horde_GetLevel(self.subclass.PrintName)

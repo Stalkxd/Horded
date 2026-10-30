@@ -276,81 +276,81 @@ end
 function SWEP:DealDamage()
 	if not IsValid(self.Owner) then return end
 
-	self.Owner:LagCompensation( true )
+	HORDE:WithLagCompensation( self.Owner, function()
 
-	local tr = util.TraceLine( {
-		start = self.Owner:GetShootPos(),
-		endpos = self.Owner:GetShootPos() + self.Owner:GetAimVector() * self.HitDistance,
-		filter = self.Owner,
-		mask = MASK_SHOT_HULL
-	} )
-
-	if ( !IsValid( tr.Entity ) ) then
-		tr = util.TraceHull( {
+		local tr = util.TraceLine( {
 			start = self.Owner:GetShootPos(),
 			endpos = self.Owner:GetShootPos() + self.Owner:GetAimVector() * self.HitDistance,
 			filter = self.Owner,
-			mins = Vector( -10, -10, -8 ),
-			maxs = Vector( 10, 10, 8 ),
 			mask = MASK_SHOT_HULL
 		} )
-	end
 
-	if ( tr.Hit && !( game.SinglePlayer() && CLIENT ) ) then
-		self:EmitSound( HitSound )
-	end
-
-	local hit = false
-
-	local isFriendly = HORDE and HORDE.IsPlayerOrMinion and IsValid( tr.Entity ) and HORDE:IsPlayerOrMinion( tr.Entity )
-
-	if ( SERVER && IsValid( tr.Entity ) && !isFriendly && ( tr.Entity:IsNPC() || tr.Entity:IsNextBot() || tr.Entity:Health() > 0 ) ) then
-		local dmginfo = DamageInfo()
-
-		local attacker = self.Owner
-		if ( !IsValid( attacker ) ) then attacker = self end
-		dmginfo:SetAttacker( attacker )
-		dmginfo:SetInflictor( self )
-
-		local mode = self:GetNWInt("AttackMode", 1)
-		local baseDmg
-		if mode == 1 then
-			baseDmg = math.random( self.FastDamageMin, self.FastDamageMax )
-		else
-			baseDmg = math.random( self.SlowDamageMin, self.SlowDamageMax )
+		if ( !IsValid( tr.Entity ) ) then
+			tr = util.TraceHull( {
+				start = self.Owner:GetShootPos(),
+				endpos = self.Owner:GetShootPos() + self.Owner:GetAimVector() * self.HitDistance,
+				filter = self.Owner,
+				mins = Vector( -10, -10, -8 ),
+				maxs = Vector( 10, 10, 8 ),
+				mask = MASK_SHOT_HULL
+			} )
 		end
 
-		local level = self:GetUpgradeLevel()
-		if level > 0 then
-			baseDmg = baseDmg * (1 + 0.03 * level)
+		if ( tr.Hit && !( game.SinglePlayer() && CLIENT ) ) then
+			self:EmitSound( HitSound )
 		end
 
-		dmginfo:SetDamage( baseDmg )
+		local hit = false
 
-		dmginfo:SetDamageType( DMG_SLASH )
-		dmginfo:SetDamagePosition( tr.HitPos )
-		dmginfo:SetDamageForce( self.Owner:GetForward() * 9000 )
+		local isFriendly = HORDE and HORDE.IsPlayerOrMinion and IsValid( tr.Entity ) and HORDE:IsPlayerOrMinion( tr.Entity )
 
-		tr.Entity:TakeDamageInfo( dmginfo )
-		hit = true
-	end
+		if ( SERVER && IsValid( tr.Entity ) && !isFriendly && ( tr.Entity:IsNPC() || tr.Entity:IsNextBot() || tr.Entity:Health() > 0 ) ) then
+			local dmginfo = DamageInfo()
 
-	if ( SERVER && IsValid( tr.Entity ) ) then
-		local phys = tr.Entity:GetPhysicsObject()
-		if ( IsValid( phys ) ) then
-			phys:ApplyForceOffset( self.Owner:GetAimVector() * 80 * phys:GetMass(), tr.HitPos )
+			local attacker = self.Owner
+			if ( !IsValid( attacker ) ) then attacker = self end
+			dmginfo:SetAttacker( attacker )
+			dmginfo:SetInflictor( self )
+
+			local mode = self:GetNWInt("AttackMode", 1)
+			local baseDmg
+			if mode == 1 then
+				baseDmg = math.random( self.FastDamageMin, self.FastDamageMax )
+			else
+				baseDmg = math.random( self.SlowDamageMin, self.SlowDamageMax )
+			end
+
+			local level = self:GetUpgradeLevel()
+			if level > 0 then
+				baseDmg = baseDmg * (1 + 0.03 * level)
+			end
+
+			dmginfo:SetDamage( baseDmg )
+
+			dmginfo:SetDamageType( DMG_SLASH )
+			dmginfo:SetDamagePosition( tr.HitPos )
+			dmginfo:SetDamageForce( self.Owner:GetForward() * 9000 )
+
+			tr.Entity:TakeDamageInfo( dmginfo )
+			hit = true
 		end
-	end
 
-	if ( SERVER ) then
-		if ( hit ) then
-			self:SetCombo( self:GetCombo() + 1 )
-		else
-			self:SetCombo( 0 )
+		if ( SERVER && IsValid( tr.Entity ) ) then
+			local phys = tr.Entity:GetPhysicsObject()
+			if ( IsValid( phys ) ) then
+				phys:ApplyForceOffset( self.Owner:GetAimVector() * 80 * phys:GetMass(), tr.HitPos )
+			end
 		end
-	end
 
-	self.Owner:LagCompensation( false )
+		if ( SERVER ) then
+			if ( hit ) then
+				self:SetCombo( self:GetCombo() + 1 )
+			else
+				self:SetCombo( 0 )
+			end
+		end
+
+	end )
 end
 
 function SWEP:Reload()

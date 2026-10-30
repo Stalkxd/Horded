@@ -435,13 +435,9 @@ function SWEP:DoPrimaryFire(isent, data)
 
             ArcCW:ShootPhysBullet(self, data.Src, vel, prof)
         else
-            if owner:IsPlayer() then
-                owner:LagCompensation(true)
-            end
+            -- FireBullets lag compensates by itself; wrapping it again
+            -- opened a second session on top of the engine's own.
             self:FireBullets(data)
-            if owner:IsPlayer() then
-                owner:LagCompensation(false)
-            end
         end
     end
 end

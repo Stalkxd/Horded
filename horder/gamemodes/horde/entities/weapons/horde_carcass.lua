@@ -142,6 +142,9 @@ function SWEP:DealDamage()
 		} )
 	end
 
+	-- Only the traces are compensated: FireBullets below compensates by itself.
+	self.Owner:LagCompensation( false )
+
 	if ( tr.Hit && !( game.SinglePlayer() && CLIENT ) ) then
 		self:EmitSound( HitSound )
 	end
@@ -267,8 +270,6 @@ function SWEP:DealDamage()
 			self:SetCombo( 0 )
 		end
 	end
-
-	self.Owner:LagCompensation( false )
 
 end
 
@@ -488,8 +489,6 @@ function SWEP:UpdateAttack()
 	if self.Owner:Horde_GetPerk("carcass_bio_thruster") then return end
 	if !(self.Owner:Horde_GetPerk("carcass_grappendix")) then return end
 
-	self.Owner:LagCompensation( true )
-
 	if (!intestine_endpos) then
 		intestine_endpos = self.Tr.HitPos
 		if self.Tr.Entity:IsNPC() then
@@ -570,8 +569,6 @@ function SWEP:UpdateAttack()
 		end
 		self.LastDrain = CurTime() + self.DrainInterval
 	end
-
-	self.Owner:LagCompensation( false )
 
 end
 

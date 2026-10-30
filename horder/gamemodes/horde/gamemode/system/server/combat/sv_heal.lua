@@ -36,6 +36,9 @@ end
 
 local plymeta = FindMetaTable("Player")
 
+local HEAL_MONEY = 3
+local HEAL_MONEY_OVERHEAL = 0.5
+
 function plymeta:Horde_AddHealAmount(amount)
     if GetConVar("horde_enable_sandbox"):GetInt() == 1 then return end
     if not self.Horde_HealAmount then self.Horde_HealAmount = 0 end
@@ -58,6 +61,9 @@ function HORDE:OnPlayerHeal(ply, healinfo, silent)
     if (ply:GetMaxHealth() <= ply:Health()) and (healinfo:GetOverHealPercentage() <= 0) then return end
 
     local healer = healinfo:GetHealer()
+    -- Healing someone who is already at full health only overheals them,
+    -- which pays far less so medics can't farm money on a full-HP teammate.
+    local was_overheal = ply:Health() >= ply:GetMaxHealth()
     if healer:IsPlayer() and healer:IsValid() then
         local heal_mult = 1
         local curr_weapon = HORDE:GetCurrentWeapon(healer)
@@ -90,7 +96,7 @@ function HORDE:OnPlayerHeal(ply, healinfo, silent)
         alpha = 50,
     })
     if healer ~= ply and HORDE.start_game and HORDE.current_break_time <= 0 then
-        healer:Horde_AddMoney(3)
+        healer:Horde_AddMoney(was_overheal and HEAL_MONEY_OVERHEAL or HEAL_MONEY)
         healer:Horde_SyncEconomy()
         net.Start("Horde_RenderHealer")
             net.WriteString(healer:GetName())
