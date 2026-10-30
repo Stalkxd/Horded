@@ -28,7 +28,7 @@ function ENT:Initialize()
 		SafeRemoveEntityDelayed(self, 3)
 	end
 
-	ParticleEffectAttach("horror_bloodgibs", PATTACH_ABSORIGIN_FOLLOW, self, 1)
+	ParticleEffectAttach("bo3_annihilator_blood_gib_trails", PATTACH_ABSORIGIN_FOLLOW, self, 1)
 end
 
 function ENT:Think()

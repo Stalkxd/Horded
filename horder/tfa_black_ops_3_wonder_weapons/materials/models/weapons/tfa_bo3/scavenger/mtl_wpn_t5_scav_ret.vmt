@@ -1,6 +1,0 @@
-"UnlitGeneric"
-{
-	$basetexture			"models/weapons/tfa_bo3/scavenger/zombie_sniper_glow_c"
-	$basetexturetransform	"center .5 .475 scale 1.35 1.35 rotate -90 translate 0 0"
-	$translucent "1"
-}

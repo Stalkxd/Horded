@@ -94,7 +94,10 @@ function ENT:Initialize(...)
 end
 
 function ENT:DoExplosionEffect()
-	ParticleEffect("bo3_spider_impact", self:GetPos(), Angle(0,0,0))
+	local effectdata = EffectData()
+	effectdata:SetOrigin(self:GetPos())
+	util.Effect("HelicopterMegaBomb", effectdata)
+	util.Effect("Explosion", effectdata)
 
 	self:EmitSound(self.ExplosionSound1)
 end
