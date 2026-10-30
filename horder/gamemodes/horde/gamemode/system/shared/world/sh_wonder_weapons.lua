@@ -1,93 +1,41 @@
--- Horde balance data for the TFA wonder weapon packs (CoD Zombies Wonder Weapons and
--- Black Ops 3 Wonder Weapons). The packs are built for nZombies and kill most targets in one
--- hit, so under Horde every damage event from them is capped instead.
+-- Horde balance data for the wonder weapons addon (horde_wonder_weapons, ArcCW remakes of the
+-- CoD Zombies and Black Ops 3 wonder weapons). Their projectiles come from nZombies and can kill
+-- most targets in one hit, so under Horde every damage event from them is capped instead.
 --   cap  = the most damage one hit (or one tick) can deal, before Horde perk bonuses
 HORDE.WonderWeapons = {
-    tfa_raygun = { cap = 300 },
-    tfa_wintershowl = { cap = 150 },
-    tfa_vr11 = { cap = 200 },
-    tfa_blundergat = { cap = 140 },
-    tfa_wavegun = { cap = 250 },
-    tfa_acidgat = { cap = 350 },
-    tfa_paralyzer = { cap = 60 },
-    tfa_jetgun = { cap = 80 },
-    tfa_sliquifier = { cap = 400 },
-    tfa_shrinkray = { cap = 500 },
-    tfa_staff_fire = { cap = 300 },
-    tfa_staff_ice = { cap = 200 },
-    tfa_staff_lightning = { cap = 250 },
-    tfa_staff_wind = { cap = 600 },
-    tfa_scavenger = { cap = 2500 },
-    tfa_raygun_mark2 = { cap = 250 },
-    tfa_thundergun = { cap = 700 },
-    tfa_wunderwaffe = { cap = 800 },
-    tfa_staff_fire_ult = { cap = 480 },
-    tfa_staff_ice_ult = { cap = 320 },
-    tfa_staff_lightning_ult = { cap = 400 },
-    tfa_staff_wind_ult = { cap = 950 },
-    tfa_bo3_gkzmk3 = { cap = 350 },
-    tfa_bo3_zmbbow = { cap = 600 },
-    tfa_bo3_skullgun = { cap = 120 },
-    tfa_bo3_keepersword = { cap = 700 },
-    tfa_bo3_zodsword = { cap = 700 },
-    tfa_bo3_mirg2000 = { cap = 450 },
-    tfa_bo3_gauntlet = { cap = 90 },
-    tfa_bo3_idgun = { cap = 1500 },
-    tfa_bo3_dg4 = { cap = 1200 },
-    tfa_bo3_annihilator_zm = { cap = 2500 },
-    tfa_bo3_monkeybomb = { cap = 600 },
-    tfa_bo3_lilarnie = { cap = 300 },
-    tfa_bo3_matryoshka = { cap = 500 },
-    tfa_bo3_gstrike = { cap = 900 },
-    tfa_bo3_gersch = { cap = 800 },
+    arccw_ww_scavenger = { cap = 2500 },
+    arccw_ww_zapguns = { cap = 250 },
+    arccw_ww_sliquifier = { cap = 400 },
+    arccw_ww_zodsword = { cap = 700 },
+    arccw_ww_deathmachine = { cap = 100 },
+    arccw_ww_gauntlet = { cap = 500 },
+    arccw_ww_gkzmk3 = { cap = 350 },
+    arccw_ww_keepersword = { cap = 700 },
+    arccw_ww_kt4 = { cap = 600 },
+    arccw_ww_dg4 = { cap = 1200 },
+    arccw_ww_zmbbow = { cap = 600 },
 }
 
 -- Projectiles and lingering effects, for when their damage cannot be traced back to a weapon.
 HORDE.WonderWeaponEntities = {
-    obj_rgun_proj = "tfa_raygun",
-    obj_whowl_proj = "tfa_wintershowl",
-    obj_humangun_proj = "tfa_vr11",
-    obj_wgun_proj = "tfa_wavegun",
-    obj_wgun_proj2 = "tfa_wavegun",
-    obj_acidgat_proj = "tfa_acidgat",
-    obj_sliquifier_proj = "tfa_sliquifier",
-    obj_sliquifier_puddle = "tfa_sliquifier",
-    obj_babygun_proj = "tfa_shrinkray",
-    obj_firestaff_proj = "tfa_staff_fire",
-    obj_icestaff_proj = "tfa_staff_ice",
-    obj_lstaff_proj = "tfa_staff_lightning",
-    obj_windstaff_proj = "tfa_staff_wind",
-    obj_scavenger_proj = "tfa_scavenger",
-    obj_wunderwaffe_proj = "tfa_wunderwaffe",
-    obj_blank_proj = "tfa_wunderwaffe",
-    bo3_ww_mk3 = "tfa_bo3_gkzmk3",
-    bo3_ww_gkz = "tfa_bo3_gkzmk3",
-    bo3_ww_gkzmk3_bh = "tfa_bo3_gkzmk3",
-    bo3_ww_zmbbow = "tfa_bo3_zmbbow",
-    bo3_ww_mirg = "tfa_bo3_mirg2000",
-    bo3_ww_mirg_puddle = "tfa_bo3_mirg2000",
-    bo3_status_effect_spores = "tfa_bo3_mirg2000",
-    bo3_ww_idgun = "tfa_bo3_idgun",
-    bo3_status_effect_portalpull = "tfa_bo3_idgun",
-    bo3_special_dg4 = "tfa_bo3_dg4",
-    bo3_special_dg4clone = "tfa_bo3_dg4",
-    bo3_special_keepersword = "tfa_bo3_keepersword",
-    bo3_status_effect_skullstun = "tfa_bo3_skullgun",
-    bo3_tac_monkeybomb = "tfa_bo3_monkeybomb",
-    bo3_tac_lilarnie = "tfa_bo3_lilarnie",
-    bo3_tac_lilarnie_squid = "tfa_bo3_lilarnie",
-    bo3_tac_matryoshka = "tfa_bo3_matryoshka",
-    bo3_tac_matryoshka_mini = "tfa_bo3_matryoshka",
-    bo3_tac_gstrike = "tfa_bo3_gstrike",
-    bo3_tac_gstrike_mortar = "tfa_bo3_gstrike",
-    bo3_tac_gersch = "tfa_bo3_gersch",
+    obj_scavenger_proj = "arccw_ww_scavenger",
+    obj_wgun_proj = "arccw_ww_zapguns",
+    obj_sliquifier_proj = "arccw_ww_sliquifier",
+    obj_sliquifier_puddle = "arccw_ww_sliquifier",
+    bo3_ww_mk3 = "arccw_ww_gkzmk3",
+    bo3_ww_gkz = "arccw_ww_gkzmk3",
+    bo3_ww_gkzmk3_bh = "arccw_ww_gkzmk3",
+    bo3_ww_zmbbow = "arccw_ww_zmbbow",
+    bo3_ww_mirg = "arccw_ww_kt4",
+    bo3_ww_mirg_puddle = "arccw_ww_kt4",
+    bo3_status_effect_spores = "arccw_ww_kt4",
+    bo3_special_dg4 = "arccw_ww_dg4",
+    bo3_special_dg4clone = "arccw_ww_dg4",
+    bo3_special_keepersword = "arccw_ww_keepersword",
 }
 
 -- Used for pack entities that are not listed above.
 HORDE.WONDER_WEAPON_FALLBACK_CAP = 300
-
--- The packs cap reserve ammo at nZombies values. Horde lets players carry this many times that.
-HORDE.WONDER_WEAPON_AMMO_MULT = 3
 
 -- For pack code: true for bosses and elites (Weeper, Hulk, Yeti, Lesion...), which shrug off
 -- control effects such as shrinking, freezing, mind control, lifting and pulling.
@@ -136,16 +84,6 @@ local function ResolveWonderWeapon(dmginfo)
     end
 
     if not HORDE.WonderWeaponEntities[class] and not IsPackEntity(class) then return end
-
-    -- Upgraded staffs share projectiles with the base staffs, so prefer what the owner holds
-    local owner = inflictor:GetOwner()
-    if IsValid(owner) and owner:IsPlayer() then
-        local wpn = owner:GetActiveWeapon()
-        if IsValid(wpn) and HORDE.WonderWeapons[wpn:GetClass()] then
-            local mapped = HORDE.WonderWeaponEntities[class]
-            if not mapped or string.StartWith(wpn:GetClass(), mapped) then return wpn:GetClass() end
-        end
-    end
 
     return HORDE.WonderWeaponEntities[class] or false
 end

@@ -1,7 +1,0 @@
-"UnlitGeneric"
-{
-	"$basetexture" "vgui/entities/tfa_staff_ice_ult"
-	"$nolod" 1
-	"$vertexalpha" 1
-	"$vertexcolor" 1
-}

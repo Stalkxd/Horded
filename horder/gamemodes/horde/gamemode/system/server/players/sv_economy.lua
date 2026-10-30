@@ -1054,10 +1054,6 @@ net.Receive("Horde_BuyItemAmmoPrimary", function (len, ply)
 
     local ammo_safe_clip = math.max(1, clip_size)
     local max_ammo = wpn.Primary and tonumber(wpn.Primary.MaxAmmo)
-    -- Wonder weapons come with nZombies reserve caps that a fresh purchase already fills
-    if max_ammo and HORDE.WonderWeapons and HORDE.WonderWeapons[class] then
-        max_ammo = max_ammo * HORDE.WONDER_WEAPON_AMMO_MULT
-    end
     if max_ammo then
         local ammo_room = max_ammo - ply:GetAmmoCount(ammo_id)
         local max_mags = math.floor(ammo_room / ammo_safe_clip)

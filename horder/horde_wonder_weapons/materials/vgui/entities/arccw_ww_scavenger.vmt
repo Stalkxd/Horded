@@ -1,0 +1,7 @@
+"UnlitGeneric"
+{
+	"$basetexture" "vgui/entities/arccw_ww_scavenger"
+	"$nolod" 1
+	"$vertexalpha" 1
+	"$vertexcolor" 1
+}

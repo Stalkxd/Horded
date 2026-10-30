@@ -1,9 +1,0 @@
-"SpriteCard"
-{
-"$baseTexture" "particles/custom/misc/electric_arc2"
-"$translucent" 1
-"$additive" 1
-"$vertexcolor" 1
-"$vertexalpha" 1
-//"$overbrightfactor" 1
-}

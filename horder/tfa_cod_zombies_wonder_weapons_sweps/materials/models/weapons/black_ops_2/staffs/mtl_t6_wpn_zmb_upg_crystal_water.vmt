@@ -1,9 +1,0 @@
-"VertexlitGeneric"
-{
-	"$basetexture" "models/weapons/black_ops_2/staffs/ice_gem"
-	"$selfillum" "1"
-	"$bumpmap" "models/weapons/black_ops_2/staffs/gem_n"
-	"$envmap" "env_cubemap"
-	"$envmaptint" "[0.6 0.6 0.6]"
-	"$normalmapalphaenvmapmask" "1"
-}

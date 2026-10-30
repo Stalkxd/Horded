@@ -1,0 +1,6 @@
+{
+	"title": "Horde Wonder Weapons (ArcCW)",
+	"type": "weapon",
+	"tags": ["fun", "scenic"],
+	"ignore": ["*.psd", "*.txt"]
+}
