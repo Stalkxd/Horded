@@ -431,6 +431,7 @@ local SYSTEMS_MANIFEST = {
     { path = "server/players/sv_commands.lua",       server_only = true, desc = "Console commands" },
     { path = "server/players/sv_playerlifecycle.lua",server_only = true, desc = "Player join/leave/vote" },
     { path = "server/players/sv_leaderboard.lua",    server_only = true, desc = "Leaderboard" },
+    { path = "server/players/sv_scoreboard_ping.lua", server_only = true, desc = "Fast scoreboard ping" },
     { path = "server/players/sv_achievements.lua",   server_only = true, desc = "Player achievements (tracking, SQLite, rewards)" },
 
     { path = "server/combat/sv_hitnumbers.lua",      server_only = true, desc = "Hit numbers" },
