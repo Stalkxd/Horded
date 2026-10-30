@@ -1,0 +1,8 @@
+"UnlitGeneric"
+{
+	"$basetexture" "vgui/hud/tfa_staff_ice"
+	"$color" "[1 0.9 0]"
+	"$additive" 1
+	"$vertexalpha" 1
+	"$vertexcolor" 1
+}

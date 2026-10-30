@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/keepersword/zombietron_diamond_d"
+	$color2 "[5 0 0]"
+	$translucent "1"
+}

@@ -1,0 +1,16 @@
+VertexLitGeneric
+{
+	$baseTexture "models\weapons\black_ops_1\scavenger\~-gt5_weapon_zsniper_c"
+	"$bumpmap" "models\weapons\black_ops_1\scavenger\t5_weapon_zsniper_n"
+	
+	"$phong" 1
+	"$phongboost" 64
+	//"$phongexponent" 8
+	"$phongexponenttexture" "models\common\metal_exponent"
+	"$phongalbedotint" 1
+	"$phongfresnelranges" "[0.1 0.5 1.0]"
+	"$normalmapalphaphongmask" 1
+	
+	//"$envmap" "env_cubemap"
+	"$envmaptint" "[0.35 0.35 0.35]"
+}

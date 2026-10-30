@@ -1,0 +1,11 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/mirg2000/i_wpn_t7_zmb_dlc2_mirg2000_decal_c"
+	$bumpmap				"null-bumpmap"
+	$translucent "1"
+
+	$phong	"1"
+	$phongboost	"1"
+	$phongfresnelranges	"[.78 .9 1]"
+	$phongexponent "33"
+}

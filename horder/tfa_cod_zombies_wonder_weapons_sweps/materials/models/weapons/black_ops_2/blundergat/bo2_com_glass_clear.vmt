@@ -1,0 +1,13 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/weapons/black_ops_2/blundergat/~-gcore_glass_plain_c"
+	"$translucent" 1
+	
+	"$phong" "1"
+	"$phongexponent"				"4"
+	"$phongboost"					"10"
+	"$phongfresnelranges"			"[0.5 0.7 0.8]"
+	
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[0.5 0.5 0.5]"
+}

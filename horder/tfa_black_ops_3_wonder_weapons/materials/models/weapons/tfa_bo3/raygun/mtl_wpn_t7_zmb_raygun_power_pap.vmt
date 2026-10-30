@@ -1,0 +1,29 @@
+"VertexlitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/raygun/i_wpn_t7_zmb_raygun_power_e"
+	$color2 "[1 0 0]"
+	$additive "1"
+	
+	$selfillum "1"
+	$selfillummask "models/weapons/tfa_bo3/raygun/i_wpn_t7_zmb_raygun_power_e"
+	$selfillumtint "[1 0 0]"
+
+	$emissiveblendenabled		"1"
+	$emissiveblendstrength		"1"
+	$emissiveblendtexture		"vgui/white"
+	$emissiveblendbasetexture	"models/weapons/tfa_bo3/raygun/i_wpn_t7_zmb_raygun_power_e"
+	$emissiveblendflowtexture	"vgui/white"
+	$emissiveblendtint			"[1 0 0]"
+	$emissiveblendscrollvector	"[0 0]"
+	
+	Proxies
+	{
+		TextureScroll
+		{
+			"textureScrollVar" "$basetexturetransform"
+			"textureScrollRate" "0.1"
+			"textureScrollAngle" "30"
+			"rotateVar" "90"
+		}
+	}
+}

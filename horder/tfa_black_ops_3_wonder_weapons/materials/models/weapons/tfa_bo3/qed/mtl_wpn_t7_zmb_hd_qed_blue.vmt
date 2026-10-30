@@ -1,0 +1,43 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/qed/i_wpn_t7_zmb_hd_qed_blue_e"
+	$selfillum "1"
+	$selfillummask "vgui/white"
+
+	$detail "models/weapons/tfa_bo3/qed/zombie_tele_glow_scroll"
+	$detailscale "[1 1]"
+	$detailblendmode "1"
+	$detailblendfactor "1"
+
+	$center "[0.5 0.5]"
+	$translate "[0 0]"
+
+	//credit to hidden, i never knew you could use texturetransform as a proxy
+	Proxies
+	{
+		LinearRamp
+		{
+			rate "-0.5"
+			initialvalue "0"
+			resultvar "$translate[1]"
+		}
+		LinearRamp
+		{
+			rate "0.5"
+			initialvalue "0"
+			resultvar "$translate[0]"
+		}
+		TextureTransform
+		{
+			centervar "$center"
+			translatevar "$translate"
+			resultvar "$detailtexturetransform"
+		}
+		TextureTransform
+		{
+			centervar "$center"
+			translatevar "$translate"
+			resultvar "$basetexturetransform"
+		}
+	}
+}

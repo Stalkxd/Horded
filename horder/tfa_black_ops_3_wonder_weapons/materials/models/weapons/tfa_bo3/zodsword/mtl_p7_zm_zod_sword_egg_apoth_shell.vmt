@@ -1,0 +1,11 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/zodsword/i_mtl_p7_zm_zod_egg_shell_d"
+	$bumpmap				"models/weapons/tfa_bo3/zodsword/i_mtl_p7_zm_zod_egg_shell_n"
+	$additive "1"
+
+	$phong	"1"
+	$phongboost	"0.5"
+	$phongfresnelranges	"[.78 .9 1]"
+	$phongexponent "66"
+}

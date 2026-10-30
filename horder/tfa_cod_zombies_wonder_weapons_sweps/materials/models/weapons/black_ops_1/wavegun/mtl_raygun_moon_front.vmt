@@ -1,0 +1,13 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/weapons/black_ops_1/wavegun/_-gt5_weapon_zom_moon_raygun_front_clr"
+	"$bumpmap" "models/weapons/black_ops_1/wavegun/t5_weapon_zom_moon_raygun_front_n"
+	
+	//"$color" "[.2 .2 .2]"
+
+	"$phong" "1"
+	"$phongexponent" "16"
+	"$phongboost"	"10"
+	"$phongfresnelranges"	"[0.1 0.6 1.0]"
+	"$normalmapalphaphongmask" "1"	
+}

@@ -1,0 +1,14 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/weapons/black_ops_2/slipgun/zmb_slipgun_glass"
+	"$translucent" "1"
+
+	"$phong" "1"
+	"$phongexponent" "1"
+	"$phongboost" "2"
+	"$phongfresnelranges" "[0 0.5 1]"
+	//"$normalmapalphaphongmask" "1"
+	
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[0.5 0.5 0.5]"
+}

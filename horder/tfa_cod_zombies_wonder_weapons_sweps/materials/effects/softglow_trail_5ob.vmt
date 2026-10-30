@@ -1,0 +1,7 @@
+"SpriteCard"
+{
+	"$basetexture"	"Effects/softglow"
+	"$additive"	1
+	$overbrightfactor	5
+	$splinetype 2
+}

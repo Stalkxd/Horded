@@ -1,0 +1,15 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/qed/haymaker/i_wpn_t7_shotty_tc12_release_d"
+	$bumpmap				"models/weapons/tfa_bo3/qed/haymaker/i_wpn_t7_shotty_tc12_release_n"
+	$phongexponenttexture	"models/weapons/tfa_bo3/qed/haymaker/i_wpn_t7_shotty_tc12_release_s"
+
+	$phong	"1"
+	$phongboost	"5"
+	$phongfresnelranges	"[.78 .9 1]"
+
+	$envmap	"env_cubemap"
+	$envmaptint	"[.25 .25 .25]"
+	$normalmapalphaenvmapmask	"1"
+	$envmapfresnel	"1"
+}

@@ -1,0 +1,12 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/weapons/black_ops_2/blundergat/~-gp6_anim_zm_al_pakasplat_c"
+	"$bumpmap" "models/weapons/black_ops_2/blundergat/p6_anim_zm_al_pakasplat_n"
+	"$selfillum" "1"
+	
+	"$phong" "1"
+	"$phongexponent" "8"
+	"$phongboost" "1"
+	"$phongfresnelranges" "[0.5 0.75 1]"
+	"$normalmapalphaphongmask" "1"
+}

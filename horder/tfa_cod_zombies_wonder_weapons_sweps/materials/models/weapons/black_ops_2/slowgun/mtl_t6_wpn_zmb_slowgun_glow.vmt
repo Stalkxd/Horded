@@ -1,0 +1,21 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/weapons/black_ops_2/slowgun/~-gmtl_t6_wpn_zmb_slowgun_col"
+	"$bumpmap" "models/weapons/black_ops_2/slowgun/mtl_t6_wpn_zmb_slowgun_nml"
+	
+	$emissiveBlendEnabled 1
+	$emissiveBlendTexture vgui/white
+	$emissiveBlendBaseTexture "models/weapons/black_ops_2/slowgun/reveal"
+	$emissiveBlendFlowTexture "models/weapons/black_ops_2/slowgun/glowcycle_gradient_02"
+	$emissiveBlendTint "{105 156 84}"
+	$emissiveBlendStrength 100
+	$emissiveBlendScrollVector "[0 0]"
+	
+	"$phong" "1"
+	//"$phongexponent" "4"
+	"$phongexponenttexture" "models\common\metal_exponent"
+	"$phongalbedotint" 1
+	"$phongboost" "64"
+	"$phongfresnelranges" "[0.3 0.6 1]"
+	"$normalmapalphaphongmask" "1"
+}

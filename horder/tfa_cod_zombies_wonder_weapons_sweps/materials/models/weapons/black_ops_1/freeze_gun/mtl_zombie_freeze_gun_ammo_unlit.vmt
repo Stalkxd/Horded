@@ -1,0 +1,23 @@
+"UnlitGeneric"
+{
+	"$basetexture" "models\weapons\black_ops_1\freeze_gun\_-gt5_weapon_zombie_freeze_ammo_c"
+	
+	"$center" "[0.5 0.5]"
+	"$translate" "[0 0]"
+
+	"Proxies"
+	{
+		"LinearRamp"
+		{
+			"rate" -0.2
+			"initialvalue" 0
+			"resultvar" "$translate[0]"
+		}
+		"TextureTransform"
+		{
+			"centervar" "$center"
+			"translatevar" "$translate"
+			"resultvar" "$basetexturetransform"
+		}
+	}
+}

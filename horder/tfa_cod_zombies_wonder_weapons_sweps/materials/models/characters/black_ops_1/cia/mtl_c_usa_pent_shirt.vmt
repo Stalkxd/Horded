@@ -1,0 +1,5 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/characters/black_ops_1/cia/c_usa_pent_shirt_c"
+	"$bumpmap" "models/characters/black_ops_1/cia/c_usa_pent_shirt_n"
+}

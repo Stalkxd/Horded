@@ -1,0 +1,12 @@
+"VertexlitGeneric"
+{
+	$basetexture			"vgui/black"
+	
+	$emissiveblendenabled		"1"
+	$emissiveblendstrength		"1"
+	$emissiveblendtexture		"vgui/overlay/i_t6_wpn_zmb_raygun_glow_upg_c"
+	$emissiveblendbasetexture	"vgui/white"
+	$emissiveblendflowtexture	"vgui/overlay/i_t6_wpn_zmb_raygun_glow_3c"
+	$emissiveblendtint			"[1 1 1]"
+	$emissiveblendscrollvector	"[0.1 -0.05]"
+}

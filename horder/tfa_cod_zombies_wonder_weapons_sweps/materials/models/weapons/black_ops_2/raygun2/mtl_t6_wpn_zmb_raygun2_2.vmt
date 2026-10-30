@@ -1,0 +1,29 @@
+"UnlitGeneric"
+{
+	"$basetexture" "models/weapons/black_ops_2/raygun2/mtl_t6_wpn_zmb_raygun2_glow2"
+	"$translate" "[0 0]"
+	"$center" "[0.5 0.5]"
+	
+	"Proxies"
+	{
+		"LinearRamp"
+		{
+			"rate" 0.1
+			"initialValue" 0.0
+			"resultVar" "$translate"
+		}
+		"TextureTransform"
+		{
+			"translateVar" "$translate"
+			"centerVar" "$center"
+			"resultVar" "$basetexturetransform"
+		}
+		
+		UniformNoise
+		{
+			"minVal" 0.5
+			"maxVal" 1
+			"resultVar" "$color2"
+		}
+	}
+}

@@ -1,0 +1,5 @@
+"UnlitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/zodsword/i_mtl_p7_zm_zod_egg_apoth_01a_d"
+	$additive "1"
+}

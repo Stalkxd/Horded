@@ -1,0 +1,13 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/gersch/i_wpn_t7_zmb_hd_gersch_device_d"
+	$color2 "[.25 5 .25]"
+
+	$emissiveblendenabled		"1"
+	$emissiveblendstrength		"1"
+	$emissiveblendtexture		"vgui/white"
+	$emissiveblendbasetexture	"models/weapons/tfa_bo3/gersch/i_wpn_t7_zmb_hd_gersch_device_d"
+	$emissiveblendflowtexture	"vgui/white"
+	$emissiveblendtint			"[.25 5 .25]"
+	$emissiveblendscrollvector	"[0 0]"
+}

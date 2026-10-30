@@ -1,0 +1,12 @@
+VertexLitGeneric
+{
+	$baseTexture "models\weapons\black_ops_1\thundergun\_-gt5_weapon_thundergun_c"
+	"$bumpmap" "models\weapons\black_ops_1\thundergun\t5_weapon_thundergun_n"
+	
+	"$phong" 1
+	"$phongboost" 0.6
+	"$phongexponent" 3
+	"$normalmapalphaphongmask" "1"
+
+	"$phongfresnelranges"			"[0.5 0.75 1]"
+}

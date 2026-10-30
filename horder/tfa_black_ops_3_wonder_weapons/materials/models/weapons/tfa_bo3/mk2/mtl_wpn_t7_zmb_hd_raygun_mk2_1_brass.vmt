@@ -1,0 +1,17 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/mk2/i_wpn_t7_zmb_hd_raygun_mk2_1_spc"
+	$bumpmap				"models/weapons/tfa_bo3/mk2/mk2_1_n"
+	$phongexponenttexture	"models/weapons/tfa_bo3/mk2/mk2_1_s"
+	$color2 "[.25 .25 .25]"
+
+	$phong	"1"
+	$phongboost	"15"
+	$phongfresnelranges	"[.78 .9 1]"
+	$phongalbedotint "1"
+
+	$envmap	"env_cubemap"
+	$envmaptint	"[.25 .25 .25]"
+	$normalmapalphaenvmapmask	"1"
+	$envmapfresnel	"1"
+}

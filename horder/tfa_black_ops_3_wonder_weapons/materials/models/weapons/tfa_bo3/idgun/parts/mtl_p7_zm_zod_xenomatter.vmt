@@ -1,0 +1,5 @@
+"UnlitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/idgun/parts/i_mtl_p7_zm_zod_xenomatter_d"
+	$basetexturetransform	"center .5 .5 scale 6 6 rotate 0 translate 0 0"
+}

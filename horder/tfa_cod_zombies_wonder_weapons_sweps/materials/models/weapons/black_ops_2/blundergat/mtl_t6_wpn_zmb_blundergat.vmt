@@ -1,0 +1,13 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/weapons/black_ops_2/blundergat/~-gmtl_t6_wpn_zmb_blundergat_col"
+	"$bumpmap" "models/weapons/black_ops_2/blundergat/mtl_t6_wpn_zmb_blundergat_nml"
+
+	"$phong" "1"
+	"$phongboost" "100"
+	"$phongalbedotint" "1"
+	"$phongexponenttexture" "models/common/metal_exponent"
+
+	"$phongfresnelranges"		"[1 1 1]"
+	"$normalmapalphaphongmask"	"1"
+}

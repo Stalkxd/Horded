@@ -1,0 +1,12 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/mirg2000/parts/i_mtl_p7_foliage_coral_sea_fans_d"
+	$bumpmap				"models/weapons/tfa_bo3/mirg2000/parts/i_mtl_p7_foliage_coral_sea_fans_n"
+	$translucent "1"
+	$nocull "1"
+
+	$phong	"1"
+	$phongboost	"1"
+	$phongfresnelranges	"[.78 .9 1]"
+	$phongexponent "30"
+}

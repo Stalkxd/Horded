@@ -1,0 +1,18 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/zmbbow/i_wpn_t7_zmb_bow_d"
+	$bumpmap				"models/weapons/tfa_bo3/zmbbow/i_wpn_t7_zmb_bow_n"
+	$phongexponenttexture	"models/weapons/tfa_bo3/zmbbow/i_wpn_t7_zmb_bow_s2"
+	$color2 "[.25 .25 .25]"
+	$blendtintbybasealpha "1"
+
+	$phong	"1"
+	$phongboost	"15"
+	$phongfresnelranges	"[.78 .9 1]"
+	$phongalbedotint "1"
+
+	$envmap	"env_cubemap"
+	$envmaptint	"[.25 .25 .25]"
+	$normalmapalphaenvmapmask	"1"
+	$envmapfresnel	"1"
+}

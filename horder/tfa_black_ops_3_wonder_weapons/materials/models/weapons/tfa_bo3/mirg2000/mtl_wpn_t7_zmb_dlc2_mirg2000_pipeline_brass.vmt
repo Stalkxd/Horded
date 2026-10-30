@@ -1,0 +1,17 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/mirg2000/i_wpn_t7_zmb_dlc2_mirg2000_pipeline_spec"
+	$bumpmap				"models/weapons/tfa_bo3/mirg2000/i_wpn_t7_zmb_dlc2_mirg2000_pipeline_n"
+	$phongexponenttexture	"models/weapons/tfa_bo3/mirg2000/i_wpn_t7_zmb_dlc2_mirg2000_pipeline_s"
+	$color2 "[.25 .25 .25]"
+
+	$phong	"1"
+	$phongboost	"25"
+	$phongfresnelranges	"[.78 .9 1]"
+	$phongalbedotint "1"
+
+	$envmap	"env_cubemap"
+	$envmaptint	"{208 144 118}"
+	$normalmapalphaenvmapmask	"1"
+	$envmapfresnel	"1"
+}

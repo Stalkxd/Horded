@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/annihilator/i_wpn_t7_annihilator_trifocal_c"
+	$color2 "[10 8 0]"
+	$translucent "1"
+}

@@ -1,0 +1,4 @@
+VertexLitGeneric
+{
+	$baseTexture "models\weapons\black_ops_1\scavenger\zombie_sniper_glow_c"
+}

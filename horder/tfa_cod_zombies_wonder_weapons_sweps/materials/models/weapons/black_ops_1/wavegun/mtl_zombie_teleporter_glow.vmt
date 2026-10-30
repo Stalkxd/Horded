@@ -1,0 +1,35 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/weapons/black_ops_1/wavegun/_-gzombie_teleporter_glow_c"
+	"$bumpmap" "models/weapons/black_ops_1/wavegun/zombie_teleporter_glow_n"
+	"$selfillum" 1
+	
+	"$detail" "models/weapons/black_ops_1/wavegun/zombie_tele_glow_scroll"
+	"$detailscale" 1.0
+	"$detailblendmode" 1
+	
+	"$center" "[0.5 0.5]"
+	"$translate" "[0 0]"
+	
+	"Proxies"
+	{
+		"LinearRamp"
+		{
+			"rate" -.5
+			"initialvalue" 0
+			"resultvar" "$translate[1]"
+		}
+		"LinearRamp"
+		{
+			"rate" .5
+			"initialvalue" 0
+			"resultvar" "$translate[0]"
+		}
+		"TextureTransform"
+		{
+			"centervar" "$center"
+			"translatevar" "$translate"
+			"resultvar" "$detailtexturetransform"
+		}
+	}
+}

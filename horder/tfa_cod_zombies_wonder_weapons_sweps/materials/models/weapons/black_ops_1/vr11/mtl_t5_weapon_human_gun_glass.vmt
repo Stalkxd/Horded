@@ -1,0 +1,14 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/weapons/black_ops_1/vr11/~-gt5_weapon_human_gun_glass_c"
+	"$bumpmap" "vgui/white"
+	"$translucent" "1"
+	
+	"$phong" 1
+	"$phongboost" 16
+	"$phongexponent" 16
+	"$phongfresnelranges" "[0.1 0.5 1.0]"
+	
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[1 0.2 0.2]"
+}

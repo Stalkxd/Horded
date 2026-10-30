@@ -1,0 +1,20 @@
+VertexLitGeneric
+{
+	$baseTexture "models\weapons\black_ops_1\thundergun\_-gt5_weapon_thundergun_c"
+	"$bumpmap" "models\weapons\black_ops_1\thundergun\t5_weapon_thundergun_n"
+	//"$alphatest" 1
+	
+	"$phong" 1
+	"$phongboost" 64
+	//"$phongexponent" 1
+	"$phongexponenttexture" "models\common\metal_exponent"
+	//"$phongexponenttexture" "models\weapons\black_ops_1\thundergun\_t5_weapon_thundergun_s"
+	
+	"$phongalbedotint" 1
+	"$normalmapalphaphongmask" "1"
+
+	"$phongfresnelranges"			"[0.1 0.5 1]"
+	
+	//"$envmap" "env_cubemap"
+	"$envmaptint" "[0.35 0.35 0.35]"
+}

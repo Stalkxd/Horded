@@ -1,0 +1,10 @@
+"SpriteCard"
+{
+	"$basetexture" "sprites/fxt_env_lightning_bolt_trail2_vertical"
+	"$spriteorientation" "vp_parallel"
+	"$spriteorigin" "[ 0.50 0.50 ]"
+	"$additive" "1"
+	"$vertexcolor" "1"
+	"$vertexalpha" "1"
+}
+

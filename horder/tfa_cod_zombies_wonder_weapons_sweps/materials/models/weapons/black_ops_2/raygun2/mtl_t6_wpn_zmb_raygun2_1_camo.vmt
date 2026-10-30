@@ -1,0 +1,19 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/weapons/black_ops_2/raygun2/~-gmtl_t6_wpn_zmb_raygun2_col1"
+	"$bumpmap" "models/weapons/black_ops_2/raygun2/raygun2_n"
+	//"$nocull" 1	
+	
+	"$phong" "1"
+	"$phongboost"					"64"
+	//"$phongexponent"				"1"
+	"$phongexponenttexture" "models\common\metal_exponent"
+
+	"$phongalbedotint" 1
+	"$normalmapalphaphongmask" "1"
+
+	"$phongfresnelranges"			"[0.5 0.75 1]"
+	
+	//"$envmap" "env_cubemap"
+	//"$envmaptint" "[0.35 0.35 0.35]"
+}

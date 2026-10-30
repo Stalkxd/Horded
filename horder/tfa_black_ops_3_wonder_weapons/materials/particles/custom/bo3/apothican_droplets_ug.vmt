@@ -1,0 +1,10 @@
+UnlitGeneric
+{
+	// droplets_painterly.vtf contains 32 sequences (0-31)
+	// Each sequence is a static image (no animation)
+
+	$basetexture		"particles/custom/bo3/droplets_painterly"
+	$vertexcolor		1
+	$vertexalpha		1
+	$translucent		1
+}

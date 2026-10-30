@@ -1,0 +1,11 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/grenade/i_wpn_t7_grenade_frag_decal_d"
+	$bumpmap				"models/weapons/tfa_bo3/grenade/i_wpn_t7_grenade_frag_decal_n"
+	$translucent "1"
+
+	$phong	"1"
+	$phongboost	"0.5"
+	$phongfresnelranges	"[.78 .9 1]"
+	$phongexponent "33"
+}

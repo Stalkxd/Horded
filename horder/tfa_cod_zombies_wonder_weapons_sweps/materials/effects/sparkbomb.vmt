@@ -1,0 +1,8 @@
+"UnlitGeneric"
+{
+	"$basetexture" "effects/sparkbomb"
+	"$additive" 1
+	"$nodecal" 1
+	"$vertexalpha" 1
+	"$vertexcolor" 1
+}

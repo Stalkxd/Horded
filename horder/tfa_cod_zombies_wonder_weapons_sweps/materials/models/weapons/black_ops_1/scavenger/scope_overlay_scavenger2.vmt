@@ -1,0 +1,5 @@
+"UnlitGeneric"
+{
+	"$basetexture" "models\weapons\black_ops_1\scavenger\scope_overlay_scavenger2"
+	"$translucent" 1
+}

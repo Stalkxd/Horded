@@ -1,0 +1,14 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/zmbbow/i_wpn_t7_zmb_bow_base_e_d"
+	$bumpmap				"models/weapons/tfa_bo3/zmbbow/i_wpn_t7_zmb_bow_base_e_n"
+	$translucent "1"
+
+	$emissiveblendenabled		"1"
+	$emissiveblendstrength		"1"
+	$emissiveblendtexture		"vgui/white"
+	$emissiveblendbasetexture	"models/weapons/tfa_bo3/zmbbow/i_wpn_t7_zmb_bow_base_e_d"
+	$emissiveblendflowtexture	"vgui/white"
+	$emissiveblendtint			"[1 1 1]"
+	$emissiveblendscrollvector	"[0 0]"
+}

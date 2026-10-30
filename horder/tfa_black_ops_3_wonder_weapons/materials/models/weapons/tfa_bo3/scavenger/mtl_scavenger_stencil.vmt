@@ -1,0 +1,11 @@
+"UnlitGeneric"
+{
+	$basetexture			"vgui/black"
+
+	Proxies
+	{
+		TFA_RTScope
+		{
+		}
+	}
+}

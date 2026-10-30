@@ -1,0 +1,5 @@
+"UnlitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/zodsword/i_mtl_p7_zm_zod_beast_door_set_text_02b_d"
+	$color2 "[0 1 0.65]"
+}

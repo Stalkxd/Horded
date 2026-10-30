@@ -1,0 +1,8 @@
+"Spritecard"
+{
+	//"srgb?$overbrightfactor" "1.5"
+	"$baseTexture" "particles/custom/tf2/animated_electricity"
+	$translucent 1
+	"$addself" "0"
+	$DEPTHBLEND 0
+}

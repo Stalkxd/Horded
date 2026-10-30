@@ -1,0 +1,18 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/keepersword/i_wpn_t7_zmb_zod_sword_egg_head_d"
+	$bumpmap				"models/weapons/tfa_bo3/keepersword/i_wpn_t7_zmb_zod_sword_egg_head_n"
+
+	$phong	"1"
+	$phongboost	"0.5"
+	$phongfresnelranges	"[.78 .9 1]"
+	$phongexponent "99"
+	
+	$emissiveblendenabled		"1"
+	$emissiveblendstrength		"1"
+	$emissiveblendtexture		"models/weapons/tfa_bo3/keepersword/i_mtl_p7_zm_zod_beast_door_set_text_02b_d"
+	$emissiveblendbasetexture	"vgui/white"
+	$emissiveblendflowtexture	"models/weapons/tfa_bo3/mk2/i_wpn_t7_camo_obsidian_n"
+	$emissiveblendtint			"[1 0 0]"
+	$emissiveblendscrollvector	"[0.15 -0.25]"
+}

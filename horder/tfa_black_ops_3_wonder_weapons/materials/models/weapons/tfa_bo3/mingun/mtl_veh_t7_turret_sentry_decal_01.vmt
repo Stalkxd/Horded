@@ -1,0 +1,16 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/mingun/i_veh_t7_turret_sentry_decal_01_c"
+	$bumpmap				"models/weapons/tfa_bo3/mingun/i_veh_t7_turret_sentry_decal_01_n"
+	$translucent "1"
+
+	$phong	"1"
+	$phongboost	"1"
+	$phongfresnelranges	"[.78 .9 1]"
+	$phongexponent "30"
+
+	$envmap	"env_cubemap"
+	$envmaptint	"[.01 .01 .01]"
+	$normalmapalphaenvmapmask	"1"
+	$envmapfresnel	"1"
+}

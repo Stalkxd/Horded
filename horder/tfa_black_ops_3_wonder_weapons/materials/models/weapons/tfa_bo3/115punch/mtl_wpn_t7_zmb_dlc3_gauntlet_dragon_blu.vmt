@@ -1,0 +1,23 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/gauntlet/i_wpn_t7_zmb_dlc3_gauntlet_dragon_02_d"
+	$bumpmap				"models/weapons/tfa_bo3/gauntlet/i_wpn_t7_zmb_dlc3_gauntlet_dragon_02_n"
+	$phongexponenttexture	"models/weapons/tfa_bo3/gauntlet/i_wpn_t7_zmb_dlc3_gauntlet_dragon_02_s"
+
+	$phong	"1"
+	$phongboost	"5"
+	$phongfresnelranges	"[.78 .9 1]"
+
+	$envmap	"env_cubemap"
+	$envmaptint	"[.25 .25 .25]"
+	$normalmapalphaenvmapmask	"1"
+	$envmapfresnel	"1"
+	
+	$emissiveblendenabled		"1"
+	$emissiveblendstrength		"1"
+	$emissiveblendtexture		"vgui/white"
+	$emissiveblendbasetexture	"models/weapons/tfa_bo3/115punch/i_wpn_t7_zmb_dlc3_gauntlet_dragon_02_e"
+	$emissiveblendflowtexture	"vgui/white"
+	$emissiveblendtint			"[10 10 10]"
+	$emissiveblendscrollvector	"[0 0]"
+}

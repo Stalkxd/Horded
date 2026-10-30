@@ -1,0 +1,21 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/hacker/i_wpn_t7_zmb_hd_hack_tool_pouch_d"
+	$bumpmap				"models/weapons/tfa_bo3/hacker/i_wpn_t7_zmb_hd_hack_tool_pouch_n"
+	$phongexponenttexture	"models/weapons/tfa_bo3/hacker/i_wpn_t7_zmb_hd_hack_tool_pouch_s"
+
+	$phong	"1"
+	$phongboost	"5"
+	$phongfresnelranges	"[.78 .9 1]"
+	$phongtint "{54 50 25}"
+
+	$envmap	"env_cubemap"
+	$envmaptint	"[.25 .25 .0]"
+	$normalmapalphaenvmapmask	"1"
+	$envmapfresnel	"1"
+
+	$rimlight	"1"
+	$rimmask	"1"
+	$rimlightboost	"1"
+	$rimlightexponent	"2"
+}

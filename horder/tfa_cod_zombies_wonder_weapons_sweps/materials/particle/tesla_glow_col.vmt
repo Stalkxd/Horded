@@ -1,0 +1,9 @@
+"SpriteCard"
+{
+	// Original shader: AddTexture
+	"$basetexture" "particle/tesla_glow_col"
+	"$additive" 1
+	"$vertexcolor" 1
+	"$vertexalpha" 1
+	//"ignoreZ" 1
+}

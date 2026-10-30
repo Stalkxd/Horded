@@ -1,0 +1,8 @@
+"SpriteCard"
+{
+	$basetexture		"particles/custom/misc/fireparticle5"
+	$addself			1.25
+	$overbrightfactor	3.5
+	$DEPTHBLEND			1
+	$depthblendscale	5
+}

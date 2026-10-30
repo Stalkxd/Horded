@@ -1,0 +1,5 @@
+"UnlitGeneric"
+{
+	"$basetexture"	"vgui/overlay/i_moon_helmet_c"
+	"$translucent" 1
+}

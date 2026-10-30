@@ -1,0 +1,10 @@
+VertexLitGeneric
+{
+	"$baseTexture" "models\weapons\black_ops_1\scavenger\~-gmtl_t5_weapon_zom_sniper_lens_c"
+	"$bumpmap" "models\weapons\black_ops_1\scavenger\mtl_weapon_acog_lens_n"
+	"$selfillum" 1
+	
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[0.35 0.35 0.35]"
+	//"$normalmapalphaphongmask" 1
+}

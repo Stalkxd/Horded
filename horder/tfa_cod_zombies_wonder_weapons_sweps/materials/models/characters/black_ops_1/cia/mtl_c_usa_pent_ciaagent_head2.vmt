@@ -1,0 +1,16 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/characters/black_ops_1/cia/c_usa_pent_ciaagent_head2_c"
+	"$bumpmap" "models/characters/black_ops_1/cia/c_usa_pent_ciaagent_head2_n"
+	
+	"$phong" "1"
+	"$phongboost" "3"
+	"$phongexponent" "10"
+	"$phongfresnelranges"	"[.4 .9 1]"
+	"$normalmapalphaphongmask" "1"
+	"$phongtint" "[0.9 0.6 0.5]"
+	
+	"$rimlight" "1"
+	"$rimlightboost" "0.2"
+	"$rimlightexponent" "3"
+}

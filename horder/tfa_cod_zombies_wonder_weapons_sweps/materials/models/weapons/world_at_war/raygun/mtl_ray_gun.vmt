@@ -1,0 +1,15 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/weapons/world_at_war/raygun/ray_gun"
+	"$bumpmap" "models/weapons/world_at_war/raygun/ray_gun_n"
+	
+	"$phong" 1
+	"$phongboost"	128
+	//"$phongexponent"	6
+	"$phongexponenttexture" "models/weapons/world_at_war/raygun/ray_gun_o"
+	//"$phongexponentfactor" 4
+	"$phongalbedotint" 1
+	"$phongfresnelranges"	"[0.2 0.7 1.0]"
+	
+	"$normalmapalphaphongmask" 1
+}

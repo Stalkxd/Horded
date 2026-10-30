@@ -1,0 +1,18 @@
+"VertexlitGeneric"
+{
+	$basetexture			"vgui/black"
+	$bumpmap				"models/weapons/tfa_bo3/mk2/mk2_5_n"
+
+	$phong	"1"
+	$phongboost	"5"
+	$phongfresnelranges	"[.78 .9 1]"
+	$phongexponent "33"
+	
+	$emissiveblendenabled		"1"
+	$emissiveblendstrength		"1"
+	$emissiveblendtexture		"models/weapons/tfa_bo3/mk2/camo_ice_e"
+	$emissiveblendbasetexture	"vgui/white"
+	$emissiveblendflowtexture	"models/weapons/tfa_bo3/mk2/i_wpn_t7_camo_obsidian_n"
+	$emissiveblendtint			"[0 5 0]"
+	$emissiveblendscrollvector	"[0.15 -0.25]"
+}

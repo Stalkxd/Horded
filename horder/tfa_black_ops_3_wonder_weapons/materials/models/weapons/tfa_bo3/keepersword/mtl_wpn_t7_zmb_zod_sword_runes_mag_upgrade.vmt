@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/keepersword/i_wpn_t7_zmb_zod_sword_runes_mag_upgrade_d"
+	$color2 "[2 0 0]"
+	$translucent "1"
+}

@@ -1,0 +1,12 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/weapons/world_at_war/wunderwaffe/vacuum_tube_c"
+	"$bumpmap" "models/weapons/world_at_war/wunderwaffe/vacuum_tube_n"
+	
+	"$phong" "1"
+	"$phongboost" "32"
+	"$phongexponenttexture" "models/common/metal_exponent"
+	"$phongfresnelranges" "[0.1 0.6 1]"
+	"$phongalbedotint" 1
+	"$normalmapalphaphongmask" "1"
+}

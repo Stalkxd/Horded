@@ -1,0 +1,16 @@
+"UnlitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/gkzmk3/i_wpn_t7_zmb_dlc3_raygun_mk3_lh_glow_mid_e"
+	$color2 "[2 0 0]"
+	$additive "1"
+	
+	Proxies
+	{
+		TextureScroll
+		{
+			"textureScrollVar" $basetexturetransform
+			"textureScrollRate" 7
+			"textureScrollAngle" 0
+		}
+	}
+}

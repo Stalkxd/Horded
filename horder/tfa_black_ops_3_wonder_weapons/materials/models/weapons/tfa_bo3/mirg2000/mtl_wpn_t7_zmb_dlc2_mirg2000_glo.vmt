@@ -1,0 +1,30 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/mirg2000/$color_black_40"
+	$bumpmap				"models/weapons/tfa_bo3/mirg2000/obsidian_n"
+	$phongexponenttexture	"vgui/white"
+	$color2 "[1 1 1]"
+
+	$phong	"1"
+	$phongboost	"2"
+	$phongfresnelranges	"[.78 .9 1]"
+	$phongexponent "33"
+	
+	$emissiveblendenabled		"1"
+	$emissiveblendstrength		"1"
+	$emissiveblendtexture		"models/weapons/tfa_bo3/mirg2000/$gray_color"
+	$emissiveblendbasetexture	"vgui/white"
+	$emissiveblendflowtexture	"vgui/white"
+	$emissiveblendtint			"[0 1 0]"
+	$emissiveblendscrollvector	"[0 0]"
+	
+	Proxies
+	{
+		TextureScroll
+		{
+			"textureScrollVar" $basetexturetransform
+			"textureScrollRate" 0.15
+			"textureScrollAngle" 90
+		}
+	}
+}

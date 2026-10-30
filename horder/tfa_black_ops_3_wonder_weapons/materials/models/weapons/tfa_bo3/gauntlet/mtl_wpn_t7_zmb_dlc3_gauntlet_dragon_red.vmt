@@ -1,0 +1,5 @@
+"UnlitGeneric"
+{
+	$basetexture			"models/weapons/tfa_bo3/gauntlet/i_wpn_t7_zmb_dlc3_gauntlet_dragon_glo_e"
+	$color2 "[1 0 0]"
+}

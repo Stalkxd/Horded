@@ -1,0 +1,13 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/weapons/black_ops_1/vr11/~-gt5_weapon_human_gun_arm_c"
+	"$bumpmap" "models/weapons/black_ops_1/vr11/t5_weapon_human_gun_arm_n"
+	
+	"$phong" 1
+	"$phongboost" 24
+	//"$phongexponent" 1
+	"$phongexponenttexture" "models\common\metal_exponent"
+	"$phongalbedotint" 1
+	"$phongfresnelranges"			"[0.1 0.6 1.0]"
+	"$normalmapalphaphongmask" 1
+}
