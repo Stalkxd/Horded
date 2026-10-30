@@ -1,7 +1,7 @@
 if not ArcCWInstalled then return end
 
 SWEP.Base = "arccw_ww_base"
-DEFINE_BASECLASS(SWEP.Base)
+local BaseClass = HORDE_WW.Base(SWEP.Base)
 SWEP.Spawnable = true
 SWEP.PrintName = "Scavenger"
 SWEP.Trivia_Desc = "Scoped rifle that fires sticky explosive bolts. They detonate a moment after landing."
@@ -25,8 +25,8 @@ SWEP.ShootEntity = "obj_scavenger_proj"
 SWEP.MuzzleVelocity = 3600
 SWEP.WW_AimAtCrosshair = true
 
-SWEP.Primary.ClipSize = 3
-SWEP.Primary.DefaultClip = 9
+SWEP.Primary.ClipSize = 5
+SWEP.Primary.DefaultClip = 15
 SWEP.Primary.Ammo = "slam"
 SWEP.Delay = 60 / 35
 

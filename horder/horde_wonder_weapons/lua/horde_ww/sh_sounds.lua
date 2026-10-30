@@ -300,3 +300,43 @@ sound.Add(
     soundlevel = 60,
     sound = "weapons/zapwavegun/wpn_micro_rld_separate.ogg"
 })
+sound.Add(
+{
+    name = "Weapon_Wavegun.Startreload",
+    channel = CHAN_ITEM,
+    volume = 1.0,
+    soundlevel = 60,
+    sound = "weapons/zapwavegun/wpn_micro_rld_rifle_start.ogg"
+})
+sound.Add(
+{
+    name = "Weapon_Wavegun.Magout",
+    channel = CHAN_WEAPON,
+    volume = 1.0,
+    soundlevel = 60,
+    sound = "weapons/zapwavegun/wpn_micro_rld_rifle_mag_out.ogg"
+})
+sound.Add(
+{
+    name = "Weapon_Wavegun.Magin",
+    channel = CHAN_WEAPON,
+    volume = 1.0,
+    soundlevel = 60,
+    sound = "weapons/zapwavegun/wpn_micro_rld_rifle_mag_in.ogg"
+})
+sound.Add(
+{
+    name = "Weapon_Wavegun.Futz",
+    channel = CHAN_WEAPON,
+    volume = 1.0,
+    soundlevel = 60,
+    sound = "weapons/zapwavegun/wpn_micro_rld_rifle_futz.ogg"
+})
+sound.Add(
+{
+    name = "Weapon_Wavegun.Ready",
+    channel = CHAN_WEAPON,
+    volume = 1.0,
+    soundlevel = 60,
+    sound = "weapons/zapwavegun/wpn_micro_rld_rifle_power_up.ogg"
+})

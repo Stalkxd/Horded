@@ -38,15 +38,14 @@ function ENT:Explode(ent)
 	local dmg = DamageInfo()
 	dmg:SetDamageType(DMG_SHOCK)
 	dmg:SetAttacker(self.Owner)
-	dmg:SetInflictor(self)
+	dmg:SetInflictor(IsValid(self.Inflictor) and self.Inflictor or self)
 	dmg:SetDamagePosition(self:GetPos())
 	--dmg:SetDamageForce( Vector(0,0,0) )
-	if string.find( ent:GetClass(), "boss", 1, true) then
-		dmg:SetDamage( math.max(ent:GetMaxHealth()/16, 2000) )
-	else
-		dmg:SetDamage(ent:Health())
+	-- Horde: a fixed hit from the weapon's damage instead of killing outright
+	dmg:SetDamage(self.Damage or 250)
+	if not ((ent:IsNPC() or ent:IsNextBot()) and HORDE_WW and IsValid(self.Owner) and not HORDE_WW.IsHostile(self.Owner, ent)) then
+		ent:TakeDamageInfo(dmg)
 	end
-	ent:TakeDamageInfo(dmg)
 	
 	self:Remove()
 end

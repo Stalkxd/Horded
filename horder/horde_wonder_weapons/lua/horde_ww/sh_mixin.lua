@@ -89,8 +89,29 @@ function HORDE_WW.Debuff(ent, status, amount, attacker)
     end
 end
 
+-- Base class lookup that walks the registered weapon tables when a function is called, instead of
+-- trusting baseclass.Get at load time. The sword base comes from the gamemode, which loads after
+-- this addon, so its baseclass table was still empty when the swords were defined.
+local function FindBaseFunc(base, key)
+    local seen = 0
+    while base and seen < 16 do
+        local stored = weapons.GetStored(base)
+        if not stored then return end
+        local value = rawget(stored, key)
+        if value ~= nil then return value end
+        base = rawget(stored, "Base")
+        seen = seen + 1
+    end
+end
+
+function HORDE_WW.Base(base)
+    return setmetatable({}, {
+        __index = function(_, key) return FindBaseFunc(base, key) end,
+    })
+end
+
 function HORDE_WW.Mixin(SWEP)
-    local BaseClass = baseclass.Get(SWEP.Base)
+    local BaseClass = HORDE_WW.Base(SWEP.Base)
 
     SWEP.IsHordeWonderWeapon = true
     SWEP.Category = "ArcCW - Horde Wonder Weapons"
@@ -107,6 +128,19 @@ function HORDE_WW.Mixin(SWEP)
         self:NetworkVar("Float", 25, "WWStateEnd")
         self:NetworkVar("Float", 26, "WWRegen")
         self:NetworkVar("Vector", 24, "WWVec")
+        self:NetworkVar("Float", 27, "WWLoadTime")
+        self:NetworkVar("Int", 25, "WWLoadMask")
+    end
+
+    -- ArcCW empties Clip2 when a weapon is created, so the second gun starts loaded here
+    function SWEP:Initialize(...)
+        local ret = BaseClass.Initialize(self, ...)
+        if self.WW_Akimbo then self:SetClip2(self:WW_MaxClip2()) end
+        return ret
+    end
+
+    function SWEP:WW_MaxClip2()
+        return self.Secondary.ClipSize or 0
     end
 
     function SWEP:FireAnimationEvent(pos, ang, event, options)
@@ -222,6 +256,8 @@ function HORDE_WW.Mixin(SWEP)
         local owner = self:GetOwner()
         if not IsValid(owner) or not owner:IsPlayer() then return end
         if SERVER then self:WW_ThinkRegen() end
+        local load = self:GetWWLoadTime()
+        if load > 0 and CurTime() >= load then self:WW_AkimboLoad() end
         self:WW_Think()
     end
 
@@ -232,6 +268,7 @@ function HORDE_WW.Mixin(SWEP)
     end
 
     function SWEP:Hook_OnHolster()
+        self:SetWWLoadTime(0)
         self:WW_StopLoops()
         self:WW_OnHolster()
     end
@@ -288,20 +325,20 @@ function HORDE_WW.Mixin(SWEP)
     end
 
     -- Second gun of the dual wield weapons: fires from Clip2 and shares the primary reserve.
+    -- Which guns to fill (WWLoadMask: 1 left, 2 right) and when (WWLoadTime) are networked and
+    -- applied in Think, so the load happens on the server even if prediction drops a timer.
+    local LOAD_LEFT, LOAD_RIGHT = 1, 2
+
     function SWEP:WW_AkimboReload()
-        if self:GetReloading() or self:GetPriorityAnim() then return end
+        if self:GetReloading() or self:GetPriorityAnim() or self:GetWWLoadTime() > 0 then return end
         if self:GetNextPrimaryFire() > CurTime() or self:GetNextSecondaryFire() > CurTime() then return end
-        local owner = self:GetOwner()
-        local reserve = self:Ammo1()
-        if reserve <= 0 then return end
+        if self:Ammo1() <= 0 and not self:HasInfiniteAmmo() then return end
 
         local need_l = self:Clip1() < self:GetMaxClip1()
-        local need_r = self:Clip2() < self:GetMaxClip2()
+        local need_r = self:Clip2() < self:WW_MaxClip2()
         if not need_l and not need_r then return end
 
-        local anim = (need_l and need_r and "reload") or (need_l and "reload_left") or "reload_right"
-        if not self.Animations[anim] then anim = "reload" end
-
+        local anim = self:WW_AkimboReloadAnim(need_l, need_r)
         local mult = self:GetBuff_Mult("Mult_ReloadTime")
         local t = self:GetAnimKeyTime(anim) * mult
         self:PlayAnimation(anim, mult, true, 0, false, nil, true)
@@ -309,27 +346,40 @@ function HORDE_WW.Mixin(SWEP)
         self:SetNextPrimaryFire(CurTime() + t)
         self:SetNextSecondaryFire(CurTime() + t)
         self:ExitSights()
-        owner:DoAnimationEvent(ACT_HL2MP_GESTURE_RELOAD_DUEL)
+        self:GetOwner():DoAnimationEvent(ACT_HL2MP_GESTURE_RELOAD_DUEL)
 
         local load_at = (self.Animations[anim].MagUpTime or t * 0.75 / mult) * mult
-        self:SetTimer(load_at, function()
-            if not IsValid(self) or not IsValid(self:GetOwner()) then return end
-            local ply = self:GetOwner()
-            local ammo_type = self:GetPrimaryAmmoType()
-            local left = ply:GetAmmoCount(ammo_type)
-            if need_l then
-                local take = math.min(self:GetMaxClip1() - self:Clip1(), left)
-                self:SetClip1(self:Clip1() + take)
-                left = left - take
-            end
-            if need_r then
-                local take = math.min(self:GetMaxClip2() - self:Clip2(), left)
-                self:SetClip2(self:Clip2() + take)
-                left = left - take
-            end
-            if SERVER then ply:SetAmmo(left, ammo_type) end
-        end, "ww_reload")
+        self:SetWWLoadMask((need_l and LOAD_LEFT or 0) + (need_r and LOAD_RIGHT or 0))
+        self:SetWWLoadTime(CurTime() + load_at)
         return true
+    end
+
+    function SWEP:WW_AkimboReloadAnim(need_l, need_r)
+        local anim = (need_l and need_r and "reload") or (need_l and "reload_left") or "reload_right"
+        if not self.Animations[anim] then anim = "reload" end
+        return anim
+    end
+
+    function SWEP:WW_AkimboLoad()
+        local mask = self:GetWWLoadMask()
+        self:SetWWLoadTime(0)
+        self:SetWWLoadMask(0)
+        if CLIENT then return end
+        local ply = self:GetOwner()
+        local ammo_type = self:GetPrimaryAmmoType()
+        local infinite = self:HasInfiniteAmmo()
+        local left = infinite and math.huge or ply:GetAmmoCount(ammo_type)
+        if bit.band(mask, LOAD_LEFT) ~= 0 then
+            local take = math.min(self:GetMaxClip1() - self:Clip1(), left)
+            self:SetClip1(self:Clip1() + take)
+            left = left - take
+        end
+        if bit.band(mask, LOAD_RIGHT) ~= 0 then
+            local take = math.min(self:WW_MaxClip2() - self:Clip2(), left)
+            self:SetClip2(self:Clip2() + take)
+            left = left - take
+        end
+        if not infinite then ply:SetAmmo(left, ammo_type) end
     end
 
     if CLIENT then
@@ -348,10 +398,6 @@ function HORDE_WW.Mixin(SWEP)
 
         function SWEP:WW_DrawOverlay() end
 
-        function SWEP:WW_HUDText()
-            if self.WW_Akimbo then
-                return string.format("L %d  |  R %d", self:Clip1(), self:Clip2())
-            end
-        end
+        function SWEP:WW_HUDText() end
     end
 end

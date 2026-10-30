@@ -34,7 +34,7 @@ SWEP.WW_NoSights = true
 
 SWEP.WW_ChargeRate = 33 / 30
 SWEP.WW_ChargeThreshold = 0.01
-SWEP.WW_DamageCharge = { 0.5, 1 }
+SWEP.WW_DamageCharge = { 1, 1.5 }
 SWEP.WW_VelocityCharge = { 0.25, 1 }
 
 SWEP.Recoil = 0.8
