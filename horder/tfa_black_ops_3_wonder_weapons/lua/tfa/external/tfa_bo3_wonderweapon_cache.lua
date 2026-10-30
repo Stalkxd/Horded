@@ -121,7 +121,6 @@ TFA.BO3BloodColor = {
 
 -- Projectile Models
 //projectiles
-util.PrecacheModel("models/weapons/tfa_bo3/scavenger/scavenger_projectile.mdl")
 util.PrecacheModel("models/weapons/tfa_bo3/keepersword/keepersword_projectile.mdl")
 
 //throwables

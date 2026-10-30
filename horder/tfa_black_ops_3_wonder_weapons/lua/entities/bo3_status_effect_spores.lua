@@ -219,7 +219,7 @@ function ENT:Explode()
 			damage:SetDamagePosition(v:WorldSpaceCenter())
 
 			if v:IsNPC() then
-				v:SetHealth(1)
+				if not HORDE then v:SetHealth(1) end
 				v:SetSchedule(SCHED_ALERT_STAND)
 			end
 

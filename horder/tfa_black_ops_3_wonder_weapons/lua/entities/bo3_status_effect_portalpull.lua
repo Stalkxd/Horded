@@ -208,7 +208,7 @@ ENT.InflictDamage = function(self, ent)
 
 	if ent:IsNPC() then ent:SetSchedule(SCHED_ALERT_STAND) end
 	ent:EmitSound("TFA_BO3_IDGUN.Portal.CrushEnd")
-	ent:SetHealth(1) //thanku jen
+	if not HORDE then ent:SetHealth(1) end //thanku jen
 	ent:TakeDamageInfo(damage)
 	//ent:Remove()
 end

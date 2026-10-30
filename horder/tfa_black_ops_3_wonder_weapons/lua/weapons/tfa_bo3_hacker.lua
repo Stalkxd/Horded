@@ -860,7 +860,7 @@ function SWEP:BuildTableHack(ent)
 		end
 
 		if IsValid(ent.CraftedModel) then
-			ParticleEffect("nzr_building_poof", ent.CraftedModel:WorldSpaceCenter(), angle_zero)
+			ParticleEffect("bo3_gersch_explode_smoke", ent.CraftedModel:WorldSpaceCenter(), angle_zero)
 			ent.CraftedModel:Reset()
 		end
 		if IsValid(ent.CraftedModel2) then

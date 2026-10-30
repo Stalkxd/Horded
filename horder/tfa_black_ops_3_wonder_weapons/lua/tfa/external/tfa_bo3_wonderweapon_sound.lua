@@ -58,12 +58,6 @@ TFA.AddSound ("TFA_BO3_IDGUN.Portal.CrushStart", CHAN_STATIC, 1, SNDLVL_IDLE, 10
 TFA.AddFireSound("TFA_BO3_RAYGUN.Shoot", {"weapons/tfa_bo3/raygun/ray_shot_f.wav"}, true, ")")
 TFA.AddFireSound("TFA_BO3_RAYGUN.Flux", {"weapons/tfa_bo3/raygun/wpn_ray_flux.wav"}, false, ")")
 
-TFA.AddWeaponSound("TFA_BO3_RAYGUN.BatOut", "weapons/tfa_bo3/raygun/wpn_ray_reload_battery_out.wav")
-TFA.AddWeaponSound("TFA_BO3_RAYGUN.BatIn", "weapons/tfa_bo3/raygun/wpn_ray_reload_battery.wav")
-TFA.AddWeaponSound("TFA_BO3_RAYGUN.Open", "weapons/tfa_bo3/raygun/wpn_ray_reload_open.wav")
-TFA.AddWeaponSound("TFA_BO3_RAYGUN.Close", "weapons/tfa_bo3/raygun/wpn_ray_reload_close.wav")
-TFA.AddWeaponSound("TFA_BO3_RAYGUN.Draw", "weapons/tfa_bo3/raygun/wpn_ray_1straise.wav")
-TFA.AddWeaponSound("TFA_BO3_RAYGUN.Hit", "weapons/tfa_bo3/raygun/wpn_ray_hit.wav")
 
 TFA.AddSound ("TFA_BO3_RAYGUN.Loop", CHAN_WEAPON, 0.5, SNDLVL_TALKING, {95,105}, "weapons/tfa_bo3/raygun/wpn_ray_loop.wav",")")
 
@@ -73,44 +67,19 @@ TFA.AddSound ("TFA_BO3_RAYGUN.ExpCl", CHAN_STATIC, 1, SNDLVL_GUNFIRE, {97,103}, 
 -- Raygun MK2 --------------------------------------------------------------------------------------------------------
 TFA.AddFireSound("TFA_BO3_MK2.Shoot", {"weapons/tfa_bo3/raygun_mk2/shot_00.wav", "weapons/tfa_bo3/raygun_mk2/shot_01.wav", "weapons/tfa_bo3/raygun_mk2/shot_02.wav"}, true, ")")
 
-TFA.AddWeaponSound("TFA_BO3_MK2.MagOut", "weapons/tfa_bo3/raygun_mk2/pullout.wav")
-TFA.AddWeaponSound("TFA_BO3_MK2.MagIn", "weapons/tfa_bo3/raygun_mk2/putin.wav")
-TFA.AddWeaponSound("TFA_BO3_MK2.Switch", "weapons/tfa_bo3/raygun_mk2/switch.wav")
-TFA.AddWeaponSound("TFA_BO3_MK2.Draw", "weapons/tfa_bo3/raygun_mk2/raise.wav")
 
 TFA.AddSound ("TFA_BO3_MK2.Impact", CHAN_ITEM, 1, SNDLVL_TALKING, {95,105}, "weapons/tfa_bo3/raygun_mk2/imp_00.wav", "weapons/tfa_bo3/raygun_mk2/imp_01.wav", "weapons/tfa_bo3/raygun_mk2/imp_02.wav",")")
 
 -- Thundergun --------------------------------------------------------------------------------------------------------
-TFA.AddFireSound("TFA_BO3_THUNDERGUN.Shoot", {"weapons/tfa_bo3/thundergun/wpn_thundergun_fire_plr.wav"}, true, ")")
-TFA.AddFireSound("TFA_BO3_THUNDERGUN.Ext", {"weapons/tfa_bo3/thundergun/wpn_thundergun_flux.wav"}, false, ")")
 
-TFA.AddWeaponSound("TFA_BO3_THUNDERGUN.Eject", "weapons/tfa_bo3/thundergun/fly_thundergun_eject.wav")
-TFA.AddWeaponSound("TFA_BO3_THUNDERGUN.Replace", "weapons/tfa_bo3/thundergun/fly_thundergun_cell_replace.wav")
-TFA.AddWeaponSound("TFA_BO3_THUNDERGUN.Lock", "weapons/tfa_bo3/thundergun/fly_thundergun_cell_slide_lock.wav")
-TFA.AddWeaponSound("TFA_BO3_THUNDERGUN.CellOn", "weapons/tfa_bo3/thundergun/fly_thundergun_cell_on.wav")
-TFA.AddWeaponSound("TFA_BO3_THUNDERGUN.Draw", "weapons/tfa_bo3/thundergun/fly_thunder_first_raise.wav")
-TFA.AddWeaponSound("TFA_BO3_THUNDERGUN.Idle", "weapons/tfa_bo3/thundergun/wpn_thunder_idle.wav")
-TFA.AddWeaponSound("TFA_BO3_THUNDERGUN.Chatter", {"weapons/tfa_bo3/thundergun/imp_thundergun_flux_gen_00.wav", "weapons/tfa_bo3/thundergun/imp_thundergun_flux_gen_01.wav", "weapons/tfa_bo3/thundergun/imp_thundergun_flux_gen_02.wav", "weapons/tfa_bo3/thundergun/imp_thundergun_flux_gen_03.wav"})
 
-TFA.AddSound ("TFA_BO3_THUNDERGUN.Impact", CHAN_STATIC, 0.2, SNDLVL_NORM, {95,105}, "weapons/tfa_bo3/thundergun/impact_00.wav",")")
 
 -- Wunderwaffe --------------------------------------------------------------------------------------------------------
-TFA.AddFireSound("TFA_BO3_WAFFE.Shoot", {"weapons/tfa_bo3/wunderwaffe/wpn_dg2_fire_f.wav"}, true, ")")
-TFA.AddFireSound("TFA_BO3_WAFFE.ShootLast", {"weapons/tfa_bo3/wunderwaffe/wpn_dg2_fire_last_f.wav"}, true, ")")
 TFA.AddFireSound("TFA_BO3_WAFFE.Ext", {"weapons/tfa_bo3/wunderwaffe/wpn_tesla_flux_f.wav"}, true, ")")
 
-TFA.AddWeaponSound("TFA_BO3_WAFFE.Start", "weapons/tfa_bo3/wunderwaffe/tesla_start_reload.wav")
-TFA.AddWeaponSound("TFA_BO3_WAFFE.FlipOff", "weapons/tfa_bo3/wunderwaffe/tesla_switch_flip_off.wav")
-TFA.AddWeaponSound("TFA_BO3_WAFFE.Pullback", "weapons/tfa_bo3/wunderwaffe/tesla_handle_pullback.wav")
-TFA.AddWeaponSound("TFA_BO3_WAFFE.ClipIn", "weapons/tfa_bo3/wunderwaffe/tesla_clip_in.wav")
-TFA.AddWeaponSound("TFA_BO3_WAFFE.Release", "weapons/tfa_bo3/wunderwaffe/tesla_handle_release.wav")
-TFA.AddWeaponSound("TFA_BO3_WAFFE.FlipOn", "weapons/tfa_bo3/wunderwaffe/tesla_switch_flip_on.wav")
 
 // the wunderwaffe is a cat in my headcannon
 TFA.AddWeaponSound("TFA_BO3_WAFFE.Meow.Happy", {"weapons/tfa_bo3/wunderwaffe/happy/happy_00.wav", "weapons/tfa_bo3/wunderwaffe/happy/happy_01.wav", "weapons/tfa_bo3/wunderwaffe/happy/happy_02.wav", "weapons/tfa_bo3/wunderwaffe/happy/happy_03.wav"})
-TFA.AddWeaponSound("TFA_BO3_WAFFE.Meow.Sweets", {"weapons/tfa_bo3/wunderwaffe/sweets/sweets_00.wav", "weapons/tfa_bo3/wunderwaffe/sweets/sweets_01.wav", "weapons/tfa_bo3/wunderwaffe/sweets/sweets_04.wav", "weapons/tfa_bo3/wunderwaffe/sweets/sweets_05.wav", "weapons/tfa_bo3/wunderwaffe/sweets/sweets_06.wav"})
-TFA.AddWeaponSound("TFA_BO3_WAFFE.Meow.Calm", {"weapons/tfa_bo3/wunderwaffe/calm/calm_00.wav", "weapons/tfa_bo3/wunderwaffe/calm/calm_01.wav", "weapons/tfa_bo3/wunderwaffe/calm/calm_02.wav"})
-TFA.AddSound ("TFA_BO3_WAFFE.Meow.Idle", CHAN_STATIC, 0.3, SNDLVL_NORM, {97,103}, {"weapons/tfa_bo3/wunderwaffe/idle/idle_00.wav", "weapons/tfa_bo3/wunderwaffe/idle/idle_01.wav", "weapons/tfa_bo3/wunderwaffe/idle/idle_02.wav", "weapons/tfa_bo3/wunderwaffe/idle/idle_03.wav", "weapons/tfa_bo3/wunderwaffe/idle/idle_04.wav", "weapons/tfa_bo3/wunderwaffe/idle/idle_05.wav"},")")
 
 TFA.AddSound ("TFA_BO3_WAFFE.Flux", CHAN_STATIC, 1, SNDLVL_TALKING, {95,105}, "weapons/tfa_bo3/wunderwaffe/projectile/wpn_tesla_flux.wav",")")
 TFA.AddSound ("TFA_BO3_WAFFE.ImpactWater", CHAN_WEAPON, 1, SNDLVL_TALKING, 100, "weapons/tfa_bo3/wunderwaffe/projectile/imp_water.wav",")")
@@ -125,37 +94,16 @@ TFA.AddSound ("TFA_BO3_WAFFE.Bounce", CHAN_ITEM, 1, SNDLVL_GUNFIRE, {97,103}, {"
 TFA.AddSound ("TFA_BO3_WAFFE.Death", CHAN_BODY, 0.5, SNDLVL_TALKING, {97,103}, {"zmb/ai/standard/vox/death/dg2/zmb_dg2_death_soul_00.wav", "zmb/ai/standard/vox/death/dg2/zmb_dg2_death_soul_01.wav", "zmb/ai/standard/vox/death/dg2/zmb_dg2_death_soul_02.wav", "zmb/ai/standard/vox/death/dg2/zmb_dg2_death_soul_03.wav", "zmb/ai/standard/vox/death/dg2/zmb_dg2_death_soul_04.wav", "zmb/ai/standard/vox/death/dg2/zmb_dg2_death_soul_05.wav", "zmb/ai/standard/vox/death/dg2/zmb_dg2_death_soul_06.wav"},")")
 
 -- Scavenger --------------------------------------------------------------------------------------------------------
-TFA.AddFireSound("TFA_BO3_SCAVENGER.Shoot", {"weapons/tfa_bo3/scavenger/scavenger_fire_loud.wav"}, true, ")")
-TFA.AddFireSound("TFA_BO3_SCAVENGER.Flux", {"weapons/tfa_bo3/scavenger/scavenger_fire.wav"}, false, ")")
 
-TFA.AddWeaponSound("TFA_BO3_SCAVENGER.Futz", "weapons/tfa_bo3/scavenger/fly_scavenger_futz.wav")
-TFA.AddWeaponSound("TFA_BO3_SCAVENGER.MagOut", "weapons/tfa_bo3/scavenger/fly_scavenger_mag_out.wav")
-TFA.AddWeaponSound("TFA_BO3_SCAVENGER.MagIn", "weapons/tfa_bo3/scavenger/fly_scavenger_mag_in.wav")
-TFA.AddWeaponSound("TFA_BO3_SCAVENGER.BoltUp", "weapons/tfa_bo3/scavenger/fly_scavenger_bolt_up.wav")
-TFA.AddWeaponSound("TFA_BO3_SCAVENGER.BoltBack", "weapons/tfa_bo3/scavenger/fly_scavenger_bolt_back.wav")
-TFA.AddWeaponSound("TFA_BO3_SCAVENGER.BoltForward", "weapons/tfa_bo3/scavenger/fly_scavenger_bolt_forward.wav")
-TFA.AddWeaponSound("TFA_BO3_SCAVENGER.BoltDown", "weapons/tfa_bo3/scavenger/fly_scavenger_bolt_down.wav")
 
-TFA.AddWeaponSound("TFA_BO3_SCAVENGER.BeepReload", "weapons/tfa_bo3/scavenger/fly_scavenger_beep_reload.wav")
-TFA.AddWeaponSound("TFA_BO3_SCAVENGER.BeepBolt", "weapons/tfa_bo3/scavenger/fly_scavenger_beep_rechamber.wav")
 
 TFA.AddFireSound("TFA_BO3_SCAVENGER.Explode", {"weapons/tfa_bo3/scavenger/scavenger_proj_explode.wav"}, true, ")")
-TFA.AddFireSound("TFA_BO3_SCAVENGER.ExplodePAP", {"weapons/tfa_bo3/scavenger/scavenger_proj_explode_upg.wav"}, true, ")")
-TFA.AddFireSound("TFA_BO3_SCAVENGER.RampUp", {"weapons/tfa_bo3/scavenger/scavenger_proj_rampup.wav"}, false, ")")
 
 -- 31-79 JGb215 --------------------------------------------------------------------------------------------------------
-TFA.AddFireSound("TFA_BO3_JGB.Shoot", {"weapons/tfa_bo3/shrinkray/wpn_shrink_plr_f.wav"}, true, ")")
-TFA.AddFireSound("TFA_BO3_JGB.Quad", {"weapons/tfa_bo3/shrinkray/wpn_shrink_plr_quad.wav"}, true, ")")
-TFA.AddFireSound("TFA_BO3_JGB.Lfe", {"weapons/tfa_bo3/shrinkray/wpn_shrink_plr_lfe.wav"}, true, ")")
 
 TFA.AddSound ("TFA_BO3_JGB.Flux", CHAN_STATIC, 1, SNDLVL_TALKING, {95,105}, "weapons/tfa_bo3/shrinkray/wpn_shrink_plr_flux.wav",")")
-TFA.AddSound ("TFA_BO3_JGB.FluxUpg", CHAN_STATIC, 1, SNDLVL_TALKING, {95,105}, "weapons/tfa_bo3/shrinkray/wpn_shrink_plr_flux_upgr.wav",")")
 
-TFA.AddWeaponSound("TFA_BO3_JGB.Futz", "weapons/tfa_bo3/shrinkray/wpn_shrink_futz.wav")
-TFA.AddWeaponSound("TFA_BO3_JGB.MagOut", "weapons/tfa_bo3/shrinkray/wpn_shrink_mag_out.wav")
-TFA.AddWeaponSound("TFA_BO3_JGB.MagIn", "weapons/tfa_bo3/shrinkray/wpn_shrink_mag_in.wav")
 
-TFA.AddSound ("TFA_BO3_JGB.Fins", CHAN_ITEM, 0.2, SNDLVL_IDLE, 100, "weapons/tfa_bo3/shrinkray/wpn_shrink_fins.wav",")")
 TFA.AddSound ("TFA_BO3_JGB.Stop", CHAN_ITEM, 1, SNDLVL_IDLE, 100, "weapons/tfa_bo3/shrinkray/empty.wav",")")
 
 TFA.AddSound ("TFA_BO3_JGB.ZMB.Shrink", CHAN_STATIC, 0.5, SNDLVL_NORM, {95,105}, "weapons/tfa_bo3/shrinkray/evt_shrink.wav",")")
@@ -391,26 +339,10 @@ TFA.AddSound ("TFA_BO3_GKZMK3.Orb.Start", CHAN_STATIC, 1, SNDLVL_GUNFIRE, 100, "
 TFA.AddSound ("TFA_BO3_GKZMK3.Orb.Damage", CHAN_AUTO, 1, SNDLVL_TALKING, {95,105}, {"weapons/tfa_bo3/gkzmk3/wpn_orb_damage_00.wav", "weapons/tfa_bo3/gkzmk3/wpn_orb_damage_01.wav", "weapons/tfa_bo3/gkzmk3/wpn_orb_damage_02.wav", "weapons/tfa_bo3/gkzmk3/wpn_orb_damage_03.wav"},")")
 
 -- Zap Guns / Wavegun --------------------------------------------------------------------------------------------------------
-TFA.AddFireSound("TFA_BO3_ZAPGUN.Shoot", "weapons/tfa_bo3/zapgun/microwave_shot.wav", true, ")")
-TFA.AddSound ("TFA_BO3_ZAPGUN.ShootRear", CHAN_STATIC, 0.4, SNDLVL_GUNFIRE, 100, "weapons/tfa_bo3/zapgun/microwave_shot_rear.wav",")")
 
-TFA.AddFireSound("TFA_BO3_WAVEGUN.Shoot", "weapons/tfa_bo3/zapgun/microwave_rifle_shot.wav", true, ")")
 
-TFA.AddWeaponSound("TFA_BO3_ZAPGUN.Reload.LeftStart", "weapons/tfa_bo3/zapgun/wpn_micro_rld_left_start.wav")
-TFA.AddWeaponSound("TFA_BO3_ZAPGUN.Reload.LeftMagIn", "weapons/tfa_bo3/zapgun/wpn_micro_rld_left_mag_in.wav")
-TFA.AddWeaponSound("TFA_BO3_ZAPGUN.Reload.LeftEnd", "weapons/tfa_bo3/zapgun/wpn_micro_rld_left_end.wav")
-TFA.AddWeaponSound("TFA_BO3_ZAPGUN.Reload.RightStart", "weapons/tfa_bo3/zapgun/wpn_micro_rld_right_start.wav")
-TFA.AddWeaponSound("TFA_BO3_ZAPGUN.Reload.RightMagIn", "weapons/tfa_bo3/zapgun/wpn_micro_rld_right_mag_in.wav")
-TFA.AddWeaponSound("TFA_BO3_ZAPGUN.Reload.RightEnd", "weapons/tfa_bo3/zapgun/wpn_micro_rld_right_end.wav")
 
-TFA.AddWeaponSound("TFA_BO3_ZAPGUN.Join", "weapons/tfa_bo3/zapgun/wpn_micro_rld_join.wav")
-TFA.AddWeaponSound("TFA_BO3_ZAPGUN.Seperate", "weapons/tfa_bo3/zapgun/wpn_micro_rld_separate.wav")
 
-TFA.AddWeaponSound("TFA_BO3_WAVEGUN.RifleStart", "weapons/tfa_bo3/zapgun/wpn_micro_rld_rifle_start.wav")
-TFA.AddWeaponSound("TFA_BO3_WAVEGUN.RifleMagOut", "weapons/tfa_bo3/zapgun/wpn_micro_rld_rifle_mag_out.wav")
-TFA.AddWeaponSound("TFA_BO3_WAVEGUN.RifleMagIn", "weapons/tfa_bo3/zapgun/wpn_micro_rld_rifle_mag_in.wav")
-TFA.AddWeaponSound("TFA_BO3_WAVEGUN.RifleFutz", "weapons/tfa_bo3/zapgun/wpn_micro_rld_rifle_futz.wav")
-TFA.AddWeaponSound("TFA_BO3_WAVEGUN.RiflePower", "weapons/tfa_bo3/zapgun/wpn_micro_rld_rifle_power_up.wav")
 
 TFA.AddSound ("TFA_BO3_WAVEGUN.Microwave.Ding", CHAN_WEAPON, 1, SNDLVL_TALKING, {97,103}, "weapons/tfa_bo3/zapgun/microwave_ding.wav",")")
 TFA.AddSound ("TFA_BO3_WAVEGUN.Microwave.Cook", CHAN_WEAPON, 1, SNDLVL_TALKING, {97,103}, "weapons/tfa_bo3/zapgun/microwave_cooking.wav",")")

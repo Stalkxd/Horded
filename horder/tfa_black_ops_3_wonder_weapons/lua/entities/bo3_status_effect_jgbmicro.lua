@@ -138,7 +138,7 @@ ENT.Initialize = function(self)
 
 		p:SetModelScale(0.5, 0.5)
 		p:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
-		p:SetHealth(1)
+		if not HORDE then p:SetHealth(1) end
 
 		p:EmitSound("TFA_BO3_JGB.ZMB.Shrink")
 		ParticleEffectAttach("bo3_jgb_shrink", PATTACH_POINT_FOLLOW, p, 1)
@@ -306,7 +306,7 @@ ENT.Squish = function(self)
 	damage:SetDamagePosition(ent:WorldSpaceCenter())
 
 	ent:EmitSound("TFA_BO3_JGB.ZMB.Squish")
-	ent:SetHealth(1)
+	if not HORDE then ent:SetHealth(1) end
 	ent:TakeDamageInfo(damage)
 
 	if nzombies and IsValid(ply) and self.Assistor and ply ~= self.Assistor and self.Assistor:IsPlayer() then

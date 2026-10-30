@@ -196,7 +196,7 @@ SWEP.CustomBulletCallback = function(ply, tr, dmg)
 			if nzombies and ent:IsPlayer() then return end
 			if nzombies and ent.NZBossType then return end
 
-			ent:SetHealth(1)
+			if not HORDE then ent:SetHealth(1) end
 			dmg:SetDamage(ent:Health() + 666)
 			//dmg:SetDamageForce(((dmg:GetDamagePosition() - ply:GetShootPos()):GetNormalized() * 20000) + ent:GetUp()*3000)
 

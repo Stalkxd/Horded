@@ -97,7 +97,7 @@ function ENT:Explosion()
 	
 	local parent = self:GetParent()
 	if self.Upgraded and IsValid(parent) and parent:GetInternalVariable("m_takedamage") == 2 then
-		parent:SetHealth(1)
+		if not HORDE then parent:SetHealth(1) end
 	end
 	
 	local dmg = DamageInfo() -- determine damage

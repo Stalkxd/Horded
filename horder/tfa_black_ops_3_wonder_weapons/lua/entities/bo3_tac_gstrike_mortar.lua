@@ -120,7 +120,10 @@ function ENT:Think()
 end
 
 function ENT:DoExplosionEffect()
-	ParticleEffect("doi_mortar_explosion", self:GetPos(), Angle(-90,0,0))
+	local effectdata = EffectData()
+	effectdata:SetOrigin(self:GetPos())
+	util.Effect("HelicopterMegaBomb", effectdata)
+	util.Effect("Explosion", effectdata)
 
 	self:EmitSound("TFA_BO3_GSTRIKE.Exp")
 	self:EmitSound("TFA_BO3_GSTRIKE.Exp.Debris")

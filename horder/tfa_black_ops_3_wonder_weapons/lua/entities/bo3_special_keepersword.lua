@@ -205,7 +205,7 @@ function ENT:InflictDamage(ent)
 
 	ent:Ignite(1.5)
 	if ent:IsNPC() then
-		ent:SetHealth(1)
+		if not HORDE then ent:SetHealth(1) end
 	end
 	ent:TakeDamageInfo(damage)
 

@@ -243,7 +243,7 @@ ENT.Pop = function(self)
 	self:GetOwner():ChatPrint("QED Effect: Astronaut Pop")
 
 	self:EmitSound("TFA_BO3_QED.AstroPop")
-	ParticleEffect("bo3_astronaut_pulse",self:GetPos(),self:GetAngles())
+	ParticleEffect("bo3_qed_explode_1",self:GetPos(),self:GetAngles())
 
 	local damage = DamageInfo()
 	damage:SetAttacker(IsValid(self:GetOwner()) and self:GetOwner() or self)
@@ -670,8 +670,8 @@ ENT.WunderWaffe = function(self)
 	ply:EmitSound("TFA_BO3_QED.Pickup")
 
 	if SERVER then
-		ply:Give("tfa_bo3_wunderwaffe")
-		ply:SelectWeapon("tfa_bo3_wunderwaffe")
+		ply:Give("tfa_wunderwaffe")
+		ply:SelectWeapon("tfa_wunderwaffe")
 		net.Start("TFA.BO3.QED_SND")
 		net.WriteString("Tesla")
 		net.Send(ply)
@@ -772,8 +772,8 @@ ENT.SpinningRaygun = function(self)
 	self:GetOwner():ChatPrint("QED Effect: Summon Raygun")
 
 	local raychance = math.random(2)
-	local mdl1 = "models/weapons/tfa_bo3/raygun/w_raygun.mdl"
-	local mdl2 = "models/weapons/tfa_bo3/mk2/w_mk2.mdl"
+	local mdl1 = "models/weapons/world_at_war/raygun/w_raygun.mdl"
+	local mdl2 = "models/weapons/black_ops_2/raygun2/w_raygun2.mdl"
 	local mk2 = raychance == 1
 
 	if SERVER then
@@ -966,7 +966,7 @@ ENT.Explode = function(self)
 	
 	util.ScreenShake(self:GetPos(), 20, 255, 1.2, 500)
 
-	ParticleEffect("bo3_panzer_explosion", self:GetPos(), angle_zero)
+	ParticleEffect("bo3_scavenger_explosion_2", self:GetPos(), angle_zero)
 	self:EmitSound("TFA_BO3_QED.NukeFlux")
 
 	self:DoCustomRemove(false, 1)

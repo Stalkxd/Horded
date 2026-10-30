@@ -302,7 +302,7 @@ function ENT:InflictDamage(ent)
 	ParticleEffect("bo3_gersch_kill", ent:WorldSpaceCenter(), angle_zero)
 	
 	ent:EmitSound("TFA_BO3_GERSCH.Suck")
-	ent:SetHealth(1)
+	if not HORDE then ent:SetHealth(1) end
 	ent:TakeDamageInfo(damage)
 
 	if (ent:IsNPC() or ent:IsNextBot()) then

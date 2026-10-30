@@ -32,7 +32,7 @@ end
 
 function ENT:ZapTarget(target, fx)
 	if target:Health() < 0 then
-		if target.Kill then target:Kill() end
+		if not HORDE and target.Kill then target:Kill() end
 		return
 	end
 

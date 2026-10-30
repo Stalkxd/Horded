@@ -406,7 +406,7 @@ function SWEP:PrimaryAttack()
 			
 			if SERVER then
 				v:SetNW2Float( "IceStaffSlow", math.Rand(3,5) )
-				v:SetHealth(1)
+				if not HORDE then v:SetHealth(1) end
 				v.LastIceAttacker = self.Owner
 				v:SetCollisionGroup(COLLISION_GROUP_WEAPON)
 				tfaww_icestaffed[v:EntIndex()] = v
