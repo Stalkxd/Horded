@@ -399,7 +399,7 @@ local SYSTEMS_MANIFEST = {
     { path = "shared/world/sh_mutation.lua",   desc = "Mutation framework" },
     { path = "shared/world/sh_quality.lua",    desc = "Weapon quality & auto-price" },
     { path = "shared/world/sh_item.lua",       desc = "Item/shop framework" },
-    { path = "shared/world/sh_wonder_weapons.lua", desc = "TFA wonder weapon damage caps & unlock waves" },
+    { path = "shared/world/sh_wonder_weapons.lua", desc = "Wonder weapon damage caps" },
     { path = "shared/world/sh_maps.lua",       desc = "Map config" },
     { path = "shared/world/sh_specialwaves.lua", desc = "Special Waves data model (presets, sanitize)" },
     { path = "shared/world/sh_gameplayconfig.lua", desc = "Gameplay config (hidden difficulties, default controls)" },

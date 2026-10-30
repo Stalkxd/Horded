@@ -65,6 +65,9 @@ local function TeleportToPlayer(ent, ply)
     return true
 end
 
+-- Shared with the enemy director, which teleports enemies that never find a target.
+HORDE.TeleportEnemyToPlayer = TeleportToPlayer
+
 local function Forget(ent)
     last_pos[ent] = nil
     stuck_since[ent] = nil
