@@ -87,6 +87,9 @@ HORDE.WonderWeaponEntities = {
 -- Used for pack entities that are not listed above.
 HORDE.WONDER_WEAPON_FALLBACK_CAP = 300
 
+-- The packs cap reserve ammo at nZombies values. Horde lets players carry this many times that.
+HORDE.WONDER_WEAPON_AMMO_MULT = 3
+
 local cv_wave_lock = CreateConVar("horde_wonder_wave_lock", 1, { FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE, FCVAR_REPLICATED },
     "Lock wonder weapons in the shop until their unlock wave. 0 = buyable from wave 1.")
 
