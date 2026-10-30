@@ -103,6 +103,7 @@ end
 
 function SWEP:Hook_PostFireBullets()
     if IsFirstTimePredicted() then
+        self:EmitSound("TFA_BO3_GKZ.Layer")
         self:EmitSound("TFA_BO3_GKZ.Act")
         self:EmitSound("TFA_BO3_GKZ.Gears")
     end
@@ -120,6 +121,7 @@ function SWEP:SecondaryAttack()
         delay = self.WW_AltDelay,
     })
     if self:Clip2() < clip and IsFirstTimePredicted() then
+        self:EmitSound("TFA_BO3_MK3.Layer")
         self:EmitSound("TFA_BO3_MK3.Act")
         self:EmitSound("TFA_BO3_MK3.Decay")
     end

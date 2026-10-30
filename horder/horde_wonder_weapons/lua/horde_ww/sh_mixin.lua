@@ -12,15 +12,18 @@ local MUZZLE_EVENTS = {
 
 -- Perk and charm slots. The perk slot takes CS:GO and Modern Warfare perks (sh_arccw_slots widens
 -- "go_perk" to "perk"), and "charm" is the slot name both packs use for charms.
-function HORDE_WW.Slots(bone, offset, extra)
+-- charm_only leaves out the perk slot (the swords only take a charm).
+function HORDE_WW.Slots(bone, offset, extra, charm_only)
     local slots = {}
     for _, slot in ipairs(extra or {}) do
         slots[#slots + 1] = slot
     end
-    slots[#slots + 1] = {
-        PrintName = "Perk",
-        Slot = {"go_perk", "perk"},
-    }
+    if not charm_only then
+        slots[#slots + 1] = {
+            PrintName = "Perk",
+            Slot = {"go_perk", "perk"},
+        }
+    end
     slots[#slots + 1] = {
         PrintName = "Charm",
         Slot = "charm",

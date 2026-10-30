@@ -27,7 +27,7 @@ SWEP.Primary.DefaultClip = 100
 SWEP.UseHordeDurability = false
 SWEP.WW_NoReload = true
 SWEP.WW_NoSights = true
-SWEP.WW_Regen = 1.5
+SWEP.WW_Regen = 5
 
 SWEP.PrimaryBash = true
 SWEP.CanBash = true
@@ -54,6 +54,6 @@ SWEP.HolsterAng = Angle(-10, 0, 0)
 SWEP.CustomizePos = Vector(10, -4, -2)
 SWEP.CustomizeAng = Angle(15, 30, 10)
 
-SWEP.Attachments = HORDE_WW.Slots()
+SWEP.Attachments = HORDE_WW.Slots(nil, nil, nil, true)
 
 HORDE_WW.Mixin(SWEP)
