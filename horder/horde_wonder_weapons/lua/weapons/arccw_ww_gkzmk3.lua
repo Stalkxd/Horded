@@ -28,8 +28,7 @@ SWEP.WW_AimAtCrosshair = true
 SWEP.Primary.ClipSize = 3
 SWEP.Primary.DefaultClip = 90
 SWEP.Primary.Ammo = "Battery"
-SWEP.Secondary.ClipSize = 15
-SWEP.Secondary.DefaultClip = 15
+SWEP.WW_Clip2Size = 15 -- right gun; see WW_MaxClip2 in sh_mixin.lua
 SWEP.Secondary.Ammo = "none"
 SWEP.Secondary.Automatic = true
 SWEP.Delay = 60 / 95
@@ -104,6 +103,7 @@ end
 
 function SWEP:Hook_PostFireBullets()
     if IsFirstTimePredicted() then
+        self:EmitSound("TFA_BO3_GKZ.Layer")
         self:EmitSound("TFA_BO3_GKZ.Act")
         self:EmitSound("TFA_BO3_GKZ.Gears")
     end
@@ -121,6 +121,7 @@ function SWEP:SecondaryAttack()
         delay = self.WW_AltDelay,
     })
     if self:Clip2() < clip and IsFirstTimePredicted() then
+        self:EmitSound("TFA_BO3_MK3.Layer")
         self:EmitSound("TFA_BO3_MK3.Act")
         self:EmitSound("TFA_BO3_MK3.Decay")
     end

@@ -28,12 +28,12 @@ SWEP.MeleeMissSound = "TFA_BO3_ZODSWORD.SwingFoly"
 SWEP.MeleeHitSound = "TFA_BO3_STAFFS.MeleeHit"
 SWEP.MeleeHitNPCSound = "TFA_BO3_ZODSWORD.Impact"
 
-SWEP.WW_Regen = 2
+SWEP.WW_Regen = 6
 SWEP.WW_SlamCost = 20
 SWEP.WW_SlamDamage = 400
 SWEP.WW_SlamRadius = 150
 
-SWEP.Attachments = HORDE_WW.Slots("tag_weapon")
+SWEP.Attachments = HORDE_WW.Slots("tag_weapon", nil, nil, true)
 
 SWEP.Animations = {
     ["idle"] = { Source = "idle" },

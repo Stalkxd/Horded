@@ -28,11 +28,11 @@ SWEP.MeleeMissSound = "TFA_BO3_ZODSWORD.SwingFoly"
 SWEP.MeleeHitSound = "TFA_BO3_STAFFS.MeleeHit"
 SWEP.MeleeHitNPCSound = "TFA_BO3_ZODSWORD.Impact"
 
-SWEP.WW_Regen = 2
+SWEP.WW_Regen = 6
 SWEP.WW_ThrowCost = 20
 SWEP.WW_ThrowModel = "models/weapons/tfa_bo3/keepersword/keepersword_projectile.mdl"
 
-SWEP.Attachments = HORDE_WW.Slots("tag_weapon")
+SWEP.Attachments = HORDE_WW.Slots("tag_weapon", nil, nil, true)
 
 SWEP.Animations = {
     ["idle"] = { Source = "idle" },

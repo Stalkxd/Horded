@@ -12,15 +12,18 @@ local MUZZLE_EVENTS = {
 
 -- Perk and charm slots. The perk slot takes CS:GO and Modern Warfare perks (sh_arccw_slots widens
 -- "go_perk" to "perk"), and "charm" is the slot name both packs use for charms.
-function HORDE_WW.Slots(bone, offset, extra)
+-- charm_only leaves out the perk slot (the swords only take a charm).
+function HORDE_WW.Slots(bone, offset, extra, charm_only)
     local slots = {}
     for _, slot in ipairs(extra or {}) do
         slots[#slots + 1] = slot
     end
-    slots[#slots + 1] = {
-        PrintName = "Perk",
-        Slot = {"go_perk", "perk"},
-    }
+    if not charm_only then
+        slots[#slots + 1] = {
+            PrintName = "Perk",
+            Slot = {"go_perk", "perk"},
+        }
+    end
     slots[#slots + 1] = {
         PrintName = "Charm",
         Slot = "charm",
@@ -95,7 +98,8 @@ end
 local function FindBaseFunc(base, key)
     local seen = 0
     while base and seen < 16 do
-        local stored = weapons.GetStored(base)
+        -- A missing base (the Horde melee base outside Horde) falls back to plain ArcCW
+        local stored = weapons.GetStored(base) or weapons.GetStored("arccw_base")
         if not stored then return end
         local value = rawget(stored, key)
         if value ~= nil then return value end
@@ -139,8 +143,10 @@ function HORDE_WW.Mixin(SWEP)
         return ret
     end
 
+    -- The second gun's clip size lives in its own field: ArcCW rewrites Secondary.ClipSize to -1
+    -- whenever attachments change (it keeps that slot for underbarrel launchers).
     function SWEP:WW_MaxClip2()
-        return self.Secondary.ClipSize or 0
+        return self.WW_Clip2Size or 0
     end
 
     function SWEP:FireAnimationEvent(pos, ang, event, options)

@@ -26,8 +26,8 @@ SWEP.Primary.DefaultClip = 100
 SWEP.Primary.Ammo = "none"
 SWEP.WW_NoReload = true
 SWEP.WW_NoSights = true
-SWEP.WW_Regen = 2
-SWEP.WW_RegenDelay = 1
+SWEP.WW_Regen = 6
+SWEP.WW_RegenDelay = 0.5
 
 SWEP.WW_SlamCost = 25
 SWEP.WW_SlamRadius = 200

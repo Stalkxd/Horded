@@ -32,8 +32,8 @@ SWEP.Primary.Ammo = "none"
 SWEP.Delay = 60 / 1200
 SWEP.WW_NoReload = true
 SWEP.WW_NoSights = true
-SWEP.WW_Regen = 3
-SWEP.WW_RegenDelay = 1
+SWEP.WW_Regen = 15
+SWEP.WW_RegenDelay = 0.5
 
 SWEP.Recoil = 0.25
 SWEP.RecoilSide = 0.25
