@@ -376,8 +376,9 @@ function SWEP:Horde_MeleeSwing(damage, sound_variant)
 	if not IsValid(own) then return end
 	local dir = self:GetForward()
 	local src = own:GetShootPos() - dir * 64
+	-- Only the trace is compensated: FireBullets below compensates by itself,
+	-- and the early CLIENT return used to leave the session open.
 	own:LagCompensation(true)
-
 	local tr = util.TraceHull({
 		start = own:GetShootPos(),
 		endpos = own:GetShootPos() + own:GetAimVector() * 96,
@@ -386,6 +387,7 @@ function SWEP:Horde_MeleeSwing(damage, sound_variant)
 		maxs = Vector(16, 16, 0),
 		mask = MASK_SHOT_HULL,
 	})
+	own:LagCompensation(false)
 
 	own:SetAnimation(PLAYER_ATTACK1)
 	self:SendWeaponAnim(ACT_VM_HITCENTER)
@@ -415,7 +417,6 @@ function SWEP:Horde_MeleeSwing(damage, sound_variant)
 	elseif tr.Entity:IsWorld() then
 		own:EmitSound("weapons/cbar_hit" .. math.random(1,2) .. ".wav", 80, math.random(95, 100))
 	end
-	own:LagCompensation(false)
 end
 
 if CLIENT then

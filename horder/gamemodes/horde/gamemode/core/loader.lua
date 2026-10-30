@@ -383,6 +383,7 @@ local SYSTEMS_MANIFEST = {
     { path = "shared/combat/sh_damage.lua",    desc = "Damage types" },
     { path = "shared/combat/sh_objective.lua", desc = "Objectives" },
     { path = "shared/combat/sh_objectivebar.lua", desc = "Objective progress bar (server: state & progress)" },
+    { path = "shared/combat/sh_lagcomp.lua",   desc = "Lag compensation helpers" },
 
     { path = "shared/player/sh_class.lua",     desc = "Class system" },
     { path = "shared/player/sh_minion.lua",    desc = "Minion ownership API (shared)" },
