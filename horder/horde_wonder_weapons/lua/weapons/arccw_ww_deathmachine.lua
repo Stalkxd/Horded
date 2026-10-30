@@ -1,7 +1,7 @@
 if not ArcCWInstalled then return end
 
 SWEP.Base = "arccw_ww_base"
-DEFINE_BASECLASS(SWEP.Base)
+local BaseClass = HORDE_WW.Base(SWEP.Base)
 SWEP.Spawnable = true
 SWEP.PrintName = "Death Machine"
 SWEP.Trivia_Desc = "Hand held minigun. Hold left or right click to spin the barrels up, then fire. Recharges on its own."

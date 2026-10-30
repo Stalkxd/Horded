@@ -58,8 +58,9 @@ SWEP.AnimShoot = ACT_HL2MP_GESTURE_RANGE_ATTACK_PISTOL
 
 SWEP.Attachments = HORDE_WW.Slots("tag_weapon")
 
+-- No "idle" entry on purpose: the model's 23 second idle has the dragon fly off the arm and
+-- hover beside the screen. Without it the arm holds the last pose, with the dragon in place.
 SWEP.Animations = {
-    ["idle"] = { Source = "idle" },
     ["ready"] = { Source = "draw_first" },
     ["draw"] = {
         Source = "draw",

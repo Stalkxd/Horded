@@ -4,7 +4,7 @@
 --   cap  = the most damage one hit (or one tick) can deal, before Horde perk bonuses
 HORDE.WonderWeapons = {
     arccw_ww_scavenger = { cap = 2500 },
-    arccw_ww_zapguns = { cap = 250 },
+    arccw_ww_zapguns = { cap = 1000 },
     arccw_ww_sliquifier = { cap = 400 },
     arccw_ww_zodsword = { cap = 700 },
     arccw_ww_deathmachine = { cap = 100 },
@@ -13,13 +13,14 @@ HORDE.WonderWeapons = {
     arccw_ww_keepersword = { cap = 700 },
     arccw_ww_kt4 = { cap = 600 },
     arccw_ww_dg4 = { cap = 1200 },
-    arccw_ww_zmbbow = { cap = 600 },
+    arccw_ww_zmbbow = { cap = 900 },
 }
 
 -- Projectiles and lingering effects, for when their damage cannot be traced back to a weapon.
 HORDE.WonderWeaponEntities = {
     obj_scavenger_proj = "arccw_ww_scavenger",
     obj_wgun_proj = "arccw_ww_zapguns",
+    obj_wgun_proj2 = "arccw_ww_zapguns",
     obj_sliquifier_proj = "arccw_ww_sliquifier",
     obj_sliquifier_puddle = "arccw_ww_sliquifier",
     bo3_ww_mk3 = "arccw_ww_gkzmk3",

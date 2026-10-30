@@ -1,7 +1,7 @@
 if not ArcCWInstalled then return end
 
 SWEP.Base = "arccw_ww_base"
-DEFINE_BASECLASS(SWEP.Base)
+local BaseClass = HORDE_WW.Base(SWEP.Base)
 SWEP.Spawnable = true
 SWEP.PrintName = "KT-4"
 SWEP.Trivia_Desc = "Fires toxic spores that infect enemies. Hold the trigger to charge up to three shots into one; charged shots leave a toxic puddle."
@@ -25,8 +25,8 @@ SWEP.ShootEntity = "bo3_ww_mirg"
 SWEP.ShootEntityModel = "models/dav0r/hoverball.mdl"
 SWEP.MuzzleVelocity = 3000
 
-SWEP.Primary.ClipSize = 6
-SWEP.Primary.DefaultClip = 24
+SWEP.Primary.ClipSize = 10
+SWEP.Primary.DefaultClip = 40
 SWEP.Primary.Ammo = "AR2AltFire"
 SWEP.Delay = 60 / 220
 
