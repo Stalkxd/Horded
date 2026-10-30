@@ -68,6 +68,7 @@ function ENT:OnCollide(ent, hitpos)
 	for _,v in pairs(ents.FindInSphere(hitpos,65)) do
 		if v:Health() < 1 then continue end
 		if v:IsPlayer() and (v == self.Owner or !hook.Run("PlayerShouldTakeDamage",v,self.Owner)) then continue end
+		if HORDE and v:IsPlayer() then continue end -- Horde: never on players
 		
 		--[[if string.StartsWith(v:GetClass(), "nz_zombie_boss") then
 			self.DmgInfo:SetDamage(335)
@@ -109,6 +110,7 @@ function ENT:Think()
 	if self.Charge > 1 and self:GetMoveType() == MOVETYPE_NONE then
 		for k, v in pairs(ents.FindInSphere(self:GetPos(), 128)) do
 			if v:IsPlayer() and (v == self.Owner or !hook.Run("PlayerShouldTakeDamage",v,self.Owner)) then continue end
+			if HORDE and v:IsPlayer() then continue end -- Horde: never on players
 			if v:Health() <= 0 then 
 				if not HORDE and v:GetInternalVariable("m_takedamage") > 0 and v.Kill then v:Kill() end
 				continue 

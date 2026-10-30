@@ -22,6 +22,7 @@ function ENT:Think()
 			if v:GetInternalVariable("m_takedamage") < 1 then continue end
 			if !v:IsPlayer() and !v:IsNPC() and !v:IsNextBot() then continue end
 			if v:IsPlayer() and (v == self.Owner or !hook.Run("PlayerShouldTakeDamage",v,self.Owner)) then continue end
+			if HORDE and v:IsPlayer() then continue end -- Horde: never on players
 			
 			self:ZapTarget(v, true)
 		end
@@ -81,6 +82,7 @@ function ENT:StartTouch(ent)
 	for k, v in ipairs(ents.FindInBox(data.HitPos - hitMaxs, data.HitPos + hitMaxs)) do
 		if v:GetInternalVariable("m_takedamage") < 1 then continue end
 		if v:IsPlayer() and (v == self.Owner or !hook.Run("PlayerShouldTakeDamage",v,self.Owner)) then continue end
+		if HORDE and v:IsPlayer() then continue end -- Horde: never on players
 		
 		self:ZapTarget(v, false)
 	end

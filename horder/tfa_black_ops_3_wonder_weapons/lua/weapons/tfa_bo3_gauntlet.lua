@@ -174,6 +174,7 @@ SWEP.CustomBulletCallback = function(ply, tr, dmg)
 
 		if IsValid(ent) and ent.Ignite then
 			if nzombies and ent:IsPlayer() then return end
+			if TFAWW_SkipPlayer and TFAWW_SkipPlayer(ent, ply) then return end
 
 			if nzombies and ent:IsValidZombie() then
 				local round = nzRound:GetNumber() > 0 and nzRound:GetNumber() or 1

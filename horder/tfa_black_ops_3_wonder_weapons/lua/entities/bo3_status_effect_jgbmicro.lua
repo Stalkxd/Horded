@@ -32,6 +32,7 @@ local entMeta = FindMetaTable("Entity")
 
 if SERVER then
 	entMeta.BO3Shrink = function(self, duration, upgrade, attacker)
+		if TFAWW_SkipEffect and TFAWW_SkipEffect(self) then return end -- Horde: not on players, bosses or elites
 		if upgrade == nil then
 			upgrade = false
 		end

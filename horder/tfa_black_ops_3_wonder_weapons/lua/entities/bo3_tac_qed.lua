@@ -260,7 +260,7 @@ ENT.Pop = function(self)
 				damage:SetDamagePosition(v:GetPos())
 				v:TakeDamageInfo(damage)
 			end
-			if v:IsPlayer() then
+			if v:IsPlayer() and not (TFAWW_SkipPlayer and TFAWW_SkipPlayer(v, self:GetOwner())) then
 				v:ViewPunch(Angle(-25,math.random(-10, 10),0))
 				v:SetGroundEntity(nil)
 				v:SetVelocity(((v:GetPos() - self:GetPos()):GetNormalized() * 200) + v:GetUp()*200)

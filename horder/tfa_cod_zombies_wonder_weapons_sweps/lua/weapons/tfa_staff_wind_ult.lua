@@ -479,6 +479,7 @@ function SWEP:PostPrimaryAttack()
 	if SERVER then
 		for k, v in pairs(ents.FindInCone(ply:GetShootPos(), self:GetAimVector(), 250, 0.766)) do --0.766 is the cosine of rad(40)
 			if v ~= ply and (v:IsNextBot() or v:IsPlayer() or v:IsNPC()) then
+				if TFAWW_SkipPlayer and TFAWW_SkipPlayer(v, ply) then continue end
 				local dmg = DamageInfo()
 				dmg:SetDamage(1270) -- Zombie health at round 12 using original CoD:Z formula
 				dmg:SetDamageType(DMG_SONIC)

@@ -1,3 +1,19 @@
+-- Horde: wonder weapon effects only hit enemies, and control effects skip bosses and elites
+function TFAWW_SkipPlayer(ent, attacker)
+	return HORDE ~= nil and HORDE.WonderWeaponIgnores ~= nil and HORDE:WonderWeaponIgnores(ent, attacker)
+end
+
+function TFAWW_Resists(ent)
+	return HORDE ~= nil and HORDE.WonderWeaponResists ~= nil and HORDE:WonderWeaponResists(ent)
+end
+
+-- true when a control effect (shrink, freeze, pull...) from attacker must not touch ent
+function TFAWW_SkipEffect(ent, attacker)
+	if not IsValid(ent) or HORDE == nil then return false end
+	if ent:IsPlayer() then return true end
+	return TFAWW_Resists(ent)
+end
+
 --Origins staffs
 if SERVER then
 	AddCSLuaFile()

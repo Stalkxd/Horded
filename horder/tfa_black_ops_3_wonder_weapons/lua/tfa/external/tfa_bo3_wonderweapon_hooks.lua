@@ -1,3 +1,19 @@
+-- Horde: wonder weapon effects only hit enemies, and control effects skip bosses and elites
+function TFAWW_SkipPlayer(ent, attacker)
+	return HORDE ~= nil and HORDE.WonderWeaponIgnores ~= nil and HORDE:WonderWeaponIgnores(ent, attacker)
+end
+
+function TFAWW_Resists(ent)
+	return HORDE ~= nil and HORDE.WonderWeaponResists ~= nil and HORDE:WonderWeaponResists(ent)
+end
+
+-- true when a control effect (shrink, freeze, pull...) from attacker must not touch ent
+function TFAWW_SkipEffect(ent, attacker)
+	if not IsValid(ent) or HORDE == nil then return false end
+	if ent:IsPlayer() then return true end
+	return TFAWW_Resists(ent)
+end
+
 -- Copyright (c) 2018-2020 TFA Base Devs
 
 -- Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -373,7 +389,7 @@ if CLIENT then
 		local upgraded = false
 
 		for _, ent in pairs(ents_FindInSphere(pos, 1000)) do
-			if EntList[ent:GetClass()] then
+			if EntList[ent:GetClass()] and (not HORDE or ent:GetOwner() == ply) then -- Horde: only the thrower's screen
 				table.insert(dents, ent)
 			end
 		end

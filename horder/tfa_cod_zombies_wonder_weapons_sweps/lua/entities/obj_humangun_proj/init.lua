@@ -31,6 +31,11 @@ function ENT:StartTouch(ent)
 		return true 
 	end
 	
+	if ent:IsPlayer() and TFAWW_SkipPlayer and TFAWW_SkipPlayer(ent, self.Owner) then -- Horde: no effect on teammates
+		self:Remove()
+		return true
+	end
+
 	if ent:IsPlayer() then
 		self:EmitSound("weapons/humangun/projectile/impact_0"..math.random(0,1)..".ogg", 70)
 		self:EmitSound("weapons/humangun/growl_0"..math.random(2,3)..".ogg", 70, 100, 1, CHAN_WEAPON)
@@ -78,7 +83,7 @@ function ENT:StartTouch(ent)
 		ParticleEffect(self.CollidePCF, data.HitPos, angle_zero)
 		self:EmitSound("weapons/humangun/projectile/impact_0"..math.random(0,1)..".ogg", 70)
 		self:Remove()
-	elseif string.find(c, "nz_zombie_boss") then
+	elseif string.find(c, "nz_zombie_boss") or (TFAWW_Resists and TFAWW_Resists(ent)) then -- Horde: bosses and elites take damage instead of turning
 		ent:TakeDamage(self:GetUpgraded() and math.max(ent:GetMaxHealth()/3, 2000) or math.max(ent:GetMaxHealth()/6, 1000), self.Owner, self)
 		ParticleEffect(self.CollidePCF, data.HitPos, angle_zero)
 		self:EmitSound("weapons/humangun/projectile/impact_0"..math.random(0,1)..".ogg", 70)

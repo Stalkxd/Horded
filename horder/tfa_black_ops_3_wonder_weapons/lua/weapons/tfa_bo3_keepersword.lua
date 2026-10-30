@@ -358,7 +358,7 @@ function SWEP:ApplyDamage(trace, dmginfo, attk)
 		ParticleEffect("bo3_keepersword_hit", trace.HitPos, force:Angle())
 	end
 
-	if SERVER and ent.Ignite then
+	if SERVER and ent.Ignite and not (TFAWW_SkipPlayer and TFAWW_SkipPlayer(ent, self:GetOwner())) then
 		if nzombies then
 			if IsValid(ent) and ent:IsValidZombie() then
 				ent:Ignite(3)

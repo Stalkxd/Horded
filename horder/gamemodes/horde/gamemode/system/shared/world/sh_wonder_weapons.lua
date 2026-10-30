@@ -111,7 +111,29 @@ function HORDE.WonderWeaponCanPurchase(ply, item)
     end
 end
 
+-- For pack code: true for bosses and elites (Weeper, Hulk, Yeti, Lesion...), which shrug off
+-- control effects such as shrinking, freezing, mind control, lifting and pulling.
+-- Clients read the networked flag set below, so effect visuals agree with the server.
+function HORDE:WonderWeaponResists(ent)
+    if not IsValid(ent) or ent:IsPlayer() then return false end
+    if ent:GetNW2Bool("Horde_WonderResist") then return true end
+    if CLIENT then return false end
+    if ent.Horde_IsElite and ent:Horde_IsElite() then return true end
+    local boss = ent.Horde_GetBossProperties and ent:Horde_GetBossProperties()
+    if boss and boss.is_boss then return true end
+    return string.find(ent:GetClass(), "boss", 1, true) ~= nil
+end
+
 if not SERVER then return end
+
+-- Elite and boss flags are set right after an enemy spawns, so check on the next tick
+hook.Add("OnEntityCreated", "Horde_WonderWeaponResistFlag", function(ent)
+    timer.Simple(0, function()
+        if IsValid(ent) and (ent:IsNPC() or ent:IsNextBot()) and HORDE:WonderWeaponResists(ent) then
+            ent:SetNW2Bool("Horde_WonderResist", true)
+        end
+    end)
+end)
 
 local OVERRIDES_FILE = "horde/wonder_waves.txt"
 
@@ -244,4 +266,48 @@ function HORDE:CapWonderWeaponDamage(dmginfo)
     if dmginfo:GetDamage() > cap then
         dmginfo:SetDamage(cap)
     end
+end
+
+local function WonderOwner(ent)
+    if not IsValid(ent) then return end
+    if ent:IsPlayer() then return ent end
+    local owner = ent:GetOwner()
+    if IsValid(owner) and owner:IsPlayer() then return owner end
+    if IsValid(ent.Inflictor) and ent.Inflictor:IsWeapon() then
+        owner = ent.Inflictor:GetOwner()
+        if IsValid(owner) and owner:IsPlayer() then return owner end
+    end
+end
+
+local function IsWonderSource(ent)
+    if not IsValid(ent) then return false end
+    if ent:IsPlayer() then
+        local wpn = ent:GetActiveWeapon()
+        return IsValid(wpn) and HORDE.WonderWeapons[wpn:GetClass()] ~= nil
+    end
+    local class = ent:GetClass()
+    return HORDE.WonderWeapons[class] ~= nil or HORDE.WonderWeaponEntities[class] ~= nil or IsPackEntity(class)
+end
+
+-- Wonder weapons only affect enemies. The packs ask this hook before pushing, freezing or
+-- zapping a player, and the engine asks it before any damage to a player.
+hook.Add("PlayerShouldTakeDamage", "Horde_WonderWeaponNoFriendlyFire", function(ply, attacker)
+    if not IsWonderSource(attacker) then return end
+    local owner = WonderOwner(attacker)
+    if owner and owner ~= ply then return false end
+end)
+
+hook.Add("EntityTakeDamage", "Horde_WonderWeaponNoFriendlyFire", function(target, dmginfo)
+    if not target:IsPlayer() then return end
+    local attacker, inflictor = dmginfo:GetAttacker(), dmginfo:GetInflictor()
+    if not IsWonderSource(inflictor) and not IsWonderSource(attacker) then return end
+    local owner = WonderOwner(attacker) or WonderOwner(inflictor)
+    if owner and owner ~= target then return true end
+end)
+
+-- For pack code: true when a wonder weapon effect from attacker must skip ent
+function HORDE:WonderWeaponIgnores(ent, attacker)
+    if not IsValid(ent) or not ent:IsPlayer() then return false end
+    local owner = WonderOwner(attacker)
+    return owner ~= ent
 end

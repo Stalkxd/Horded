@@ -71,6 +71,7 @@ function ENT:Think()
 	end
 	for k, p in ipairs(ents.FindInSphere(self:GetPos(), 256)) do
 		if p:IsPlayer() and (p == self.Owner or !hook.Run("PlayerShouldTakeDamage",p,self.Owner)) then continue end
+		if TFAWW_SkipEffect and TFAWW_SkipEffect(p) then continue end -- Horde: no pull on players, bosses or elites
 		if p.loco then
 			p.loco:SetVelocity(2*(self:GetPos()-p:GetPos()))
 		else
