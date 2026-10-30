@@ -87,9 +87,16 @@ HORDE.WonderWeaponEntities = {
 -- Used for pack entities that are not listed above.
 HORDE.WONDER_WEAPON_FALLBACK_CAP = 300
 
+local cv_wave_lock = CreateConVar("horde_wonder_wave_lock", 1, { FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE, FCVAR_REPLICATED },
+    "Lock wonder weapons in the shop until their unlock wave. 0 = buyable from wave 1.")
+
+-- Unlock waves set with horde_wonder_wave. These are absolute waves and are not scaled.
+HORDE.WonderWeaponWaveOverrides = HORDE.WonderWeaponWaveOverrides or {}
+
 function HORDE:GetWonderWeaponUnlockWave(class)
     local data = HORDE.WonderWeapons[class]
     if not data then return 1 end
+    if HORDE.WonderWeaponWaveOverrides[class] then return HORDE.WonderWeaponWaveOverrides[class] end
     local max_waves = HORDE.max_waves or 10
     return math.max(1, math.ceil(data.wave / 10 * max_waves))
 end
@@ -97,6 +104,7 @@ end
 -- ITEM.CanPurchase for wonder weapon shop items. The shop opens before each wave, so a
 -- weapon for wave N can be bought once wave N - 1 is over.
 function HORDE.WonderWeaponCanPurchase(ply, item)
+    if not cv_wave_lock:GetBool() then return end
     local wave = HORDE:GetWonderWeaponUnlockWave(item.class)
     if (HORDE.current_wave or 0) + 1 < wave then
         return false, item.name .. " unlocks at wave " .. wave .. "."
@@ -104,6 +112,92 @@ function HORDE.WonderWeaponCanPurchase(ply, item)
 end
 
 if not SERVER then return end
+
+local OVERRIDES_FILE = "horde/wonder_waves.txt"
+
+local function SaveWaveOverrides()
+    file.CreateDir("horde")
+    file.Write(OVERRIDES_FILE, util.TableToJSON(HORDE.WonderWeaponWaveOverrides, true))
+end
+
+local function LoadWaveOverrides()
+    local saved = util.JSONToTable(file.Read(OVERRIDES_FILE, "DATA") or "") or {}
+    HORDE.WonderWeaponWaveOverrides = {}
+    for class, wave in pairs(saved) do
+        if HORDE.WonderWeapons[class] and tonumber(wave) then
+            HORDE.WonderWeaponWaveOverrides[class] = math.max(1, math.floor(tonumber(wave)))
+        end
+    end
+end
+LoadWaveOverrides()
+
+local function CanUseCommand(ply)
+    return not IsValid(ply) or ply:IsSuperAdmin()
+end
+
+local function Reply(ply, msg)
+    if IsValid(ply) then ply:PrintMessage(HUD_PRINTCONSOLE, msg) else print(msg) end
+end
+
+local function WonderWeaponName(class)
+    local item = HORDE.items and HORDE.items[class]
+    return item and item.name or class
+end
+
+concommand.Add("horde_wonder_waves", function(ply)
+    if not CanUseCommand(ply) then return end
+    local classes = table.GetKeys(HORDE.WonderWeapons)
+    table.sort(classes, function(a, b)
+        local wa, wb = HORDE:GetWonderWeaponUnlockWave(a), HORDE:GetWonderWeaponUnlockWave(b)
+        if wa ~= wb then return wa < wb end
+        return a < b
+    end)
+    Reply(ply, string.format("[Horde] Wonder weapon wave lock is %s (horde_wonder_wave_lock), max waves %d",
+        cv_wave_lock:GetBool() and "ON" or "OFF", HORDE.max_waves or 10))
+    for _, class in ipairs(classes) do
+        Reply(ply, string.format("  wave %2d  %-26s %s%s", HORDE:GetWonderWeaponUnlockWave(class), class,
+            WonderWeaponName(class), HORDE.WonderWeaponWaveOverrides[class] and "  (custom)" or ""))
+    end
+end)
+
+-- horde_wonder_wave <class|all> <wave|reset>
+concommand.Add("horde_wonder_wave", function(ply, cmd, args)
+    if not CanUseCommand(ply) then return end
+    local target, value = args[1], args[2]
+    if not target or not value then
+        Reply(ply, "Usage: horde_wonder_wave <weapon class|all> <wave|reset>. See horde_wonder_waves for classes.")
+        return
+    end
+
+    local classes = {}
+    if target == "all" then
+        classes = table.GetKeys(HORDE.WonderWeapons)
+    elseif HORDE.WonderWeapons[target] then
+        classes = { target }
+    else
+        Reply(ply, "[Horde] " .. target .. " is not a wonder weapon. See horde_wonder_waves for classes.")
+        return
+    end
+
+    local wave = tonumber(value)
+    if value ~= "reset" and not wave then
+        Reply(ply, "[Horde] Wave must be a number or reset.")
+        return
+    end
+
+    for _, class in ipairs(classes) do
+        HORDE.WonderWeaponWaveOverrides[class] = wave and math.max(1, math.floor(wave)) or nil
+    end
+    SaveWaveOverrides()
+
+    local what = target == "all" and "All wonder weapons" or WonderWeaponName(target)
+    local plural = target == "all"
+    if wave then
+        Reply(ply, string.format("[Horde] %s now %s at wave %d.", what, plural and "unlock" or "unlocks", math.max(1, math.floor(wave))))
+    else
+        Reply(ply, string.format("[Horde] %s %s back to the default unlock wave.", what, plural and "are" or "is"))
+    end
+end)
 
 local function IsPackEntity(class)
     return string.StartWith(class, "bo3_")
