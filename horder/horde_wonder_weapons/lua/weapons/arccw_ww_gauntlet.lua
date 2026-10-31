@@ -90,8 +90,8 @@ end
 function SWEP:Hook_PostFireBullets()
     if SERVER and not self.WW_FireLooping then
         self.WW_FireLooping = true
-        self:EmitSound("TFA_BO3_GAUNTLET.ShootIn")
-        self:EmitSound("TFA_BO3_GAUNTLET.ShootLoop")
+        self:WW_ServerSound("TFA_BO3_GAUNTLET.ShootIn")
+        self:WW_ServerSound("TFA_BO3_GAUNTLET.ShootLoop")
     end
     self.WW_LastShot = CurTime()
 end
@@ -152,8 +152,8 @@ function SWEP:WW_Think()
     if SERVER and self.WW_FireLooping and (not owner:KeyDown(IN_ATTACK) or self:Clip1() <= 0
             or CurTime() > (self.WW_LastShot or 0) + 0.2) then
         self.WW_FireLooping = false
-        self:StopSound("TFA_BO3_GAUNTLET.ShootLoop")
-        self:EmitSound("TFA_BO3_GAUNTLET.ShootOut")
+        self:WW_StopServerSound("TFA_BO3_GAUNTLET.ShootLoop")
+        self:WW_ServerSound("TFA_BO3_GAUNTLET.ShootOut")
     end
 end
 

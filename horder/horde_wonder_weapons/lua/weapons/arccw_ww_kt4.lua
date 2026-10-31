@@ -103,10 +103,8 @@ function SWEP:PrimaryAttack()
 
     self:SetWWState(1)
     self:SetWWStateEnd(CurTime())
-    if SERVER then
-        self:EmitSound("TFA_BO3_MIRG.Charge1")
-        self:EmitSound("TFA_BO3_MIRG.Charge2")
-    end
+    self:WW_ServerSound("TFA_BO3_MIRG.Charge1")
+    self:WW_ServerSound("TFA_BO3_MIRG.Charge2")
 end
 
 function SWEP:WW_Release()
@@ -117,7 +115,7 @@ function SWEP:WW_Release()
     BaseClass.PrimaryAttack(self)
     self.WW_Releasing = false
     self:SetWWState(0)
-    if SERVER then self:StopSound("TFA_BO3_MIRG.Charge2") end
+    self:WW_StopServerSound("TFA_BO3_MIRG.Charge2")
 end
 
 function SWEP:WW_Think()
@@ -132,7 +130,7 @@ function SWEP:WW_Think()
     local want = math.min(MAX_STAGE, self:Clip1(), 1 + math.floor((CurTime() - self:GetWWStateEnd()) / STAGE_TIME))
     if want > stage then
         self:SetWWState(want)
-        if SERVER then self:EmitSound("TFA_BO3_MIRG.Charge3") end
+        self:WW_ServerSound("TFA_BO3_MIRG.Charge3")
     end
 end
 

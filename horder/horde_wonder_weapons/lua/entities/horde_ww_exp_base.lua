@@ -37,12 +37,12 @@ function ENT:Think()
     return true
 end
 
--- The server already sends EmitSound to every client in range.
+-- The server sends EmitSound to every client in range, the shooter included.
 function ENT:EmitSoundNet(snd, ...)
-    if CLIENT then return end
-    self:EmitSound(snd, ...)
+    HORDE_WW.ServerSound(self, snd, ...)
 end
 
 function ENT:StopSoundNet(snd)
-    self:StopSound(snd)
+    if CLIENT then self:StopSound(snd) return end
+    HORDE_WW.StopServerSound(self, snd)
 end

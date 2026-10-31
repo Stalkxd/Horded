@@ -93,17 +93,15 @@ function SWEP:PrimaryAttack()
     self:SetWWCharge(0)
     self:SetWWFlag(false)
     self:PlayAnimation("pull", 1, true, 0, false, nil, true)
-    if SERVER then self:EmitSound("TFA_BO3_ZMBBOW.PullBack") end
+    self:WW_ServerSound("TFA_BO3_ZMBBOW.PullBack")
 end
 
 function SWEP:WW_StopDraw()
     self:SetWWState(0)
     self:SetWWCharge(0)
     self:SetWWFlag(false)
-    if SERVER then
-        self:StopSound("TFA_BO3_ZMBBOW.PullBack")
-        self:StopSound("TFA_BO3_ZMBBOW.DrawLoop")
-    end
+    self:WW_StopServerSound("TFA_BO3_ZMBBOW.PullBack")
+    self:WW_StopServerSound("TFA_BO3_ZMBBOW.DrawLoop")
 end
 
 function SWEP:WW_Cancel()
@@ -112,7 +110,7 @@ function SWEP:WW_Cancel()
     self:PlayAnimation("cancel", 1, true, 0, false, nil, true)
     self:SetNextPrimaryFire(CurTime() + t)
     self:SetNextSecondaryFire(CurTime() + t)
-    if SERVER then self:EmitSound("TFA_BO3_ZMBBOW.Cancel") end
+    self:WW_ServerSound("TFA_BO3_ZMBBOW.Cancel")
 end
 
 function SWEP:WW_Loose()
@@ -172,7 +170,7 @@ function SWEP:WW_Think()
 
     if not self:GetWWFlag() and held >= 15 / 30 then
         self:SetWWFlag(true)
-        if SERVER then self:EmitSound("TFA_BO3_ZMBBOW.DrawLoop") end
+        self:WW_ServerSound("TFA_BO3_ZMBBOW.DrawLoop")
     end
 
     if not owner:KeyDown(IN_ATTACK) then

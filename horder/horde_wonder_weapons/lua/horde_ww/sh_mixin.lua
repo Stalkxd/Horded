@@ -40,6 +40,32 @@ function HORDE_WW.Slots(bone, offset, extra, charm_only)
 end
 
 -- Attaches a particle to the viewmodel in first person, or to the world model otherwise.
+-- Runs fn with the shooter included in server sounds and effects. Inside predicted
+-- code (a weapon's attack or think) the engine leaves the shooter out, expecting
+-- their own client to play them, so server-only sounds were silent for them on a
+-- dedicated server while everyone else heard them.
+function HORDE_WW.ToEveryone(fn, ...)
+    local ply = SERVER and GetPredictionPlayer() or NULL
+    if not IsValid(ply) then return fn(...) end
+    SuppressHostEvents(NULL)
+    local a, b = fn(...)
+    SuppressHostEvents(ply)
+    return a, b
+end
+
+local function emit(ent, snd, ...) ent:EmitSound(snd, ...) end
+local function stop(ent, snd) ent:StopSound(snd) end
+
+function HORDE_WW.ServerSound(ent, snd, ...)
+    if CLIENT then return end
+    HORDE_WW.ToEveryone(emit, ent, snd, ...)
+end
+
+function HORDE_WW.StopServerSound(ent, snd)
+    if CLIENT then return end
+    HORDE_WW.ToEveryone(stop, ent, snd)
+end
+
 function HORDE_WW.MuzzleParticle(wep, name, att)
     if not name or name == "" then return end
     local owner = wep:GetOwner()
@@ -198,8 +224,11 @@ function HORDE_WW.Mixin(SWEP)
         if ent.SetUpgraded then ent:SetUpgraded(false) end
 
         self:WW_PreSpawnProjectile(ent)
-        ent:Spawn()
-        ent:Activate()
+        -- Projectiles start their own sounds as they spawn
+        HORDE_WW.ToEveryone(function()
+            ent:Spawn()
+            ent:Activate()
+        end)
         ent:SetOwner(owner)
 
         local dir = ang:Forward()
@@ -267,9 +296,18 @@ function HORDE_WW.Mixin(SWEP)
         self:WW_Think()
     end
 
+    -- For sounds only the server starts, like loops, so the shooter hears them too
+    function SWEP:WW_ServerSound(snd, ...)
+        HORDE_WW.ServerSound(self, snd, ...)
+    end
+
+    function SWEP:WW_StopServerSound(snd)
+        HORDE_WW.StopServerSound(self, snd)
+    end
+
     function SWEP:WW_StopLoops()
         for _, snd in ipairs(self.WW_LoopSounds) do
-            self:StopSound(snd)
+            if SERVER then self:WW_StopServerSound(snd) else self:StopSound(snd) end
         end
     end
 
