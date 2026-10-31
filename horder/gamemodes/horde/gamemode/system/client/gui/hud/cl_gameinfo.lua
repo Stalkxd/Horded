@@ -298,7 +298,7 @@ net.Receive("Horde_RenderPlayersReady", function()
 end)
 
 net.Receive("Horde_RenderBreakCountDown", function()
-    local num = net.ReadInt(8)
+    local num = net.ReadInt(16)
     local is_end_message = net.ReadBool()
     local hold = net.ReadBool()
     if is_end_message then
