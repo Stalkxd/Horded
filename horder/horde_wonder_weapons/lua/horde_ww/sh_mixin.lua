@@ -330,14 +330,15 @@ function HORDE_WW.Mixin(SWEP)
         if BaseClass.OnDrop then return BaseClass.OnDrop(self) end
     end
 
-    -- Same checks ArcCW makes before a primary shot, for attacks bound to the right mouse button
-    function SWEP:WW_CanAltFire()
+    -- Same checks ArcCW makes before a primary shot, for attacks bound to the right mouse button.
+    -- allow_sprint lets the attack happen while sprinting.
+    function SWEP:WW_CanAltFire(allow_sprint)
         if IsValid(self:GetHolster_Entity()) or self:GetHolster_Time() > 0 then return false end
         local state = self:GetState()
         if state == ArcCW.STATE_CUSTOMIZE or state == ArcCW.STATE_DISABLE then return false end
         if self:GetPriorityAnim() then return false end
         if self:GetNextSecondaryFire() > CurTime() then return false end
-        if self:GetNWState() == ArcCW.STATE_SPRINT and not self:CanShootWhileSprint() then return false end
+        if self:GetNWState() == ArcCW.STATE_SPRINT and not allow_sprint and not self:CanShootWhileSprint() then return false end
         return true
     end
 

@@ -12,10 +12,9 @@ SWEP.Slot = 3
 SWEP.ViewModel = "models/weapons/black_ops_1/scavenger/v_scavenger.mdl"
 SWEP.WorldModel = "models/weapons/black_ops_1/scavenger/w_scavenger.mdl"
 SWEP.MirrorVMWM = false
-SWEP.WorldModelOffset = {
-    pos = Vector(0, 0, 0),
-    ang = Angle(-2, -1, 178),
-}
+-- The world model is built on the player's hand bone, so bone merge it
+-- instead of placing it by an offset, which held it sideways.
+SWEP.WorldModelOffset = false
 SWEP.ViewModelFOV = 65
 
 SWEP.Damage = 1500

@@ -65,6 +65,20 @@ function ENT:Attach(tgt, pos)
 		end
 	end
 	self:EmitSound(self.CollideSound)
+
+	-- The bolt registers a hit the moment it sticks in an enemy, so hit markers
+	-- and damage number addons show it before the blast goes off.
+	if HORDE_WW.IsHostile(self.Owner, tgt) then
+		local dmg = DamageInfo()
+		dmg:SetDamageType(DMG_BULLET)
+		dmg:SetAttacker(self.Owner)
+		dmg:SetInflictor(self)
+		dmg:SetDamage((self.Damage or 1500) * self.ImpactDamageMult)
+		dmg:SetDamagePosition(pos)
+		dmg:SetReportedPosition(pos)
+		dmg:SetDamageForce(self:GetForward() * 2000)
+		tgt:TakeDamageInfo(dmg)
+	end
 end
 
 function ENT:Explosion()
@@ -86,12 +100,19 @@ function ENT:Explosion()
 	dmg:SetAttacker(self.Owner)
 	dmg:SetInflictor(self)
 	
+	dmg:SetReportedPosition(self:GetPos())
+
 	for k, v in pairs(ents.FindInSphere(self:GetPos(), 256)) do
+		if !IsValid(self.Owner) then break end
 		dmg:SetDamage(10000)
 		if v:IsPlayer() then 
 			if !hook.Run("PlayerShouldTakeDamage",v,self.Owner) then continue end
 			dmg:SetDamage(50)
 		end
+		-- Where the blast hit them, for hit markers and damage numbers
+		local center = v:WorldSpaceCenter()
+		dmg:SetDamagePosition(center)
+		dmg:SetDamageForce((center - self:GetPos()):GetNormalized() * 5000)
 		v:TakeDamageInfo(dmg)
 	end
 	SafeRemoveEntity(self)

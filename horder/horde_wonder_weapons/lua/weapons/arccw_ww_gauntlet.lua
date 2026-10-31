@@ -98,7 +98,8 @@ end
 
 -- WWFlag: dashing, WWStateEnd: when the dash ends
 function SWEP:SecondaryAttack()
-    if self:GetWWFlag() or not self:WW_CanAltFire() then return end
+    -- The dash works while sprinting too
+    if self:GetWWFlag() or not self:WW_CanAltFire(true) then return end
     if self:GetNextPrimaryFire() > CurTime() then return end
     local owner = self:GetOwner()
     if not owner:IsOnGround() or self:Clip1() < self.WW_DashCost then return end

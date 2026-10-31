@@ -12,10 +12,9 @@ SWEP.Slot = 1
 SWEP.ViewModel = "models/weapons/black_ops_1/wavegun/c_zapguns.mdl"
 SWEP.WorldModel = "models/weapons/black_ops_1/wavegun/w_zapguns.mdl"
 SWEP.MirrorVMWM = false
-SWEP.WorldModelOffset = {
-    pos = Vector(4.5, 1, -2),
-    ang = Angle(-10, 0, 180),
-}
+-- Both world models carry the player's hand attachment bones (one per gun),
+-- so bone merge them instead of placing them at the right hand by an offset.
+SWEP.WorldModelOffset = false
 
 SWEP.Damage = 250
 SWEP.DamageMin = 250
@@ -111,11 +110,26 @@ function SWEP:WW_SyncModel()
     self:SetHoldType(self.HoldtypeActive)
 
     local owner = self:GetOwner()
-    if IsValid(owner) and owner:IsPlayer() and owner:GetActiveWeapon() == self then
+    if IsValid(owner) and owner:IsPlayer() and owner:GetActiveWeapon() == self
+            and (SERVER or owner == LocalPlayer()) then
         local vm = owner:GetViewModel()
         if IsValid(vm) then vm:SetModel(vmodel) end
     end
+
+    -- ArcCW keeps its own copy of the world model, so rebuild it with the new one
+    if CLIENT and self.WM then
+        self:KillModel(self.WM)
+        self.WM = nil
+    end
     return true
+end
+
+if CLIENT then
+    -- Other players never run this weapon's Think, so swap the model here for them
+    function SWEP:DrawWorldModel(...)
+        self:WW_SyncModel()
+        return BaseClass.DrawWorldModel(self, ...)
+    end
 end
 
 function SWEP:WW_ToggleWave()

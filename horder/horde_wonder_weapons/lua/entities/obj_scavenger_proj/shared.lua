@@ -8,6 +8,7 @@ ENT.TrailSound = "weapons/ubersniper/bomb/projectile_whoosh.wav"
 ENT.FuseSound = "weapons/ubersniper/bomb/us_bomb_rampup.ogg"
 ENT.FuseDelay = 0.5
 ENT.FuseTime = 3.25
+ENT.ImpactDamageMult = 0.1 -- share of the weapon's damage dealt when the bolt sticks in an enemy
 ENT.CollideSound = "weapons/ubersniper/bomb/projectile_impact.ogg"
 
 function ENT:SetupDataTables()
