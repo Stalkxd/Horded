@@ -152,7 +152,7 @@ function SWEP:SecondaryAttack()
     end
 end
 
-function SWEP:WW_DashDamage()
+function SWEP:WW_DashHits()
     local owner = self:GetOwner()
     local hit = self.WW_DashHit or {}
     self.WW_DashHit = hit
@@ -189,7 +189,7 @@ function SWEP:WW_Think()
     local owner = self:GetOwner()
 
     if self:GetWWFlag() then
-        if SERVER then self:WW_DashDamage() end
+        if SERVER then self:WW_DashHits() end
         if CurTime() >= self:GetWWStateEnd() then self:SetWWFlag(false) end
     end
 
