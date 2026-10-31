@@ -81,11 +81,34 @@ end
 local function IsHostile(ply, ent)
     if ent == ply or not IsValid(ent) then return false end
     if not (ent:IsNPC() or ent:IsNextBot()) or ent:Health() <= 0 then return false end
-    -- Horde minions belong to a player
+    -- Horde knows its minions and buildables, like an engineer's walls
+    if HORDE and HORDE.IsEnemy then return HORDE:IsEnemy(ent) end
     if ent:GetNWEntity("HordeOwner"):IsPlayer() then return false end
     return true
 end
 HORDE_WW.IsHostile = IsHostile
+
+-- Damages ent as if hit along dir at pos, the way a bullet does, so the game knows which
+-- body part was hit: headshots count for projectiles and Horde's headshot perks apply.
+-- Falls back to a plain hit when the trace misses ent's hitboxes. Returns the hitgroup.
+-- reach is how far past pos to look, 64 by default.
+function HORDE_WW.TraceHit(ent, dmginfo, pos, dir, reach)
+    if CLIENT or not IsValid(ent) then return end
+    dir = dir:GetNormalized()
+    local tr = util.TraceLine({
+        start = pos - dir * 32,
+        endpos = pos + dir * (reach or 64),
+        filter = function(e) return e == ent end,
+        mask = MASK_SHOT,
+    })
+    if tr.Entity ~= ent then
+        ent:TakeDamageInfo(dmginfo)
+        return
+    end
+    dmginfo:SetDamagePosition(tr.HitPos)
+    ent:DispatchTraceAttack(dmginfo, tr, dir)
+    return tr.HitGroup
+end
 
 -- Area damage for slams and blasts: enemies in radius that pos can see. Server only.
 function HORDE_WW.AreaDamage(wep, pos, radius, damage, dmgtype, onhit)

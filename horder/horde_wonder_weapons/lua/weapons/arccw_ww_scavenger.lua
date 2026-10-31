@@ -45,7 +45,7 @@ SWEP.SightTime = 0.3
 SWEP.IronSightStruct = {
     Pos = Vector(-3, -7.81, 1),
     Ang = Angle(0, 0, 0),
-    Magnification = 6,
+    Magnification = 3.5, -- 6x was far too close for zombies at shotgun range
     CrosshairInSights = false,
 }
 
@@ -101,5 +101,11 @@ if CLIENT then
         surface.SetDrawColor(255, 255, 255, 255)
         surface.SetTexture(scope_tex)
         surface.DrawTexturedRect(x, 0, size, size)
+        -- A clear center dot where the bolt will go
+        local cx, cy = math.floor(w * 0.5), math.floor(h * 0.5)
+        surface.SetDrawColor(0, 0, 0, 200)
+        surface.DrawRect(cx - 3, cy - 3, 6, 6)
+        surface.SetDrawColor(255, 60, 30, 255)
+        surface.DrawRect(cx - 2, cy - 2, 4, 4)
     end
 end

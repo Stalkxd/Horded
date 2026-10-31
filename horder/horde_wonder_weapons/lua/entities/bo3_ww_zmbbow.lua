@@ -46,7 +46,8 @@ function ENT:PhysicsCollide(data, phys)
 
 	self:StopParticles()
 
-	self:Explode(data.HitPos)
+	-- Blast from just outside the surface, so its line of sight checks don't start inside a wall
+	self:Explode(data.HitPos - data.HitNormal * 4)
 	self:SetHitPos(data.HitPos)
 
 	if self:GetCharge() >= 1 then
@@ -63,6 +64,10 @@ function ENT:StartTouch(ent)
 	if ent == self:GetOwner() then return end
 	
 	if ent:IsNPC() or ent:IsNextBot() or ent:IsPlayer() then
+		if HORDE_WW.IsHostile(self:GetOwner(), ent) then
+			self:WW_DirectHit(ent, self:GetPos(), self:GetVelocity())
+			return
+		end
 		self:StopParticles()
 		self:Explode(self:GetPos())
 
@@ -97,7 +102,43 @@ function ENT:Initialize(...)
 	self:SetTrigger(true)
 end
 
+-- Fast arrows could pass through a zombie between physics ticks without touching it,
+-- so sweep the path flown since the last think for enemies as well.
+function ENT:WW_SweepHit()
+	local pos = self:GetPos()
+	local last = self.WW_LastPos or pos
+	self.WW_LastPos = pos
+	if last == pos then return end
+	local dir = (pos - last):GetNormalized()
+	local tr = util.TraceHull({
+		start = last,
+		endpos = pos + dir * 8,
+		mins = Vector(-3, -3, -3),
+		maxs = Vector(3, 3, 3),
+		filter = { self, self:GetOwner() },
+		mask = MASK_SHOT,
+	})
+	if IsValid(tr.Entity) and HORDE_WW.IsHostile(self:GetOwner(), tr.Entity) then
+		self:WW_DirectHit(tr.Entity, tr.HitPos, dir)
+	end
+end
+
+-- An arrow that hits an enemy: that enemy takes the blast as a hit on the body part the
+-- arrow struck, so headshots count, and everything around takes the normal blast.
+function ENT:WW_DirectHit(ent, pos, dir)
+	if self.Impacted then return end
+	self.Impacted = true
+	self:StopParticles()
+	self.WW_Direct, self.WW_DirectPos, self.WW_DirectDir = ent, pos, dir
+	self:SetHitPos(pos)
+	self:Explode(pos)
+	ParticleEffect(self:GetCharge() >= 1 and "bo3_zmbbow_impact_big" or "bo3_zmbbow_impact_small", pos, angle_zero)
+	self:Remove()
+end
+
 function ENT:Think()
+	if SERVER and not self.Impacted then self:WW_SweepHit() end
+	if not IsValid(self) or self.Impacted then return end
 	local phys = self:GetPhysicsObject()
 	if IsValid(phys) then
 		local vel = phys:GetVelocity()
@@ -130,9 +171,10 @@ function ENT:Explode(pos)
 			if v == ply then continue end
 			if nzombies and v:IsPlayer() then continue end
 			if v:IsPlayer() and IsValid(ply) and !hook.Run("PlayerShouldTakeDamage", v, ply) then continue end
+			tr.start = pos
 			tr.endpos = v:WorldSpaceCenter()
 			local tr1 = util.TraceLine(tr)
-			if tr1.HitWorld then continue end
+			if tr1.HitWorld and not tr1.StartSolid and v ~= self.WW_Direct then continue end
 
 			self:InflictDamage(v)
 		end
@@ -164,7 +206,11 @@ function ENT:InflictDamage(ent)
 	end
 
 	if ent:IsNPC() then ent:SetSchedule(SCHED_ALERT_STAND) end
-	ent:TakeDamageInfo(damage)
+	if ent == self.WW_Direct then
+		HORDE_WW.TraceHit(ent, damage, self.WW_DirectPos, self.WW_DirectDir)
+	else
+		ent:TakeDamageInfo(damage)
+	end
 end
 
 function ENT:OnRemove()

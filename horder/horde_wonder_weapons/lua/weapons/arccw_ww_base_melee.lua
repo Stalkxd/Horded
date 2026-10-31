@@ -55,5 +55,49 @@ SWEP.CustomizePos = Vector(10, -4, -2)
 SWEP.CustomizeAng = Angle(15, 30, 10)
 
 SWEP.Attachments = HORDE_WW.Slots(nil, nil, nil, true)
+-- Seconds into the swing animation of its second (backhand) hit; nil for one hit
+SWEP.WW_SecondHitTime = nil
 
 HORDE_WW.Mixin(SWEP)
+
+-- ArcCW's Bash plays the swing animation on the server only. On a dedicated server
+-- the shooter's own game then fought it, so fast clicks broke the animation on their
+-- screen, and the swing sounds in its sound table never reached them. This is the same
+-- swing with the animation played on both sides like a gun shot, plus the second hit
+-- the animation shows.
+function SWEP:Bash(melee2)
+    if melee2 then return HORDE_WW.Base(self.Base).Bash(self, melee2) end
+    local state = self:GetState()
+    if state == ArcCW.STATE_SIGHTS or state == ArcCW.STATE_CUSTOMIZE
+            or (state == ArcCW.STATE_SPRINT and not self:CanShootWhileSprint()) then
+        return
+    end
+    if self:GetNextPrimaryFire() > CurTime() or self:GetGrenadePrimed() or self:GetPriorityAnim() then return end
+    if not self.CanBash and not self:GetBuff_Override("Override_CanBash") then return end
+
+    self:GetBuff_Hook("Hook_PreBash")
+    self.Primary.Automatic = true
+
+    local owner = self:GetOwner()
+    local mult = self:GetBuff_Mult("Mult_MeleeTime")
+    local wait = self.MeleeTime * mult * self:GetBuff_Mult("Mult_MeleeWaitTime")
+
+    local anim = self:SelectAnimation("bash") or "bash"
+    anim = self:GetBuff_Hook("Hook_SelectBashAnim", anim) or anim
+    self:PlayAnimation(anim, mult, true, 0, true)
+    self:SetNextPrimaryFire(CurTime() + wait)
+    owner:DoAnimationEvent(self.MeleeGesture or ACT_GMOD_GESTURE_MELEE_SHOVE_2HAND)
+
+    local function hit()
+        if not IsValid(self) or not IsValid(self:GetOwner()) then return end
+        if self:GetOwner():GetActiveWeapon() ~= self then return end
+        self:MeleeAttack(false)
+    end
+    local speed = self:GetBuff_Mult("Mult_MeleeAttackTime") * math.pow(mult, 1.5)
+    self:SetTimer(self.MeleeAttackTime * speed, hit)
+    if self.WW_SecondHitTime then
+        self:SetTimer(self.WW_SecondHitTime * speed, hit)
+    end
+
+    self:DoLunge()
+end

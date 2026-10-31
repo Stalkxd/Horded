@@ -30,6 +30,8 @@ end
 
 function ENT:Attach(tgt, pos)
 	self.Attached = true
+	local vel = self:GetVelocity()
+	if not vel:IsZero() then self.WW_Dir = vel:GetNormalized() end
 	self:SetLifeTime(CurTime() + self.FuseTime)
 	self:SetVelocity(vector_origin)
 	self:SetMoveType(MOVETYPE_NONE)
@@ -77,7 +79,7 @@ function ENT:Attach(tgt, pos)
 		dmg:SetDamagePosition(pos)
 		dmg:SetReportedPosition(pos)
 		dmg:SetDamageForce(self:GetForward() * 2000)
-		tgt:TakeDamageInfo(dmg)
+		HORDE_WW.TraceHit(tgt, dmg, pos, self.WW_Dir or self:GetForward())
 	end
 end
 

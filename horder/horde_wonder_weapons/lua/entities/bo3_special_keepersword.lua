@@ -156,6 +156,7 @@ function ENT:Think()
 
 		if self:GetActivated() then
 			for _, v in pairs(ents.FindInSphere(self:GetPos(), 12)) do
+				if HORDE and not HORDE_WW.IsHostile(ply, v) then continue end
 				if v:IsNPC() or v:IsNextBot() or (pvp_bool:GetBool() and v:IsPlayer()) then
 					if nzombies and v:IsPlayer() then return end
 					if v == ply then return end
@@ -230,6 +231,8 @@ function ENT:FindNearestEntity(pos, range, ent)
 
 	local ply = self:GetOwner()
 	for _, v in pairs(ents.FindInSphere(pos, range)) do
+		-- Only real enemies, never minions or an engineer's walls
+		if HORDE and not HORDE_WW.IsHostile(ply, v) then continue end
 		if v:IsNPC() or v:IsNextBot() or (pvp_bool:GetBool() and v:IsPlayer()) then
 			if v == ply then continue end
 			if v:Health() <= 0 then continue end
