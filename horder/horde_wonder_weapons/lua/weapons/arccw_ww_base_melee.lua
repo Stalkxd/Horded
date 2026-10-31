@@ -60,6 +60,17 @@ SWEP.WW_SecondHitTime = nil
 
 HORDE_WW.Mixin(SWEP)
 
+-- Every sword sound (swings and foley from the animations, hits from the melee code) is
+-- played by the server for everyone, the swinging player included. Left to ArcCW, their own
+-- game was meant to play them through prediction, and on a dedicated server they were silent.
+function SWEP:MyEmitSound(snd, level, pitch, vol, chan, use_world)
+    if CLIENT or not snd then return end
+    snd = self:GetBuff_Hook("Hook_TranslateSound", snd) or snd
+    if istable(snd) then snd = self:TableRandom(snd) end
+    if not snd or snd == "" then return end
+    HORDE_WW.ServerSound(self, snd, level, pitch, vol, chan or CHAN_AUTO)
+end
+
 -- ArcCW's Bash plays the swing animation on the server only. On a dedicated server
 -- the shooter's own game then fought it, so fast clicks broke the animation on their
 -- screen, and the swing sounds in its sound table never reached them. This is the same

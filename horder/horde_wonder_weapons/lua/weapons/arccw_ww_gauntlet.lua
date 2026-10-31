@@ -132,7 +132,7 @@ function SWEP:SecondaryAttack()
     if self:GetWWFlag() or not self:WW_CanAltFire(true) then return end
     if self:GetNextPrimaryFire() > CurTime() then return end
     local owner = self:GetOwner()
-    if not owner:IsOnGround() or self:Clip1() < self.WW_DashCost then return end
+    if self:Clip1() < self.WW_DashCost then return end
 
     self:SetClip1(self:Clip1() - self.WW_DashCost)
     self:SetWWFlag(true)
@@ -157,10 +157,20 @@ function SWEP:WW_DashDamage()
     local hit = self.WW_DashHit or {}
     self.WW_DashHit = hit
     -- A wide reach in front of the player, since they stop on the first zombie they run into
-    local center = owner:WorldSpaceCenter() + self:GetWWVec() * 40
-    for _, ent in ipairs(ents.FindInSphere(center, 80)) do
+    local dir = self:GetWWVec()
+    local targets = ents.FindInSphere(owner:WorldSpaceCenter() + dir * 40, 80)
+    -- and whatever is straight ahead, in case the sphere misses a big enemy's origin
+    local tr = util.TraceHull({
+        start = owner:WorldSpaceCenter(),
+        endpos = owner:WorldSpaceCenter() + dir * 96,
+        mins = Vector(-24, -24, -24),
+        maxs = Vector(24, 24, 24),
+        filter = { owner, self },
+        mask = MASK_SHOT_HULL,
+    })
+    if IsValid(tr.Entity) then targets[#targets + 1] = tr.Entity end
+    for _, ent in ipairs(targets) do
         if hit[ent] or not HORDE_WW.IsHostile(owner, ent) then continue end
-        if not owner:Visible(ent) then continue end
         hit[ent] = true
         local dmg = DamageInfo()
         dmg:SetAttacker(owner)
@@ -192,8 +202,11 @@ function SWEP:WW_Think()
 end
 
 function SWEP:WW_MoveVelocity(ply, mv)
-    if not self:GetWWFlag() or not ply:IsOnGround() then return end
-    return self:GetWWVec() * self.WW_DashSpeed
+    if not self:GetWWFlag() then return end
+    local vel = self:GetWWVec() * self.WW_DashSpeed
+    -- In the air the dash keeps the player's fall, so it works mid jump too
+    if not ply:IsOnGround() then vel.z = mv:GetVelocity().z end
+    return vel
 end
 
 function SWEP:WW_LockMovement()
