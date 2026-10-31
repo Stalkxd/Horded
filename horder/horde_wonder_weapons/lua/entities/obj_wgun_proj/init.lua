@@ -44,7 +44,10 @@ function ENT:Explode(ent)
 	-- Horde: a fixed hit from the weapon's damage instead of killing outright
 	dmg:SetDamage(self.Damage or 250)
 	if not ((ent:IsNPC() or ent:IsNextBot()) and HORDE_WW and IsValid(self.Owner) and not HORDE_WW.IsHostile(self.Owner, ent)) then
-		ent:TakeDamageInfo(dmg)
+		-- Hit along the flight path so headshots count
+		local dir = self:GetVelocity()
+		if dir:IsZero() then dir = self:GetForward() end
+		HORDE_WW.TraceHit(ent, dmg, self:GetPos(), dir)
 	end
 	
 	self:Remove()

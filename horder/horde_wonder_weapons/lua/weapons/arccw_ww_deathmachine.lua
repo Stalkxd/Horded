@@ -82,8 +82,8 @@ end
 function SWEP:Hook_PostFireBullets()
     if SERVER and not self.WW_FireLooping then
         self.WW_FireLooping = true
-        self:EmitSound("TFA_BO3_MINGN.Start")
-        self:EmitSound("TFA_BO3_MINGN.Loop")
+        self:WW_ServerSound("TFA_BO3_MINGN.Start")
+        self:WW_ServerSound("TFA_BO3_MINGN.Loop")
     end
     self.WW_LastShot = CurTime()
 end
@@ -102,28 +102,26 @@ function SWEP:WW_Think()
     if held then
         if not self:GetWWFlag() then
             self:SetWWFlag(true)
-            if SERVER then self:EmitSound("TFA_BO3_MINGN.SpinStart") end
+            self:WW_ServerSound("TFA_BO3_MINGN.SpinStart")
         end
         local spin = self:GetWWCharge()
         if spin < 1 then
             spin = math.min(1, spin + FrameTime() / SPIN_TIME)
             self:SetWWCharge(spin)
-            if spin >= 1 and SERVER then self:EmitSound("TFA_BO3_MINGN.SpinLoop") end
+            if spin >= 1 then self:WW_ServerSound("TFA_BO3_MINGN.SpinLoop") end
         end
     elseif self:GetWWFlag() then
         self:SetWWFlag(false)
         self:SetWWCharge(0)
-        if SERVER then
-            self:StopSound("TFA_BO3_MINGN.SpinLoop")
-            self:EmitSound("TFA_BO3_MINGN.SpinStop")
-        end
+        self:WW_StopServerSound("TFA_BO3_MINGN.SpinLoop")
+        self:WW_ServerSound("TFA_BO3_MINGN.SpinStop")
     end
 
     if SERVER and self.WW_FireLooping and (not owner:KeyDown(IN_ATTACK) or self:Clip1() <= 0
             or CurTime() > (self.WW_LastShot or 0) + 0.15) then
         self.WW_FireLooping = false
-        self:StopSound("TFA_BO3_MINGN.Loop")
-        self:EmitSound("TFA_BO3_MINGN.Stop")
+        self:WW_StopServerSound("TFA_BO3_MINGN.Loop")
+        self:WW_ServerSound("TFA_BO3_MINGN.Stop")
     end
 
     if CLIENT then

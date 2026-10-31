@@ -90,18 +90,49 @@ end
 function SWEP:Hook_PostFireBullets()
     if SERVER and not self.WW_FireLooping then
         self.WW_FireLooping = true
-        self:EmitSound("TFA_BO3_GAUNTLET.ShootIn")
-        self:EmitSound("TFA_BO3_GAUNTLET.ShootLoop")
+        self:WW_ServerSound("TFA_BO3_GAUNTLET.ShootIn")
+        self:WW_ServerSound("TFA_BO3_GAUNTLET.ShootLoop")
     end
     self.WW_LastShot = CurTime()
+    if SERVER then self:WW_SelfBurn() end
+end
+
+-- Like Horde's flamethrowers, fire splashing close to a Cremator burns them too, so
+-- their fire perks (fire damage healing them) work with the Gauntlet. Nobody else is
+-- burned by their own Gauntlet.
+SWEP.WW_SelfBurnRange = 96
+SWEP.WW_SelfBurnInterval = 0.2
+
+function SWEP:WW_SelfBurn()
+    local owner = self:GetOwner()
+    if not owner.Horde_GetCurrentSubclass or owner:Horde_GetCurrentSubclass() ~= "Cremator" then return end
+    if (self.WW_NextSelfBurn or 0) > CurTime() then return end
+    self.WW_NextSelfBurn = CurTime() + self.WW_SelfBurnInterval
+
+    local tr = util.TraceLine({
+        start = owner:GetShootPos(),
+        endpos = owner:GetShootPos() + owner:GetAimVector() * self.Distance,
+        filter = { owner, self },
+        mask = MASK_SHOT_HULL,
+    })
+    if not tr.Hit or tr.HitPos:Distance(owner:WorldSpaceCenter()) > self.WW_SelfBurnRange then return end
+
+    local dmg = DamageInfo()
+    dmg:SetAttacker(owner)
+    dmg:SetInflictor(self)
+    dmg:SetDamage(self.Damage)
+    dmg:SetDamageType(DMG_BURN)
+    dmg:SetDamagePosition(owner:WorldSpaceCenter())
+    owner:TakeDamageInfo(dmg)
 end
 
 -- WWFlag: dashing, WWStateEnd: when the dash ends
 function SWEP:SecondaryAttack()
-    if self:GetWWFlag() or not self:WW_CanAltFire() then return end
+    -- The dash works while sprinting too
+    if self:GetWWFlag() or not self:WW_CanAltFire(true) then return end
     if self:GetNextPrimaryFire() > CurTime() then return end
     local owner = self:GetOwner()
-    if not owner:IsOnGround() or self:Clip1() < self.WW_DashCost then return end
+    if self:Clip1() < self.WW_DashCost then return end
 
     self:SetClip1(self:Clip1() - self.WW_DashCost)
     self:SetWWFlag(true)
@@ -121,12 +152,24 @@ function SWEP:SecondaryAttack()
     end
 end
 
-function SWEP:WW_DashDamage()
+function SWEP:WW_DashHits()
     local owner = self:GetOwner()
     local hit = self.WW_DashHit or {}
     self.WW_DashHit = hit
-    local center = owner:WorldSpaceCenter() + self:GetWWVec() * 32
-    for _, ent in ipairs(ents.FindInSphere(center, 56)) do
+    -- A wide reach in front of the player, since they stop on the first zombie they run into
+    local dir = self:GetWWVec()
+    local targets = ents.FindInSphere(owner:WorldSpaceCenter() + dir * 40, 80)
+    -- and whatever is straight ahead, in case the sphere misses a big enemy's origin
+    local tr = util.TraceHull({
+        start = owner:WorldSpaceCenter(),
+        endpos = owner:WorldSpaceCenter() + dir * 96,
+        mins = Vector(-24, -24, -24),
+        maxs = Vector(24, 24, 24),
+        filter = { owner, self },
+        mask = MASK_SHOT_HULL,
+    })
+    if IsValid(tr.Entity) then targets[#targets + 1] = tr.Entity end
+    for _, ent in ipairs(targets) do
         if hit[ent] or not HORDE_WW.IsHostile(owner, ent) then continue end
         hit[ent] = true
         local dmg = DamageInfo()
@@ -136,7 +179,8 @@ function SWEP:WW_DashDamage()
         dmg:SetDamageType(DMG_CLUB)
         dmg:SetDamagePosition(ent:WorldSpaceCenter())
         dmg:SetDamageForce(ent:GetUp() * 15000 + self:GetWWVec() * 15000)
-        ent:TakeDamageInfo(dmg)
+        local to = ent:WorldSpaceCenter() - owner:GetShootPos()
+        HORDE_WW.TraceHit(ent, dmg, owner:GetShootPos(), to, to:Length() + 32)
         ent:EmitSound("TFA_BO3_GAUNTLET.Hit")
     end
 end
@@ -145,21 +189,24 @@ function SWEP:WW_Think()
     local owner = self:GetOwner()
 
     if self:GetWWFlag() then
-        if SERVER then self:WW_DashDamage() end
+        if SERVER then self:WW_DashHits() end
         if CurTime() >= self:GetWWStateEnd() then self:SetWWFlag(false) end
     end
 
     if SERVER and self.WW_FireLooping and (not owner:KeyDown(IN_ATTACK) or self:Clip1() <= 0
             or CurTime() > (self.WW_LastShot or 0) + 0.2) then
         self.WW_FireLooping = false
-        self:StopSound("TFA_BO3_GAUNTLET.ShootLoop")
-        self:EmitSound("TFA_BO3_GAUNTLET.ShootOut")
+        self:WW_StopServerSound("TFA_BO3_GAUNTLET.ShootLoop")
+        self:WW_ServerSound("TFA_BO3_GAUNTLET.ShootOut")
     end
 end
 
 function SWEP:WW_MoveVelocity(ply, mv)
-    if not self:GetWWFlag() or not ply:IsOnGround() then return end
-    return self:GetWWVec() * self.WW_DashSpeed
+    if not self:GetWWFlag() then return end
+    local vel = self:GetWWVec() * self.WW_DashSpeed
+    -- In the air the dash keeps the player's fall, so it works mid jump too
+    if not ply:IsOnGround() then vel.z = mv:GetVelocity().z end
+    return vel
 end
 
 function SWEP:WW_LockMovement()

@@ -103,7 +103,7 @@ function SWEP:WW_Slam()
 
     if SERVER then
         for _, snd in ipairs({ "TFA_BO3_DG4.Explode", "TFA_BO3_DG4.Shockwave", "TFA_BO3_DG4.EMP", "TFA_BO3_DG4.Dist" }) do
-            self:EmitSound(snd)
+            self:WW_ServerSound(snd)
         end
         local tr = util.QuickTrace(owner:GetPos() + Vector(0, 0, 8), Vector(0, 0, -32), { owner, self })
         util.Decal("Scorch", tr.HitPos - tr.HitNormal, tr.HitPos + tr.HitNormal)

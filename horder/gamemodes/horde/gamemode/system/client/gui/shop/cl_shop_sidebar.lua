@@ -133,6 +133,23 @@ function PANEL:ScrollToActive(instant)
     end
 end
 
+-- Count against whichever limit applies: the subclass's own limit if it has one,
+-- otherwise the parent class's limit, which every subclass of it shares.
+local function class_count(sub)
+    local name = sub.PrintName
+    local parent = sub.ParentClass or name
+    local count, limit
+    if sub.ParentClass and sub.player_limit ~= nil then
+        count, limit = HORDE:CountSubclassPlayers(name), HORDE:GetClassPlayerLimit(name)
+    else
+        count, limit = HORDE:CountClassPlayers(parent), HORDE:GetClassPlayerLimit(parent)
+    end
+    if limit < math.huge then
+        return count .. "/" .. limit, count >= limit
+    end
+    return tostring(count), false
+end
+
 local function draw_class(self, e, ox, oy, p)
     local locked = not MySelf:Horde_GetSubclassUnlocked(e.name)
     local active = (MySelf:Horde_GetCurrentSubclass() == e.name)
@@ -193,13 +210,24 @@ local function draw_class(self, e, ox, oy, p)
 
     local ta = math.Clamp(1 - p * 2.2, 0, 1)
     if ta > 0.01 then
+        -- Players on this class right now, left of the icon. Red when it is full.
+        local count_w = 0
+        if not locked then
+            local count_text, full = class_count(e.sub)
+            local cfont = UI.Font(13, true)
+            surface.SetFont(cfont)
+            count_w = surface.GetTextSize(count_text) + S(8)
+            local ccol = (full and not active) and C.RED or C.DIM
+            UI.Text(count_text, cfont, x + dcx - dr - S(6), y + h / 2, UI.Alpha(ccol, ta), TEXT_ALIGN_RIGHT)
+        end
+
         local font = UI.Font(14.5, false)
         surface.SetFont(font)
         local tw = surface.GetTextSize(e.label)
-        if S(16) + tw + S(8) < w - S(12) - dr * 2 then
+        if S(16) + tw + S(8) < w - S(12) - dr * 2 - count_w then
             UI.Text(e.label, font, x + S(16), y + h / 2, UI.Alpha(txt_col, ta))
         else
-            local avail = w - S(12) - dr * 2 - S(16) - S(8)
+            local avail = w - S(12) - dr * 2 - S(16) - S(8) - count_w
             if avail > S(30) then
                 UI.Text(UI.Ellipsis(e.label, font, avail), font, x + S(16), y + h / 2, UI.Alpha(txt_col, ta))
             end

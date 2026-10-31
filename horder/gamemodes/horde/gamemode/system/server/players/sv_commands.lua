@@ -23,7 +23,7 @@ end
 
 function HORDE:BroadcastBreakCountDownMessage(wave, is_end_message, hold)
     net.Start("Horde_RenderBreakCountDown")
-        net.WriteInt(math.max(0, wave), 8)
+        net.WriteInt(math.Clamp(wave, 0, 32767), 16) -- 8 bits wrapped breaks of 256s and up to 0, the wave start
         net.WriteBool(is_end_message)
         net.WriteBool(hold == true)
     net.Broadcast()

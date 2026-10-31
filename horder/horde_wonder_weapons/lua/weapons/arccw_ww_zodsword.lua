@@ -16,10 +16,11 @@ SWEP.WorldModelOffset = {
 }
 SWEP.ActivePos = Vector(0, -6, -1.5)
 
-SWEP.MeleeDamage = 220
+SWEP.MeleeDamage = 120 -- per hit, two hits a swing
 SWEP.MeleeDamageType = DMG_SLASH
 SWEP.MeleeRange = 90
-SWEP.MeleeAttackTime = 0.25
+SWEP.MeleeAttackTime = 0.2
+SWEP.WW_SecondHitTime = 17 / 30
 SWEP.MeleeTime = 0.95
 SWEP.MaxHits = 4
 
@@ -46,7 +47,10 @@ SWEP.Animations = {
     ["bash"] = {
         Source = "slash",
         Time = 1,
-        SoundTable = { { s = "TFA_BO3_ZODSWORD.SwingFoly", t = 0 }, { s = "TFA_BO3_ZODSWORD.Swing", t = 0.2 } },
+        SoundTable = {
+            { s = "TFA_BO3_ZODSWORD.SwingFoly", t = 0 }, { s = "TFA_BO3_ZODSWORD.Swing", t = 0.1 },
+            { s = "TFA_BO3_ZODSWORD.SwingFoly", t = 12 / 30 }, { s = "TFA_BO3_ZODSWORD.Swing", t = 12 / 30 },
+        },
     },
     ["slam_in"] = { Source = "slam_in", SoundTable = { { s = "TFA_BO3_ZODSWORD.Jump", t = 0 } } },
     ["slam_out"] = {

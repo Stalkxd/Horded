@@ -40,6 +40,32 @@ function HORDE_WW.Slots(bone, offset, extra, charm_only)
 end
 
 -- Attaches a particle to the viewmodel in first person, or to the world model otherwise.
+-- Runs fn with the shooter included in server sounds and effects. Inside predicted
+-- code (a weapon's attack or think) the engine leaves the shooter out, expecting
+-- their own client to play them, so server-only sounds were silent for them on a
+-- dedicated server while everyone else heard them.
+function HORDE_WW.ToEveryone(fn, ...)
+    local ply = SERVER and GetPredictionPlayer() or NULL
+    if not IsValid(ply) then return fn(...) end
+    SuppressHostEvents(NULL)
+    local a, b = fn(...)
+    SuppressHostEvents(ply)
+    return a, b
+end
+
+local function emit(ent, snd, ...) ent:EmitSound(snd, ...) end
+local function stop(ent, snd) ent:StopSound(snd) end
+
+function HORDE_WW.ServerSound(ent, snd, ...)
+    if CLIENT then return end
+    HORDE_WW.ToEveryone(emit, ent, snd, ...)
+end
+
+function HORDE_WW.StopServerSound(ent, snd)
+    if CLIENT then return end
+    HORDE_WW.ToEveryone(stop, ent, snd)
+end
+
 function HORDE_WW.MuzzleParticle(wep, name, att)
     if not name or name == "" then return end
     local owner = wep:GetOwner()
@@ -55,11 +81,34 @@ end
 local function IsHostile(ply, ent)
     if ent == ply or not IsValid(ent) then return false end
     if not (ent:IsNPC() or ent:IsNextBot()) or ent:Health() <= 0 then return false end
-    -- Horde minions belong to a player
+    -- Horde knows its minions and buildables, like an engineer's walls
+    if HORDE and HORDE.IsEnemy then return HORDE:IsEnemy(ent) end
     if ent:GetNWEntity("HordeOwner"):IsPlayer() then return false end
     return true
 end
 HORDE_WW.IsHostile = IsHostile
+
+-- Damages ent as if hit along dir at pos, the way a bullet does, so the game knows which
+-- body part was hit: headshots count for projectiles and Horde's headshot perks apply.
+-- Falls back to a plain hit when the trace misses ent's hitboxes. Returns the hitgroup.
+-- reach is how far past pos to look, 64 by default.
+function HORDE_WW.TraceHit(ent, dmginfo, pos, dir, reach)
+    if CLIENT or not IsValid(ent) then return end
+    dir = dir:GetNormalized()
+    local tr = util.TraceLine({
+        start = pos - dir * 32,
+        endpos = pos + dir * (reach or 64),
+        filter = function(e) return e == ent end,
+        mask = MASK_SHOT,
+    })
+    if tr.Entity ~= ent then
+        ent:TakeDamageInfo(dmginfo)
+        return
+    end
+    dmginfo:SetDamagePosition(tr.HitPos)
+    ent:DispatchTraceAttack(dmginfo, tr, dir)
+    return tr.HitGroup
+end
 
 -- Area damage for slams and blasts: enemies in radius that pos can see. Server only.
 function HORDE_WW.AreaDamage(wep, pos, radius, damage, dmgtype, onhit)
@@ -198,8 +247,11 @@ function HORDE_WW.Mixin(SWEP)
         if ent.SetUpgraded then ent:SetUpgraded(false) end
 
         self:WW_PreSpawnProjectile(ent)
-        ent:Spawn()
-        ent:Activate()
+        -- Projectiles start their own sounds as they spawn
+        HORDE_WW.ToEveryone(function()
+            ent:Spawn()
+            ent:Activate()
+        end)
         ent:SetOwner(owner)
 
         local dir = ang:Forward()
@@ -267,9 +319,18 @@ function HORDE_WW.Mixin(SWEP)
         self:WW_Think()
     end
 
+    -- For sounds only the server starts, like loops, so the shooter hears them too
+    function SWEP:WW_ServerSound(snd, ...)
+        HORDE_WW.ServerSound(self, snd, ...)
+    end
+
+    function SWEP:WW_StopServerSound(snd)
+        HORDE_WW.StopServerSound(self, snd)
+    end
+
     function SWEP:WW_StopLoops()
         for _, snd in ipairs(self.WW_LoopSounds) do
-            self:StopSound(snd)
+            if SERVER then self:WW_StopServerSound(snd) else self:StopSound(snd) end
         end
     end
 
@@ -292,14 +353,15 @@ function HORDE_WW.Mixin(SWEP)
         if BaseClass.OnDrop then return BaseClass.OnDrop(self) end
     end
 
-    -- Same checks ArcCW makes before a primary shot, for attacks bound to the right mouse button
-    function SWEP:WW_CanAltFire()
+    -- Same checks ArcCW makes before a primary shot, for attacks bound to the right mouse button.
+    -- allow_sprint lets the attack happen while sprinting.
+    function SWEP:WW_CanAltFire(allow_sprint)
         if IsValid(self:GetHolster_Entity()) or self:GetHolster_Time() > 0 then return false end
         local state = self:GetState()
         if state == ArcCW.STATE_CUSTOMIZE or state == ArcCW.STATE_DISABLE then return false end
         if self:GetPriorityAnim() then return false end
         if self:GetNextSecondaryFire() > CurTime() then return false end
-        if self:GetNWState() == ArcCW.STATE_SPRINT and not self:CanShootWhileSprint() then return false end
+        if self:GetNWState() == ArcCW.STATE_SPRINT and not allow_sprint and not self:CanShootWhileSprint() then return false end
         return true
     end
 
