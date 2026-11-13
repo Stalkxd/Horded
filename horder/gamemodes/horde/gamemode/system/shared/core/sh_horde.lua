@@ -171,6 +171,11 @@ function HORDE:Shuffle(list)
     return list
 end
 
+-- 1 draws every highlight (enemies, ammo boxes, weapon drops, marks, pings, mines) as a
+-- flat colored model, 0 brings the glow outlines back. Set on the server, applies to everyone.
+CreateConVar("horde_solid_highlight", 1, { FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY },
+    "Draw highlights as a solid color (1) instead of a glow outline (0).")
+
 HORDE.difficulty = 1
 HORDE.total_enemies_this_wave = 0
 HORDE.alive_enemies_this_wave = 0

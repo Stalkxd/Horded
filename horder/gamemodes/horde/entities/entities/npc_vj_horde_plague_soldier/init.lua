@@ -46,6 +46,26 @@ ENT.Horde_Plague_Soldier = true
 ENT.CallForHelp = false
 ENT.CanInvestigate = false
 
+-- Server cost. Soldiers were the most expensive enemy to run: on top of the usual chase
+-- they kept working out strafes, cover and ally reactions, each of which is a path or
+-- sight query, and that stacked up fast with a group of them. They now stand and shoot.
+-- Both VJ Base's current and older names are set, whichever the installed version reads.
+ENT.Weapon_Strafe = false
+ENT.MoveRandomlyWhenShooting = false
+ENT.Weapon_OcclusionDelay = false
+ENT.WaitForEnemyToComeOut = false
+ENT.Weapon_FindCoverOnReload = false
+ENT.CombatDamageResponse = false
+ENT.DamageAllyResponse = false
+ENT.DeathAllyResponse = false
+ENT.BringFriendsOnDeath = false
+ENT.AlertFriendsOnDeath = false
+ENT.PropInteraction = false
+ENT.PushProps = false
+ENT.AttackProps = false
+ENT.CanReceiveOrders = false
+ENT.BecomeEnemyToPlayer = false
+
 ENT.HasItemDropsOnDeath = false
 ENT.DropWeaponOnDeath = false
 
@@ -78,12 +98,13 @@ function ENT:CustomOnInitialize()
 	self:AddRelationship("npc_headcrab_poison D_LI 99")
 	self:AddRelationship("npc_headcrab_fast D_LI 99")
 
-	local p = math.random()
-	if p <= 0.65 then
-		self:Give("weapon_vj_horde_smg1")
-	else
-		self:Give("weapon_vj_horde_shotgun")
-		self.Weapon_FiringDistanceFar = 800
+	-- Every bullet is its own entity with a trail. The shotgun variant (6 a shot) is gone,
+	-- and the SMG burst is 4 bullets instead of 7 with the damage raised to match
+	-- (36 a burst, was 35).
+	local smg = self:Give("weapon_vj_horde_smg1")
+	if IsValid(smg) then
+		smg.NPC_TimeUntilFireExtraTimers = {0.15, 0.3, 0.45}
+		smg.Horde_BulletDamage = 9
 	end
 	local pos = Vector()
 	local ang = Angle()

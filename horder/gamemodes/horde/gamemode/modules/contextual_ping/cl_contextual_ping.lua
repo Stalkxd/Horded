@@ -219,9 +219,9 @@ function PingAllEntity()
 
         hook.Add("PreDrawHalos", "ContextualPingDrawHalo"  .. userId, function()
             if IsValid(ping_entities_detective[userId]) and isTTT then
-                halo.Add(ping_entities_detective, PING_DETECTIVE, PING_BLUR, PING_BLUR, PING_PASSES)
+                HORDE.Halo(ping_entities_detective, PING_DETECTIVE, PING_BLUR, PING_BLUR, PING_PASSES)
             elseif IsValid(ping_entities_all[userId]) then
-                halo.Add(ping_entities_all, PING_INNOCENT, PING_BLUR, PING_BLUR, PING_PASSES)
+                HORDE.Halo(ping_entities_all, PING_INNOCENT, PING_BLUR, PING_BLUR, PING_PASSES)
             end
         end)
 
@@ -305,7 +305,7 @@ function PingTeamEntity()
 
                 hook.Add("PreDrawHalos", "ContextualPingDrawHaloTeam"  .. userId, function()
                     if IsValid(ping_entities_traitor[userId]) then
-                        halo.Add(ping_entities_traitor, PING_TRAITOR, PING_BLUR, PING_BLUR, PING_PASSES)
+                        HORDE.Halo(ping_entities_traitor, PING_TRAITOR, PING_BLUR, PING_BLUR, PING_PASSES)
                     end
                 end)
 

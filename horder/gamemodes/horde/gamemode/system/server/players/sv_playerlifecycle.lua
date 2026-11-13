@@ -1233,6 +1233,72 @@ hook.Add("PlayerDeathThink", "Horde_PlayerDeathThink", function (ply)
     return true
 end)
 
+local function MakePickable(wpn)
+    wpn:SetParent(NULL)
+    wpn:RemoveEffects(EF_BONEMERGE)
+    wpn:SetNoDraw(false)
+    wpn:SetCollisionGroup(COLLISION_GROUP_WEAPON)
+    -- The area a player has to touch to pick the weapon up, a little larger than the model
+    wpn:SetTrigger(true)
+    wpn:UseTriggerBounds(true, 36)
+    local phys = wpn:GetPhysicsObject()
+    if IsValid(phys) then
+        phys:EnableMotion(true)
+        phys:Wake()
+    end
+end
+
+-- Puts a weapon nobody holds at pos (or leaves it where it is) and makes it pickable.
+-- Checks again shortly after, in case it fell out of the map or got wedged.
+function HORDE:SeatDroppedWeapon(wpn, pos)
+    if not IsValid(wpn) or IsValid(wpn:GetOwner()) then return end
+    if pos then
+        wpn:SetPos(pos + Vector(math.Rand(-12, 12), math.Rand(-12, 12), 8))
+        wpn:SetAngles(Angle(0, math.random(0, 359), 0))
+        local phys = wpn:GetPhysicsObject()
+        if IsValid(phys) then phys:SetVelocity(vector_origin) end
+    end
+    MakePickable(wpn)
+
+    timer.Simple(1.5, function()
+        if not IsValid(wpn) or IsValid(wpn:GetOwner()) then return end
+        if pos and (not util.IsInWorld(wpn:GetPos()) or wpn:GetPos().z < pos.z - 2000) then
+            wpn:SetPos(pos + Vector(0, 0, 8))
+            local phys = wpn:GetPhysicsObject()
+            if IsValid(phys) then phys:SetVelocity(vector_origin) end
+        end
+        MakePickable(wpn)
+    end)
+end
+
+-- Weapons dropped any other way get the same check
+hook.Add("PlayerDroppedWeapon", "Horde_SeatDroppedWeapon", function(ply, wpn)
+    timer.Simple(0.2, function()
+        if IsValid(wpn) and not IsValid(wpn:GetOwner()) then MakePickable(wpn) end
+    end)
+end)
+
+-- Pressing +use on a weapon lying on the ground picks it up, for the ones walking over
+-- does not catch. The usual rules (weight, class, weaponless mode) still decide.
+local USE_PICKUP_RANGE = 96
+hook.Add("KeyPress", "Horde_UsePickupWeapon", function(ply, key)
+    if key ~= IN_USE or not IsValid(ply) or not ply:Alive() then return end
+
+    local start = ply:GetShootPos()
+    local aim = ply:GetAimVector()
+    local tr = util.TraceLine({ start = start, endpos = start + aim * USE_PICKUP_RANGE, filter = ply, mask = MASK_SOLID })
+    local best, best_dist
+    for _, ent in ipairs(ents.FindInSphere(tr.HitPos, 40)) do
+        if ent:IsWeapon() and not IsValid(ent:GetOwner()) and not ent.Horde_UnarmedDrop then
+            local dist = ent:WorldSpaceCenter():DistToSqr(tr.HitPos)
+            if not best_dist or dist < best_dist then best, best_dist = ent, dist end
+        end
+    end
+    if not best or ply:HasWeapon(best:GetClass()) then return end
+    if hook.Run("PlayerCanPickupWeapon", ply, best) == false then return end
+    ply:PickupWeapon(best)
+end)
+
 hook.Add("DoPlayerDeath", "Horde_DoPlayerDeath", function(victim)
     if HORDE.ClearPlayerDebuffs then
         HORDE:ClearPlayerDebuffs(victim)
@@ -1246,8 +1312,13 @@ hook.Add("DoPlayerDeath", "Horde_DoPlayerDeath", function(victim)
     net.Start("Horde_ForceCloseShop")
     net.Send(victim)
 
+    -- Weapons thrown from a dying player's eyes could land inside a wall or under the floor,
+    -- or end up with their pickup area away from where they are seen, so nobody could take
+    -- them. Lay them at the body instead and make sure each one can be picked up.
+    local body = victim:WorldSpaceCenter()
     for _, wpn in pairs(victim:GetWeapons()) do
-        victim:DropWeapon(wpn)
+        victim:DropWeapon(wpn, nil, vector_origin)
+        HORDE:SeatDroppedWeapon(wpn, body)
     end
     if (not HORDE.start_game) or (HORDE.current_break_time > 0) then
         timer.Simple(1, function() if victim:IsValid() then

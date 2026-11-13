@@ -2,7 +2,7 @@ local PANEL = {}
 
 PANEL.IdealPing = 50
 PANEL.MaxPing = 450
-PANEL.RefreshTime = 1
+PANEL.RefreshTime = 0.25
 PANEL.PingBars = 5
 
 PANEL.m_Player = NULL
@@ -51,10 +51,21 @@ function PANEL:Paint()
 	return true
 end
 
+-- Pings the server sends while the scoreboard is open, see sv_scoreboard_ping.lua
+HORDE.ScoreboardPings = HORDE.ScoreboardPings or {}
+net.Receive("Horde_ScoreboardPing", function()
+	local pings = {}
+	for _ = 1, net.ReadUInt(8) do
+		local idx = net.ReadUInt(8)
+		pings[idx] = net.ReadUInt(10)
+	end
+	HORDE.ScoreboardPings = pings
+end)
+
 function PANEL:Refresh()
 	local pl = self:GetPlayer()
 	if pl:IsValid() then
-		self:SetPing(pl:Ping())
+		self:SetPing(HORDE.ScoreboardPings[pl:EntIndex()] or pl:Ping())
 	else
 		self:SetPing(0)
 	end

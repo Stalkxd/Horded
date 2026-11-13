@@ -27,8 +27,10 @@ local function AddFireSound(name, wave, wrap, prefix)
     AddSound(name, wrap and CHAN_WEAPON or CHAN_STATIC, 1, 120, { 97, 103 }, wave, prefix)
 end
 
+-- Foley like reloads and sword swings. CHAN_STATIC like TFA used, so sounds that start
+-- together (both GKZ-45 Mk3 reloads, a swing and its foley) no longer cut each other off.
 local function AddWeaponSound(name, wave, prefix)
-    AddSound(name, CHAN_WEAPON, 1, 80, { 97, 103 }, wave, prefix)
+    AddSound(name, CHAN_STATIC, 1, 80, { 97, 103 }, wave, prefix)
 end
 
 AddWeaponSound("weapon_bo3_cloth.med", {"weapons/tfa_bo3/foley/cloth/fly_cloth_med_00.wav", "weapons/tfa_bo3/foley/cloth/fly_cloth_med_01.wav", "weapons/tfa_bo3/foley/cloth/fly_cloth_med_02.wav", "weapons/tfa_bo3/foley/cloth/fly_cloth_med_03.wav", "weapons/tfa_bo3/foley/cloth/fly_cloth_med_04.wav", "weapons/tfa_bo3/foley/cloth/fly_cloth_med_05.wav", "weapons/tfa_bo3/foley/cloth/fly_cloth_med_06.wav", "weapons/tfa_bo3/foley/cloth/fly_cloth_med_07.wav", "weapons/tfa_bo3/foley/cloth/fly_cloth_med_08.wav"})

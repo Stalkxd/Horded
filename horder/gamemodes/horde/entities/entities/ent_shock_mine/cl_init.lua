@@ -12,7 +12,7 @@ hook.Add("PreDrawHalos", "Horde_ShockMine_Halo", function()
     local mines = ents.FindByClass("ent_shock_mine")
 
     if #mines > 0 then
-        halo.Add(
+        HORDE.Halo(
             mines,
             Color(255, 255, 0),
             2,

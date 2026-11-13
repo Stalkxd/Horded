@@ -1375,6 +1375,12 @@ function HORDE:StartBreak()
 
     timer.Create("Horder_Counter", 1, 0, function()
         if not HORDE.start_game then return end
+        -- The wave already started (current_break_time is -1). Without this the counter
+        -- kept broadcasting 0, which every client shows as the wave announcement, forever.
+        if HORDE.current_break_time < 0 then
+            timer.Remove("Horder_Counter")
+            return
+        end
         HORDE:BroadcastBreakCountDownMessage(HORDE.current_break_time, false)
 
         if HORDE.Skip_Wave_Timer then
@@ -1842,7 +1848,11 @@ function HORDE:Direct()
         return
     end
 
+    -- While the break counter runs, its last tick moves to the next wave. Starting the wave
+    -- here first, which a short director interval could do, skipped that and left the
+    -- counter announcing the wave every second.
     if HORDE.current_break_time == 0 then
+        if timer.Exists("Horder_Counter") then return end
         HORDE:WaveStart()
         hook.Run("HordeWaveStart", HORDE.current_wave)
     end

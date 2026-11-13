@@ -23,8 +23,13 @@ function ENT:StartTouch(ent)
 		else
 			self:ExplodeWall(data.HitPos, data.HitNormal)
 		end
-	else
+	elseif HORDE_WW.IsHostile(self.Owner, ent) then
 		self:ExplodeEnemy(ent)
+	elseif ent:IsPlayer() or ent:IsNPC() or ent:IsNextBot() then
+		-- Fly through teammates and their minions instead of wasting the shot on them
+		return false
+	else
+		self:ExplodeWall(data.HitPos, data.HitNormal)
 	end
 	
 	return true
@@ -69,8 +74,10 @@ function ENT:ExplodeEnemy(ent)
 	self:SetMoveType(MOVETYPE_NONE)
 end
 
+-- A floor or wall hit splashes the nearest enemy, once. It used to do nothing
+-- until the goo had already burst on an enemy, so most near misses did no damage.
 function ENT:ExplodeCommon(pos)
-	if !self.Exploded then return end
+	if self.Exploded then return end
 	
 	local closestent = self:FindNearestTarget(pos)
 	if IsValid(closestent) then
@@ -91,7 +98,7 @@ end
 function ENT:FindNearestTarget(pos)
 	local closestent = {Distance = 16641, Entity = nil}
 	for k, v in pairs(ents.FindInSphere(pos, 128)) do
-		if (v:IsNPC() or v:IsNextBot()) and v:Health() > 0 then
+		if HORDE_WW.IsHostile(self.Owner, v) then
 			local dist = v:WorldSpaceCenter():DistToSqr(pos)
 			if dist < closestent.Distance then
 				closestent.Distance = dist
@@ -116,7 +123,7 @@ end
 
 function ENT:FindNearbyTarget(pos)
 	for k, v in pairs(ents.FindInSphere(pos, 128)) do
-		if (v:IsNPC() or v:IsNextBot()) and v:Health() > 0 and !self.OldTargets[v:GetCreationID()] then
+		if HORDE_WW.IsHostile(self.Owner, v) and !self.OldTargets[v:GetCreationID()] then
 			return v
 		end
 	end
@@ -136,11 +143,21 @@ function ENT:SplashTarget(tgt)
 	self.LastSplashPos = tgt:WorldSpaceCenter()
 	table.insert(self.OldTargets, tgt:GetCreationID(), tgt)
 	
+	self:DamageTarget(tgt)
+end
+
+-- Hits land on the target's body with the shooter as attacker, so hit markers
+-- and damage number addons show them.
+function ENT:DamageTarget(tgt)
+	if !IsValid(self.Owner) then return end
 	local dmginfo = DamageInfo()
 	dmginfo:SetDamage(5500000)
 	dmginfo:SetAttacker(self.Owner)
 	dmginfo:SetInflictor(self)
 	dmginfo:SetDamageType(DMG_ACID)
+	dmginfo:SetDamagePosition(tgt:WorldSpaceCenter())
+	dmginfo:SetReportedPosition(self:GetPos())
+	dmginfo:SetDamageForce(vector_up * 100)
 	tgt:TakeDamageInfo(dmginfo)
 end
 
@@ -154,12 +171,7 @@ function ENT:SplashNearbyTarget(pos)
 		self.LastSplashPos = closestent:WorldSpaceCenter()
 		table.insert(self.OldTargets, closestent:GetCreationID(), closestent)
 		
-		local dmginfo = DamageInfo()
-		dmginfo:SetDamage(5500000)
-		dmginfo:SetAttacker(self.Owner)
-		dmginfo:SetInflictor(self)
-		dmginfo:SetDamageType(DMG_ACID)
-		closestent:TakeDamageInfo(dmginfo)
+		self:DamageTarget(closestent)
 		
 		self.LifeTime = CurTime() + 0.6
 	else

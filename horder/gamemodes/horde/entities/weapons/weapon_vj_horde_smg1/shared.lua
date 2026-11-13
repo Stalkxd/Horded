@@ -58,7 +58,7 @@ function SWEP:OnPrimaryAttack(status, statusData)
 		bullet:SetOwner(self:GetOwner())
 		bullet:Activate()
 		bullet:Spawn()
-		bullet.DirectDamage = 5
+		bullet.DirectDamage = self.Horde_BulletDamage or 5
 
 		local phy = bullet:GetPhysicsObject()
 		if phy:IsValid() then

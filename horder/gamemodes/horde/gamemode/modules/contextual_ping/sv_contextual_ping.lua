@@ -10,6 +10,14 @@ util.AddNetworkString("contextual_ping_team_entity_cl")
 
 util.AddNetworkString("contextual_ping_entity_ragdoll_cl")
 
+local ping_chat = CreateConVar("horde_ping_chat", 1, { FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE },
+    "Players say \"Pinged at ...\" in chat when they ping (1 = on, 0 = off). The ping marker shows either way.")
+
+local function PingSay(ply, text, team_only)
+    if not ping_chat:GetBool() then return end
+    ply:Say(text, team_only)
+end
+
 local function IsTraitor(ply)
     if engine.ActiveGamemode() ~= "terrortown" then return false end
     if ROLE_TRAITOR == nil or not isfunction(ply.GetRole) then return false end
@@ -50,7 +58,7 @@ net.Receive("contextual_ping_all_location_sv", function(len, ply)
     if not HORDE:AllowNetRequest(ply, "contextual_ping", 0.2) then return end
     local vec = net.ReadVector()
 
-    ply:Say("Pinged at a Location")
+    PingSay(ply, "Pinged at a Location")
     net.Start("contextual_ping_all_location_cl")
         net.WriteVector(vec)
         net.WriteEntity(ply)
@@ -63,7 +71,7 @@ net.Receive("contextual_ping_all_entity_sv", function(len, ply)
     local ent = net.ReadEntity()
 
     local sayTxt = "Pinged at " .. GetEntityDescription(ent)
-    ply:Say(sayTxt)
+    PingSay(ply, sayTxt)
     net.Start("contextual_ping_all_entity_cl")
         net.WriteEntity(ent)
         net.WriteEntity(ply)
@@ -84,13 +92,13 @@ net.Receive("contextual_ping_team_location_sv", function(len, ply)
             end
         end
 
-        ply:Say("Pinged at a Location", true)
+        PingSay(ply, "Pinged at a Location", true)
         net.Start("contextual_ping_team_location_cl")
             net.WriteVector(vec)
             net.WriteEntity(ply)
         net.Send(traitors)
     else
-        ply:Say("Pinged at a Location")
+        PingSay(ply, "Pinged at a Location")
         net.Start("contextual_ping_all_location_cl")
             net.WriteVector(vec)
             net.WriteEntity(ply)
@@ -113,7 +121,7 @@ net.Receive("contextual_ping_team_entity_sv", function(len, ply)
         end
 
         local sayTxt = "Pinged at " .. GetEntityDescription(ent)
-        ply:Say(sayTxt, true)
+        PingSay(ply, sayTxt, true)
 
         net.Start("contextual_ping_team_entity_cl")
             net.WriteEntity(ent)
@@ -121,7 +129,7 @@ net.Receive("contextual_ping_team_entity_sv", function(len, ply)
         net.Send(traitors)
     else
         local sayTxt = "Pinged at " .. GetEntityDescription(ent)
-        ply:Say(sayTxt)
+        PingSay(ply, sayTxt)
 
         net.Start("contextual_ping_all_entity_cl")
             net.WriteEntity(ent)

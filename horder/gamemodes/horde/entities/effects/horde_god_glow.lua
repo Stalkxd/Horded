@@ -14,7 +14,7 @@ hook.Add("PreDrawHalos", "Horde_GodSpectreOutline", function ()
 	for class, color in pairs(OUTLINE_COLORS) do
 		local summons = ents.FindByClass(class)
 		if #summons > 0 then
-			halo.Add(summons, color, 3, 3, 1, true, true)
+			HORDE.Halo(summons, color, 3, 3, 1, true, true)
 		end
 	end
 end)

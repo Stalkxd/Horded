@@ -174,10 +174,20 @@ function scoreboard:show()
     end)
 end
 
+-- Ask the server for fast ping updates only while the scoreboard is open
+local function WatchPing(on)
+	net.Start("Horde_ScoreboardPingWatch")
+		net.WriteBool(on)
+	net.SendToServer()
+	if not on then HORDE.ScoreboardPings = {} end
+end
+
 function GM:ScoreboardShow()
 	scoreboard:show()
+	WatchPing(true)
 end
 
 function GM:ScoreboardHide()
 	scoreboard:hide()
+	WatchPing(false)
 end
