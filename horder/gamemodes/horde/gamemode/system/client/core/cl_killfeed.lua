@@ -1,17 +1,12 @@
--- Horde killfeed (client side). Replaces the GMod death notices with a short list in the
--- top right corner: at most 3 lines, so a wave of zombies dying doesn't fill the screen.
--- Players are white, enemies red, and the player who assisted is shown after a "+".
+-- Horde killfeed (client side). Replaces the GMod death notices and looks like them (same
+-- font, icon in the middle, no background), with these changes: at most 3 lines, so a wave
+-- of zombies dying doesn't fill the screen; players white, enemies red; and the player who
+-- assisted is shown after the killer with a "+".
 local MAX_LINES = 3
-local LIFETIME = 6
-local FADE = 0.5
-local PAD_X, PAD_Y, GAP = 8, 4, 6
 
 local COLOR_PLAYER = Color(255, 255, 255)
-local COLOR_ENEMY = Color(255, 60, 60)
-local COLOR_PLUS = Color(180, 180, 180)
-local COLOR_BG = Color(0, 0, 0, 160)
-
-surface.CreateFont("Horde_Killfeed", { font = "Arial", size = 18, weight = 700, extended = true })
+local COLOR_ENEMY = Color(250, 50, 50)
+local FONT = "ChatFont"
 
 local lines = {}
 
@@ -22,8 +17,8 @@ local function DisableDefault(gm)
     gm.DrawDeathNotice = function() end
 end
 DisableDefault(GM)
-hook.Add("Initialize", "Horde_KillfeedDisableDefault", function() DisableDefault(GAMEMODE) end)
 DisableDefault(GAMEMODE)
+hook.Add("Initialize", "Horde_KillfeedDisableDefault", function() DisableDefault(GAMEMODE) end)
 
 local function Phrase(name)
     if string.sub(name, 1, 1) == "#" then return language.GetPhrase(string.sub(name, 2)) end
@@ -48,61 +43,48 @@ net.Receive("Horde_Killfeed", function()
     while #lines > MAX_LINES do table.remove(lines, 1) end
 end)
 
-local function TextWidth(text)
-    if text == "" then return 0 end
-    return (surface.GetTextSize(text))
+local cvar_time = GetConVar("hud_deathnotice_time")
+
+-- Same layout as GMod: icon centered on x, killer to the left, victim to the right
+local function DrawLine(x, y, line, lifetime)
+    local w, h = killicon.GetSize(line.icon)
+    if not w or not h then return y end
+
+    local alpha = math.Clamp((line.time + lifetime - CurTime()) * 255, 0, 255)
+    local white = ColorAlpha(COLOR_PLAYER, alpha)
+
+    killicon.Draw(x, y, line.icon, alpha)
+
+    local mid = y + h / 2
+    local left = x - w / 2 - 16
+    if line.assist ~= "" then
+        surface.SetFont(FONT)
+        draw.SimpleText(line.assist, FONT, left, mid, white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+        left = left - surface.GetTextSize(line.assist)
+        draw.SimpleText(" + ", FONT, left, mid, white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+        left = left - surface.GetTextSize(" + ")
+    end
+    if line.killer ~= "" then
+        draw.SimpleText(line.killer, FONT, left, mid,
+            line.killer_player and white or ColorAlpha(COLOR_ENEMY, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+    end
+
+    draw.SimpleText(line.victim, FONT, x + w / 2 + 16, mid,
+        line.victim_player and white or ColorAlpha(COLOR_ENEMY, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+    return math.ceil(y + h * 0.75)
 end
 
 hook.Add("HUDPaint", "Horde_Killfeed", function()
-    if #lines == 0 then return end
+    if #lines == 0 or GetConVarNumber("cl_drawhud") == 0 then return end
+    local lifetime = cvar_time and cvar_time:GetFloat() or 6
     local now = CurTime()
     for i = #lines, 1, -1 do
-        if now - lines[i].time > LIFETIME then table.remove(lines, i) end
+        if now - lines[i].time > lifetime then table.remove(lines, i) end
     end
 
-    surface.SetFont("Horde_Killfeed")
-    local _, text_h = surface.GetTextSize("W")
-    local x_right = ScrW() - 16
-    local y = ScrH() * 0.04
-
+    local x, y = math.floor(ScrW() * 0.85), math.floor(ScrH() * 0.04)
     for _, line in ipairs(lines) do
-        local alpha = math.Clamp((LIFETIME - (now - line.time)) / FADE, 0, 1)
-        local icon_w, icon_h = killicon.GetSize(line.icon)
-        icon_w, icon_h = icon_w or 32, icon_h or 32
-        local row_h = math.max(text_h, icon_h) + PAD_Y * 2
-
-        local killer_w = TextWidth(line.killer)
-        local assist_text = line.assist ~= "" and (" + " .. line.assist) or ""
-        local assist_w = TextWidth(assist_text)
-        local victim_w = TextWidth(line.victim)
-        local width = PAD_X * 2 + icon_w + victim_w + GAP
-        if killer_w > 0 or assist_w > 0 then width = width + killer_w + assist_w + GAP end
-
-        local x = x_right - width
-        draw.RoundedBox(4, x, y, width, row_h, ColorAlpha(COLOR_BG, COLOR_BG.a * alpha))
-
-        local text_y = y + (row_h - text_h) / 2
-        local cx = x + PAD_X
-        if killer_w > 0 then
-            draw.SimpleText(line.killer, "Horde_Killfeed", cx, text_y,
-                ColorAlpha(line.killer_player and COLOR_PLAYER or COLOR_ENEMY, 255 * alpha))
-            cx = cx + killer_w
-        end
-        if assist_w > 0 then
-            surface.SetFont("Horde_Killfeed")
-            local plus_w = TextWidth(" + ")
-            draw.SimpleText(" + ", "Horde_Killfeed", cx, text_y, ColorAlpha(COLOR_PLUS, 255 * alpha))
-            draw.SimpleText(line.assist, "Horde_Killfeed", cx + plus_w, text_y, ColorAlpha(COLOR_PLAYER, 255 * alpha))
-            cx = cx + assist_w
-        end
-        if killer_w > 0 or assist_w > 0 then cx = cx + GAP end
-
-        killicon.Draw(cx + icon_w / 2, y + (row_h - icon_h) / 2, line.icon, 255 * alpha)
-        cx = cx + icon_w + GAP
-
-        draw.SimpleText(line.victim, "Horde_Killfeed", cx, text_y,
-            ColorAlpha(line.victim_player and COLOR_PLAYER or COLOR_ENEMY, 255 * alpha))
-
-        y = y + row_h + 4
+        y = DrawLine(x, y, line, lifetime)
     end
 end)
