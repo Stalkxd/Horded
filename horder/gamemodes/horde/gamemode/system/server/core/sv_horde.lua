@@ -1289,8 +1289,36 @@ function HORDE:GetDirectorInterval()
     local speed = (arr and arr[HORDE.difficulty]) or 1
     speed = tonumber(speed) or 1
     if speed <= 0 then speed = 1 end
+    if HORDE.fast_clear_active then speed = speed * HORDE:GetFastClearSettings() end
     local min_interval = configured and SPAWN_INTERVAL_MIN or 1
     return math.max(min_interval, base / speed)
+end
+
+-- Fast clear: while the players keep the horde small, enemies spawn faster.
+-- Returns the spawn speed multiplier and the share of the alive limit that counts as small.
+local FAST_CLEAR_GRACE = 10 -- seconds after the wave starts, while the horde is still filling up
+
+function HORDE:GetFastClearSettings()
+    local mult = GetConVarNumber("horde_fast_clear_spawn_mult")
+    local fraction = GetConVarNumber("horde_fast_clear_fraction")
+    local diff = HORDE._difficulties and HORDE._difficulties[HORDE.difficulty]
+    if istable(diff) then
+        mult = tonumber(diff.FastClearSpawnMult) or mult
+        fraction = tonumber(diff.FastClearAliveFraction) or fraction
+    end
+    return math.max(1, mult or 1), math.Clamp(fraction or 0, 0, 1)
+end
+
+-- Called on every director run with the number of living enemies
+function HORDE:UpdateFastClear(alive)
+    local mult, fraction = HORDE:GetFastClearSettings()
+    local active = mult > 1
+        and HORDE.total_enemies_this_wave > 0
+        and CurTime() - (HORDE.wave_start_time or 0) >= FAST_CLEAR_GRACE
+        and alive <= HORDE.max_enemies_alive * fraction
+    if active == (HORDE.fast_clear_active == true) then return end
+    HORDE.fast_clear_active = active
+    timer.Adjust("Horde_Main", HORDE:GetDirectorInterval(), nil, nil)
 end
 
 HORDE.EnemyCycleSkipsBossWaves = false
@@ -1409,6 +1437,8 @@ end
 function HORDE:WaveStart()
     HORDE:ApplyPendingConfigs()
 
+    HORDE.fast_clear_active = false
+    HORDE.wave_start_time = CurTime()
     timer.Adjust("Horde_Main", HORDE:GetDirectorInterval(), nil, nil)
     HORDE.Skip_Wave_Timer = nil
     HORDE.hundred_hold_break = nil
@@ -1866,6 +1896,7 @@ function HORDE:Direct()
 
     local enemies = HORDE:ScanEnemies()
     HORDE:RemoveDistantEnemies(enemies)
+    HORDE:UpdateFastClear(#enemies)
 
     if #enemies >= HORDE.max_enemies_alive then
         return
