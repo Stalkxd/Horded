@@ -2,11 +2,12 @@ CreateConVar("horde_enable_halo", 1, FCVAR_ARCHIVE + FCVAR_LUA_CLIENT, "Enables 
 
 -- Highlights. With horde_solid_highlight on (a server setting) every highlight is drawn as
 -- a flat colored model, the way the last 10 enemies are marked, instead of a glow outline.
--- Takes the same arguments as halo.Add; force_solid draws solid whatever the setting is.
+-- Takes the same arguments as halo.Add; force_solid draws solid whatever the setting is,
+-- and hide_in_sight leaves NPCs and players in plain view with their normal look.
 local solid_mat = Material("models/debug/debugwhite")
 local solid_queue, solid_frame = {}, -1
 
-function HORDE.Halo(list, color, blur_x, blur_y, passes, additive, ignorez, force_solid)
+function HORDE.Halo(list, color, blur_x, blur_y, passes, additive, ignorez, force_solid, hide_in_sight)
     local cvar = GetConVar("horde_solid_highlight")
     if not force_solid and not (cvar and cvar:GetBool()) then
         return halo.Add(list, color, blur_x, blur_y, passes, additive, ignorez)
@@ -15,10 +16,11 @@ function HORDE.Halo(list, color, blur_x, blur_y, passes, additive, ignorez, forc
     if solid_frame ~= frame then
         solid_queue, solid_frame = {}, frame
     end
-    solid_queue[#solid_queue + 1] = { list, color, ignorez }
+    solid_queue[#solid_queue + 1] = { list, color, ignorez, hide_in_sight }
 end
 
--- A living thing in plain view keeps its normal look; the color shows through walls
+-- With hide_in_sight a living thing in plain view keeps its normal look and the color
+-- only shows through walls
 local function SolidHidden(ent, eye)
     if not (ent:IsNPC() or ent:IsNextBot() or ent:IsPlayer()) then return true end
     if (ent.Horde_SolidSightAt or 0) < CurTime() then
@@ -38,11 +40,11 @@ hook.Add("PostDrawTranslucentRenderables", "Horde_SolidHighlights", function(dep
     render.SuppressEngineLighting(true)
     render.MaterialOverride(solid_mat)
     for _, entry in ipairs(solid_queue) do
-        local color, ignorez = entry[2], entry[3]
+        local color, ignorez, hide_in_sight = entry[2], entry[3], entry[4]
         render.SetColorModulation(color.r / 255, color.g / 255, color.b / 255)
         cam.IgnoreZ(ignorez == true)
         for _, ent in pairs(entry[1]) do
-            if IsValid(ent) and ent ~= me and not ent:IsDormant() and (not ignorez or SolidHidden(ent, eye)) then
+            if IsValid(ent) and ent ~= me and not ent:IsDormant() and (not hide_in_sight or SolidHidden(ent, eye)) then
                 ent:DrawModel()
             end
         end
@@ -250,7 +252,7 @@ net.Receive("Horde_HighlightEntities", function (len, ply)
                     enemies[key] = nil
                 end
             end
-            HORDE.Halo(enemies, Color(255, 0, 0), 1, 1, 1, true, true)
+            HORDE.Halo(enemies, Color(255, 0, 0), 1, 1, 1, true, true, false, true)
         end)
     elseif render == HORDE.render_highlight_ammoboxes then
         hook.Add("PreDrawHalos", "Horde_AddAmmoBoxHalos", function()
