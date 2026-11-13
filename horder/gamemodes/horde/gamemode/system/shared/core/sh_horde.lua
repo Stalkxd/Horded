@@ -21,7 +21,9 @@ CreateConVar("horde_external_lua_config", "", FCVAR_SERVER_CAN_EXECUTE, "Name of
 CreateConVar("horde_director_interval", 9, FCVAR_SERVER_CAN_EXECUTE, "Game director execution interval in seconds. Decreasing this increases spawn rate.")
 CreateConVar("horde_max_enemies_alive_base", 20, FCVAR_SERVER_CAN_EXECUTE, "Maximum number of living enemies (base).")
 CreateConVar("horde_max_enemies_alive_scale_factor", 5, FCVAR_SERVER_CAN_EXECUTE, "Scale factor of the maximum number of living enemies for multiplayer.")
-CreateConVar("horde_max_enemies_alive_max", 50, FCVAR_SERVER_CAN_EXECUTE, "Maximum number of maximum living enemies.")
+CreateConVar("horde_max_enemies_alive_max", 25, FCVAR_SERVER_CAN_EXECUTE, "Maximum number of maximum living enemies.")
+CreateConVar("horde_fast_clear_fraction", 0.4, FCVAR_SERVER_CAN_EXECUTE, "Enemies spawn faster while the living enemies are at or below this share of the limit. Used when the difficulty does not set FastClearAliveFraction.")
+CreateConVar("horde_fast_clear_spawn_mult", 2, FCVAR_SERVER_CAN_EXECUTE, "How many times faster enemies spawn while the players clear the horde quickly. 1 turns it off. Used when the difficulty does not set FastClearSpawnMult.")
 CreateConVar("horde_corpse_cleanup", 0, FCVAR_SERVER_CAN_EXECUTE, "Remove corpses.")
 CreateConVar("horde_decal_cleanup_interval", 60, FCVAR_ARCHIVE + FCVAR_REPLICATED, "Seconds between client decal cleanups (r_cleardecals). 0 = off.", 0, 3600)
 
