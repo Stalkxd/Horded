@@ -74,7 +74,7 @@ if CLIENT then
             if IsValid(ent) then list[#list + 1] = ent end
         end
         if #list > 0 then
-            halo.Add(list, Color(0, 200, 255), 2, 2, 1, true, true)
+            HORDE.Halo(list, Color(0, 200, 255), 2, 2, 1, true, true)
         end
     end)
 end

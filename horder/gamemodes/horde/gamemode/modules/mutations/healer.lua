@@ -22,7 +22,7 @@ if CLIENT then
 
         local entList = table.GetKeys(trackedHealers)
         if #entList > 0 then
-            halo.Add(entList, Color(0, 255, 0), 2, 2, 1, true, false)
+            HORDE.Halo(entList, Color(0, 255, 0), 2, 2, 1, true, false)
         end
     end)
 

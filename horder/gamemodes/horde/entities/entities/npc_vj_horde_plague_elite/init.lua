@@ -47,6 +47,26 @@ ENT.WeaponAttackSecondaryTimeUntilFire = 2
 ENT.EntitiesToNoCollide = {"npc_vj_horde_zombine", "npc_vj_horde_plague_soldier"}
 ENT.CallForHelp = false
 ENT.CanInvestigate = false
+
+-- Server cost. Soldiers were the most expensive enemy to run: on top of the usual chase
+-- they kept working out strafes, cover and ally reactions, each of which is a path or
+-- sight query, and that stacked up fast with a group of them. They now stand and shoot.
+-- Both VJ Base's current and older names are set, whichever the installed version reads.
+ENT.Weapon_Strafe = false
+ENT.MoveRandomlyWhenShooting = false
+ENT.Weapon_OcclusionDelay = false
+ENT.WaitForEnemyToComeOut = false
+ENT.Weapon_FindCoverOnReload = false
+ENT.CombatDamageResponse = false
+ENT.DamageAllyResponse = false
+ENT.DeathAllyResponse = false
+ENT.BringFriendsOnDeath = false
+ENT.AlertFriendsOnDeath = false
+ENT.PropInteraction = false
+ENT.PushProps = false
+ENT.AttackProps = false
+ENT.CanReceiveOrders = false
+ENT.BecomeEnemyToPlayer = false
 ENT.AnimTbl_WeaponAttackSecondary = ACT_RANGE_ATTACK1
 
 ENT.HasItemDropsOnDeath = false

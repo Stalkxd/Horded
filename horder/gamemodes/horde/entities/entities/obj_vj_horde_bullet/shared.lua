@@ -34,15 +34,19 @@ function ENT:CustomOnInitialize()
 	self:SetRenderMode(RENDERMODE_TRANSCOLOR)
 	self:SetColor(Color(255,255,255,1))
 	util.SpriteTrail(self, 0, self.TracerColor, false, self.TracerWidth, self.TracerWidth, 0.1, 1/(8+8)*0.5, "vj_base/sprites/trail.vmt")
-    self.dt = CurTime() + 4
+    -- Every NPC shot is one of these, so keep them cheap: a bullet that has hit nothing
+    -- is long past its target after 3 seconds, and it only needs to think once, to expire.
+    self.dt = CurTime() + 3
+    self:NextThink(self.dt)
 end
 
 function ENT:Think()
-    if SERVER then
-        if CurTime() >= self.dt then
-            self:Remove()
-        end
+    if CurTime() >= self.dt then
+        self:Remove()
+        return
     end
+    self:NextThink(self.dt)
+    return true
 end
 
 function ENT:CustomOnDoDamage_Direct(data, phys, hitEnt)

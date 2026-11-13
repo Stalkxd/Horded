@@ -1,5 +1,58 @@
 CreateConVar("horde_enable_halo", 1, FCVAR_ARCHIVE + FCVAR_LUA_CLIENT, "Enables highlight for last 10 enemies.")
 
+-- Highlights. With horde_solid_highlight on (a server setting) every highlight is drawn as
+-- a flat colored model, the way the last 10 enemies are marked, instead of a glow outline.
+-- Takes the same arguments as halo.Add; force_solid draws solid whatever the setting is.
+local solid_mat = Material("models/debug/debugwhite")
+local solid_queue, solid_frame = {}, -1
+
+function HORDE.Halo(list, color, blur_x, blur_y, passes, additive, ignorez, force_solid)
+    local cvar = GetConVar("horde_solid_highlight")
+    if not force_solid and not (cvar and cvar:GetBool()) then
+        return halo.Add(list, color, blur_x, blur_y, passes, additive, ignorez)
+    end
+    local frame = FrameNumber()
+    if solid_frame ~= frame then
+        solid_queue, solid_frame = {}, frame
+    end
+    solid_queue[#solid_queue + 1] = { list, color, ignorez }
+end
+
+-- A living thing in plain view keeps its normal look; the color shows through walls
+local function SolidHidden(ent, eye)
+    if not (ent:IsNPC() or ent:IsNextBot() or ent:IsPlayer()) then return true end
+    if (ent.Horde_SolidSightAt or 0) < CurTime() then
+        ent.Horde_SolidSightAt = CurTime() + 0.2
+        ent.Horde_SolidInSight = HORDE.IsInSight({ checkmode = 2, originVector = eye, targetEntity = ent })
+    end
+    return not ent.Horde_SolidInSight
+end
+
+hook.Add("PostDrawTranslucentRenderables", "Horde_SolidHighlights", function(depth, skybox, skybox3d)
+    if depth or skybox or skybox3d then return end
+    -- Highlights are collected late in a frame, so draw the ones from the frame before
+    if #solid_queue == 0 or solid_frame < FrameNumber() - 1 then return end
+
+    local eye = EyePos()
+    local me = LocalPlayer()
+    render.SuppressEngineLighting(true)
+    render.MaterialOverride(solid_mat)
+    for _, entry in ipairs(solid_queue) do
+        local color, ignorez = entry[2], entry[3]
+        render.SetColorModulation(color.r / 255, color.g / 255, color.b / 255)
+        cam.IgnoreZ(ignorez == true)
+        for _, ent in pairs(entry[1]) do
+            if IsValid(ent) and ent ~= me and not ent:IsDormant() and (not ignorez or SolidHidden(ent, eye)) then
+                ent:DrawModel()
+            end
+        end
+    end
+    cam.IgnoreZ(false)
+    render.SetColorModulation(1, 1, 1)
+    render.MaterialOverride()
+    render.SuppressEngineLighting(false)
+end)
+
 MySelf = MySelf or NULL
 hook.Add("InitPostEntity", "GetLocal", function()
     MySelf = LocalPlayer()
@@ -177,7 +230,7 @@ if GetConVarNumber("horde_enable_halo") == 1 then
         local ent = util.TraceLine(util.GetPlayerTrace(MySelf)).Entity
         if ent and ent:IsValid() then
             if HORDE:IsMinionOf(ent, MySelf) then
-                halo.Add({ent}, Color(0, 255, 0), 1, 1, 1, true, true)
+                HORDE.Halo({ent}, Color(0, 255, 0), 1, 1, 1, true, true)
                 HORDE.Player_Looking_At_Minion = ent
             end
         else
@@ -197,12 +250,12 @@ net.Receive("Horde_HighlightEntities", function (len, ply)
                     enemies[key] = nil
                 end
             end
-            halo.Add(enemies, Color(255, 0, 0), 1, 1, 1, true, true)
+            HORDE.Halo(enemies, Color(255, 0, 0), 1, 1, 1, true, true)
         end)
     elseif render == HORDE.render_highlight_ammoboxes then
         hook.Add("PreDrawHalos", "Horde_AddAmmoBoxHalos", function()
-            halo.Add(ents.FindByClass("horde_ammobox"), Color(0, 255, 0), 1, 1, 1, true, true)
-            halo.Add(ents.FindByClass("horde_gadgetbox"), Color(255, 0, 0), 1, 1, 1, true, true)
+            HORDE.Halo(ents.FindByClass("horde_ammobox"), Color(0, 255, 0), 1, 1, 1, true, true)
+            HORDE.Halo(ents.FindByClass("horde_gadgetbox"), Color(255, 0, 0), 1, 1, 1, true, true)
         end)
         timer.Simple(10, function ()
             hook.Remove("PreDrawHalos", "Horde_AddAmmoBoxHalos")
@@ -220,7 +273,8 @@ net.Receive("Horde_HighlightSonar", function (len, ply)
     if highlight == true then
         hook.Add("PreDrawHalos", "Horde_SonarHalo" .. idx, function()
             if !entity:IsValid() then hook.Remove("PreDrawHalos", "Horde_SonarHalo" .. idx) end
-            halo.Add({entity}, Color(255, 255, 255), 5, 5, 1, true, true)
+            -- The sonar grenade always marks in solid color
+            HORDE.Halo({entity}, Color(255, 255, 255), 5, 5, 1, true, true, true)
         end)
     else
         hook.Remove("PreDrawHalos", "Horde_SonarHalo" .. idx)
@@ -232,7 +286,7 @@ net.Receive("Horde_DeathMarkHighlight", function(len,ply)
     local idx = entity:EntIndex()
     hook.Add("PreDrawHalos", "Horde_DeathMarkHalo" .. idx, function()
         if !entity:IsValid() then hook.Remove("PreDrawHalos", "Horde_DeathMarkHalo" .. idx) end
-        halo.Add({entity}, Color(255, 0, 255), 3, 3, 1, true, true)
+        HORDE.Halo({entity}, Color(255, 0, 255), 3, 3, 1, true, true)
     end)
 end)
 
@@ -241,7 +295,7 @@ net.Receive("Horde_HunterMarkHighlight", function(len,ply)
     local idx = entity:EntIndex()
     hook.Add("PreDrawHalos", "Horde_HunterMarkHalo" .. idx, function()
         if !entity:IsValid() then hook.Remove("PreDrawHalos", "Horde_HunterMarkHalo" .. idx) end
-        halo.Add({entity}, Color(0, 255, 255), 5, 5, 1, true, true)
+        HORDE.Halo({entity}, Color(0, 255, 255), 5, 5, 1, true, true)
     end)
 end)
 

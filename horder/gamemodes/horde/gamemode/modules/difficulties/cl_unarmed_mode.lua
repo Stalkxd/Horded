@@ -38,7 +38,7 @@ hook.Add("PreDrawHalos", "Horde_UnarmedWeaponHalos", function()
         end
     end
     for quality, list in pairs(groups) do
-        halo.Add(list, QualityColor(quality), 1, 1, 1, true, true)
+        HORDE.Halo(list, QualityColor(quality), 1, 1, 1, true, true)
     end
 end)
 
