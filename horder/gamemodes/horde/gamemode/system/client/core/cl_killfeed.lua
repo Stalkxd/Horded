@@ -53,7 +53,8 @@ local function DrawLine(x, y, line, lifetime)
     local alpha = math.Clamp((line.time + lifetime - CurTime()) * 255, 0, 255)
     local white = ColorAlpha(COLOR_PLAYER, alpha)
 
-    killicon.Draw(x, y, line.icon, alpha)
+    -- Lowered a bit so the icon sits level with the names
+    killicon.Draw(x, y + math.floor(h * 0.3), line.icon, alpha)
 
     local mid = y + h / 2
     local left = x - w / 2 - 16
@@ -72,7 +73,7 @@ local function DrawLine(x, y, line, lifetime)
     draw.SimpleText(line.victim, FONT, x + w / 2 + 16, mid,
         line.victim_player and white or ColorAlpha(COLOR_ENEMY, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
-    return math.ceil(y + h * 0.75)
+    return math.ceil(y + h * 0.85)
 end
 
 hook.Add("HUDPaint", "Horde_Killfeed", function()
