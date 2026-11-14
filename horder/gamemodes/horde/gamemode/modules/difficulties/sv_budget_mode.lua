@@ -110,6 +110,8 @@ hook.Add("Horde_OnEnemyKilled", "Horde_Budget_Drop", function(victim)
     if (HORDE.current_wave or 0) <= 0 or GetConVar("sv_cheats"):GetInt() == 1 then return end
     if victim.Horde_NoReward then return end
     if (HORDE.current_break_time or 0) > 0 then return end
+    -- No budget money drops while a map objective (hold zone, payload, escape) is running.
+    if HORDE.horde_has_active_objective then return end
 
     local cap = tonumber(HORDE.total_enemies_this_wave_fixed) or 0
     if cap > 0 and drops_this_wave >= cap then return end
