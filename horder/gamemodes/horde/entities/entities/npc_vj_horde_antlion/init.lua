@@ -145,14 +145,14 @@ local MODE_NEXT = {
 	[MODE_ATTACK] = MODE_FOLLOW,
 }
 
-local GUARD_LEASH = 750
+local GUARD_LEASH = 1200
 local FOCUS_LEASH_MULT = 1.5
 local FOCUS_TIME = 6
 local RECALL_TIME = 3
 local PROTECT_RANGE = 900
 
 local CHARGE_MIN_DIST = 250
-local CHARGE_MAX_DIST = 900
+local CHARGE_MAX_DIST = 1200
 local CHARGE_COOLDOWN = 8
 local CHARGE_MAX_TIME = 5
 local CHARGE_RATE_PER_SEC = 0.5   -- speed/damage multiplier gained per second of running
@@ -193,6 +193,17 @@ function ENT:Horde_ApplyRole()
 		self.ConstantlyFaceEnemy_IfAttacking = false
 		self.DisableChasingEnemy = true
 		self:Horde_FindChargeAnims()
+		if not self.Horde_GuardHullSet then
+			-- The guard model's own hull is too big for the pathfinder: few maps
+			-- have nodes for it and it fails on slopes and in doorways. Navigate
+			-- with a human-sized hull instead; hits still use the model's hitboxes.
+			self.Horde_GuardHullSet = true
+			self:SetHullType(HULL_HUMAN)
+			self:SetHullSizeNormal()
+			self:SetCollisionBounds(Vector(-16, -16, 0), Vector(16, 16, 72))
+			self:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
+			if self.SetStepHeight then self:SetStepHeight(36) end
+		end
 		return
 	end
 
@@ -877,7 +888,8 @@ function ENT:CustomOnThink()
 		self.NextLeashCheck = CurTime() + 1
 		-- Only for antlions that are meant to stay with the owner.
 		local tethered = self:Horde_IsGuardForm() or self.Horde_Mode == 1
-		if tethered and not self.Horde_Charging and self:GetPos():DistToSqr(self.Owner:GetPos()) >= 1000000 then
+		local maxDist = self:Horde_IsGuardForm() and 2000 or 1000
+		if tethered and not self.Horde_Charging and self:GetPos():DistToSqr(self.Owner:GetPos()) >= maxDist * maxDist then
 			local v = VectorRand() * 20
 			v.z = 0
 			self:SetPos(self.Owner:GetPos() + v)
