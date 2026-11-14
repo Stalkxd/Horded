@@ -242,7 +242,7 @@ end
 
 function HORDE:IsPlayerSpectator(ent)
     if not IsValid(ent) or not ent:IsPlayer() then return false end
-    if ent.Horde_SpectatorGhost then return true end
+    if ent.Horde_SpectatorGhost and not ent:Alive() then return true end
     if ent.Horde_Fake_Respawn then return true end
     if ent:GetMoveType() == MOVETYPE_OBSERVER then return true end
     local obs = ent:GetObserverMode()

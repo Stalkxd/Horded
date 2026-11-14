@@ -13,7 +13,16 @@ GADGET.Params = {
 GADGET.Hooks = {}
 
 local function SpawnPlayer(ply, ply_pos, ply_angles, armor)
-    if ply:GetNoDraw() == false then ply.Horde_Invincible = nil return end
+    if not IsValid(ply) then return end
+    -- Died during the slash (or already brought back): do not spawn a dead player back in,
+    -- and never leave the fake-respawn / invulnerable flags behind, or the next real respawn
+    -- skips its cleanup and the player stays an unkillable spectator.
+    if not ply:Alive() or not ply.Horde_Fake_Respawn or ply:GetNoDraw() == false then
+        ply.Horde_Fake_Respawn = nil
+        ply.Horde_Invincible = nil
+        ply.Horde_In_Omni = nil
+        return
+    end
     local health = ply:Health()
     local ply_eyeangles = ply:EyeAngles()
     ply:UnSpectate()
