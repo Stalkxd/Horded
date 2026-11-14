@@ -25,6 +25,8 @@ HORDE.DifficultyFields = HORDE.DifficultyFields or {
     MaxEnemiesAliveBase       = { type = "int",    desc = "База лимита одновременно живых врагов." },
     MaxEnemiesAlivePerPlayer  = { type = "int",    desc = "Сколько слотов добавляет каждый игрок." },
     MaxEnemiesAliveCap        = { type = "int",    desc = "Потолок лимита живых врагов." },
+    FastClearAliveFraction    = { type = "number", desc = "Доля лимита живых врагов, при которой спавн ускоряется." },
+    FastClearSpawnMult        = { type = "number", desc = "Во сколько раз ускоряется спавн при быстрой зачистке (1 — выкл.)." },
     StatusDurationBonus       = { type = "number", desc = "Прибавка к длительности статусов." },
     BreakHealthLeft           = { type = "number", desc = "Доля здоровья при «переломе»." },
     ShockDamageIncrease       = { type = "number", desc = "Прибавка урона от шока." },

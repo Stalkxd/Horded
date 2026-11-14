@@ -196,6 +196,7 @@ local DIFF_DEFAULT_KEYS = {
     "SpawnIntervalWaveStep", "SpawnIntervalWaveAmount", "SpawnIntervalWaveCap",
     "EnemiesPerSpawnWaveStep", "EnemiesPerSpawnWaveAmount", "EnemiesPerSpawnWaveCap",
     "MaxEnemiesAliveBase", "MaxEnemiesAlivePerPlayer", "MaxEnemiesAliveCap",
+    "FastClearAliveFraction", "FastClearSpawnMult",
     "StatusDurationBonus", "BreakHealthLeft", "ShockDamageIncrease",
     "FrostbiteSlow", "PoisonHeadcrabDamage",
     "EliteHealthScaleAdd", "EliteHealthScaleMultiplier",

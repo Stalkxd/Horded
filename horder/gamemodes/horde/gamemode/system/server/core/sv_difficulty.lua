@@ -481,6 +481,7 @@ local DIFF_BASIC_KEYS = {
     "SpawnIntervalWaveStep", "SpawnIntervalWaveAmount", "SpawnIntervalWaveCap",
     "EnemiesPerSpawnWaveStep", "EnemiesPerSpawnWaveAmount", "EnemiesPerSpawnWaveCap",
     "MaxEnemiesAliveBase", "MaxEnemiesAlivePerPlayer", "MaxEnemiesAliveCap",
+    "FastClearAliveFraction", "FastClearSpawnMult",
     "StatusDurationBonus", "BreakHealthLeft", "ShockDamageIncrease",
     "FrostbiteSlow", "PoisonHeadcrabDamage",
     "EliteHealthScaleAdd", "EliteHealthScaleMultiplier",
@@ -489,6 +490,7 @@ local DIFF_BASIC_KEYS = {
 
 local DIFF_BASIC_CONVAR_FALLBACK = {
     "MaxEnemiesAliveBase", "MaxEnemiesAlivePerPlayer", "MaxEnemiesAliveCap",
+    "FastClearAliveFraction", "FastClearSpawnMult",
 }
 
 local function FindDiffByName(name)

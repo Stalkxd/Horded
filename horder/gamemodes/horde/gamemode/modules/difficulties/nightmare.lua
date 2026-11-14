@@ -20,7 +20,11 @@ HORDE:RegisterDifficulty({
     AdditionalAmmoboxes     = V("AdditionalAmmoboxes", 0),
     MaxEnemiesAliveBase      = V("MaxEnemiesAliveBase", 20),
     MaxEnemiesAlivePerPlayer = V("MaxEnemiesAlivePerPlayer", 5),
-    MaxEnemiesAliveCap       = V("MaxEnemiesAliveCap", 50),
+    MaxEnemiesAliveCap       = V("MaxEnemiesAliveCap", 25),
+    -- When the players keep the horde at or below this share of the limit, the spawn
+    -- director runs FastClearSpawnMult times as often. A mult of 1 turns it off.
+    FastClearAliveFraction   = V("FastClearAliveFraction", 0.4),
+    FastClearSpawnMult       = V("FastClearSpawnMult", 2),
 
     StatusDurationBonus      = V("StatusDurationBonus", 3),
     BreakHealthLeft          = V("BreakHealthLeft", 0.10),

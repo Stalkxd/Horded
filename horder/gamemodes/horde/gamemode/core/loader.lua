@@ -436,11 +436,13 @@ local SYSTEMS_MANIFEST = {
 
     { path = "server/combat/sv_hitnumbers.lua",      server_only = true, desc = "Hit numbers" },
     { path = "server/combat/sv_tip.lua",             server_only = true, desc = "Tip system" },
+    { path = "server/combat/sv_killfeed.lua",        server_only = true, desc = "Killfeed (sends kills and assists)" },
 
     { path = "client/core/cl_prefs.lua",       client_only = true, desc = "Client UI preferences (SQLite)" },
     { path = "client/core/cl_economy.lua",     client_only = true, desc = "Client economy" },
     { path = "client/core/cl_achievement.lua", client_only = true, desc = "Achievement display" },
     { path = "client/core/cl_hitnumbers.lua",  client_only = true, desc = "Hit number rendering" },
+    { path = "client/core/cl_killfeed.lua",    client_only = true, desc = "Killfeed (replaces GMod death notices)" },
     { path = "client/core/cl_warden_consumable_ring.lua", client_only = true, desc = "Warden Watchtower consumable ring indicator" },
     { path = "client/core/cl_spectator_ghost.lua", client_only = true, desc = "Spectator ghost sprite (blueflare)" },
     { path = "client/core/cl_init.lua",        client_only = true, desc = "Client init" },

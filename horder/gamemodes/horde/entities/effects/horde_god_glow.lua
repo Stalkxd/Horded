@@ -10,11 +10,13 @@ local OUTLINE_COLORS = {
 	["npc_vj_horde_screecher_spectre"] = Color(255, 190, 0),
 }
 
+-- These spectres keep their own glowing aura all the time, even when
+-- horde_solid_highlight draws every other highlight as a solid color.
 hook.Add("PreDrawHalos", "Horde_GodSpectreOutline", function ()
 	for class, color in pairs(OUTLINE_COLORS) do
 		local summons = ents.FindByClass(class)
 		if #summons > 0 then
-			HORDE.Halo(summons, color, 3, 3, 1, true, true)
+			halo.Add(summons, color, 3, 3, 1, true, true)
 		end
 	end
 end)
