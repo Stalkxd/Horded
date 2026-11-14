@@ -192,6 +192,7 @@ function ENT:Horde_ApplyRole()
 		self.ConstantlyFaceEnemy_IfVisible = false
 		self.ConstantlyFaceEnemy_IfAttacking = false
 		self.DisableChasingEnemy = true
+		self:Horde_FindChargeAnims()
 		return
 	end
 
@@ -329,11 +330,17 @@ function ENT:Horde_MoveTo(pos, tolerance)
 end
 
 -- Bile shot that needs no animation, so it can be used while walking.
-function ENT:Horde_SpitAt(pos)
+-- With aimEnemy set (must be the current enemy) it uses the same spawn point and
+-- trajectory solution as the standing range attack, so it is just as accurate.
+function ENT:Horde_SpitAt(pos, aimEnemy)
 	local projectile = ents.Create(self.RangeAttackEntityToSpawn)
 	if not IsValid(projectile) then return end
 	local target_pos = pos + Vector(0, 0, 10)
 	local start = self:GetPos() + self:GetUp() * self.RangeAttackPos_Up * self:GetModelScale()
+	if IsValid(aimEnemy) and self.RangeAttackProjPos then
+		local ok, p = pcall(self.RangeAttackProjPos, self, projectile)
+		if ok and isvector(p) then start = p end
+	end
 	projectile.Owner = self
 	projectile.BaseDamage = self.RangeAttackDamage
 	projectile:SetPos(start)
@@ -342,7 +349,18 @@ function ENT:Horde_SpitAt(pos)
 	projectile:SetPhysicsAttacker(self)
 	projectile:Spawn()
 	projectile:Activate()
-	local vel = (target_pos - start) * 1.5
+	local vel
+	if IsValid(aimEnemy) and aimEnemy == self:GetEnemy() and self.RangeAttackProjVel then
+		local ok, v = pcall(self.RangeAttackProjVel, self, projectile)
+		if ok and isvector(v) and v:LengthSqr() > 1 then vel = v end
+	end
+	if not vel then
+		-- Fallback: flat shot with a lift that cancels gravity over the flight time.
+		local to = target_pos - start
+		local speed = 1500
+		local t = math.max(to:Length() / speed, 0.05)
+		vel = to / t + Vector(0, 0, 0.5 * physenv.GetGravity():Length() * t)
+	end
 	local phys = projectile:GetPhysicsObject()
 	if IsValid(phys) then
 		phys:Wake()
@@ -391,7 +409,7 @@ function ENT:Horde_FollowThink(now)
 	if ene:GetPos():DistToSqr(self:GetPos()) > self.RangeDistance * self.RangeDistance then return end
 	if not self:Visible(ene) then return end
 	self.Horde_NextSpit = now + (self.NextRangeAttackTime or 2)
-	self:Horde_SpitAt(ene:GetPos() + ene:OBBCenter())
+	self:Horde_SpitAt(ene:GetPos() + ene:OBBCenter(), ene)
 end
 
 function ENT:Horde_GuardPointThink(now)
@@ -438,8 +456,48 @@ end
 	rush; it then carries on into the next enemy ahead. Only a boss, an elite
 	or something with more health than the guard stops it, and only if it
 	survives the hit. ]]
+-- Finds the guard model's charge animations by name, so it still works if a
+-- replacement model names them a little differently.
+function ENT:Horde_FindChargeAnims()
+	self.Horde_ChargeAct = nil
+	self.Horde_ChargeSeqLoop = nil
+	self.Horde_ChargeSeqStop = nil
+	self.Horde_ChargeSeqHit = nil
+	for id, name in pairs(self:GetSequenceList() or {}) do
+		local n = string.lower(name)
+		if string.find(n, "charge", 1, true) then
+			if string.find(n, "loop", 1, true) or string.find(n, "run", 1, true) then
+				self.Horde_ChargeSeqLoop = id
+			elseif string.find(n, "stop", 1, true) or string.find(n, "end", 1, true) then
+				self.Horde_ChargeSeqStop = name
+			elseif string.find(n, "hit", 1, true) or string.find(n, "crash", 1, true) then
+				self.Horde_ChargeSeqHit = self.Horde_ChargeSeqHit or name
+			end
+		end
+	end
+	if self.Horde_ChargeSeqLoop then
+		local act = self:GetSequenceActivity(self.Horde_ChargeSeqLoop)
+		if act and act > 0 then self.Horde_ChargeAct = act end
+	end
+end
+
+-- While rushing, the run/walk activity is swapped for the charge animation.
+function ENT:TranslateActivity(act)
+	if self.Horde_Charging and self.Horde_ChargeAct and (act == ACT_RUN or act == ACT_WALK) then
+		return self.Horde_ChargeAct
+	end
+	local base = self.BaseClass and self.BaseClass.TranslateActivity
+	if base then return base(self, act) end
+	return act
+end
+
 function ENT:Horde_StartCharge(target)
 	local now = CurTime()
+	if self.Horde_ChargeAct then
+		self.Horde_SavedRun, self.Horde_SavedWalk = self.AnimTbl_Run, self.AnimTbl_Walk
+		self.AnimTbl_Run = {self.Horde_ChargeAct}
+		self.AnimTbl_Walk = {self.Horde_ChargeAct}
+	end
 	self.Horde_Charging = true
 	self.Horde_ChargeStart = now
 	self.Horde_ChargeTarget = target
@@ -454,8 +512,12 @@ function ENT:Horde_StartCharge(target)
 	self:EmitSound("npc/antlion_guard/angry" .. math.random(1, 3) .. ".wav", 90, 100)
 end
 
-function ENT:Horde_EndCharge()
+function ENT:Horde_EndCharge(stopped)
 	self.Horde_Charging = false
+	if self.Horde_SavedRun then
+		self.AnimTbl_Run, self.AnimTbl_Walk = self.Horde_SavedRun, self.Horde_SavedWalk
+		self.Horde_SavedRun, self.Horde_SavedWalk = nil, nil
+	end
 	self.Horde_ChargeTarget = nil
 	self.Horde_ChargeHit = nil
 	self.Horde_NextCharge = CurTime() + CHARGE_COOLDOWN
@@ -463,11 +525,23 @@ function ENT:Horde_EndCharge()
 	self.AnimPlaybackRate = 1
 	self:SetPlaybackRate(1)
 	self:StopMoving()
+	-- Skid to a halt, or the impact animation when something stopped him.
+	local endAnim = stopped and self.Horde_ChargeSeqHit or self.Horde_ChargeSeqStop
+	if endAnim and not self.Dead then
+		self:PlayAnim("vjseq_" .. endAnim, true, false, false)
+	end
 end
 
 function ENT:Horde_ChargeRate()
 	local t = CurTime() - (self.Horde_ChargeStart or CurTime())
 	return math.min(CHARGE_RATE_MAX, 1 + t * CHARGE_RATE_PER_SEC + (self.Horde_ChargePlows or 0) * CHARGE_RATE_PER_PLOW)
+end
+
+-- Animation speed for the current rate. The charge animation is already fast,
+-- so it ramps over a narrower band than the plain run fallback.
+function ENT:Horde_ChargeAnimRate(rate)
+	if not self.Horde_ChargeAct then return rate end
+	return 0.8 + (rate - 1) / (CHARGE_RATE_MAX - 1) * 0.8
 end
 
 function ENT:Horde_CanStopCharge(ent)
@@ -504,8 +578,9 @@ function ENT:Horde_ChargeThink()
 	local rate = self:Horde_ChargeRate()
 
 	-- Run animation speed drives ground speed, so the rate is the speed-up.
-	self.AnimPlaybackRate = rate
-	self:SetPlaybackRate(rate)
+	local animRate = self:Horde_ChargeAnimRate(rate)
+	self.AnimPlaybackRate = animRate
+	self:SetPlaybackRate(animRate)
 
 	if now - self.Horde_ChargeStart > CHARGE_MAX_TIME then return self:Horde_EndCharge() end
 	if myPos:DistToSqr(self.Owner:GetPos()) > (GUARD_LEASH * 1.6) ^ 2 then return self:Horde_EndCharge() end
@@ -539,7 +614,7 @@ function ENT:Horde_ChargeThink()
 			if alive and heavy then
 				-- Something big enough took the hit: the rush ends here.
 				util.ScreenShake(myPos, 6, 5, 0.6, 500)
-				return self:Horde_EndCharge()
+				return self:Horde_EndCharge(true)
 			end
 			self.Horde_ChargePlows = self.Horde_ChargePlows + 1
 			if alive then
