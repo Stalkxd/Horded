@@ -16,7 +16,10 @@ ITEM.Description = [[Only usable by Hatcher subclass!
     RMB: Raise Antlion (40 Energy)
     Creates an Antlion that follows you around. Heal Antlion to accelerate evolution.
     HOLD RMB to force Antlions to your location and stop them chasing.
-    Antlions protect you first, attacking the enemies closest to you.
+    Press USE (E) on an Antlion to switch its mode:
+    - Follow: walks beside you and spits while moving. Two Antlions form a line.
+    - Guard: holds its position no matter what.
+    - Attacker: hunts enemies on its own with leaps, claws and spit.
     Antlion gains new effects each stage:
     - Stage I:
         - Bug Pulse: Every 5 seconds, generates a pulse that heals players nearby for 5% health.
@@ -28,10 +31,11 @@ ITEM.Description = [[Only usable by Hatcher subclass!
         - Increased health, damage and attack speed.
         - Increased Aroma Pulse radius and reduce Bug Pulse cooldown.
         - Immune to Poison damage and Break.
-        - Leaps at and claws enemies that get close to you, spits at the rest.
     - Stage IV (requires Metamorphosis):
         - Becomes an Antlion Guard with greatly increased health and damage.
-        - Melee tank: charges and shoves enemies near you, knocking them back.]]
+        - Melee tank: shoves enemies near you, knocking them back.
+        - Rush: gains speed and damage the longer it runs and plows through
+          enemies. Only bosses, elites and larger enemies can stop it.]]
 ITEM.Whitelist = { Hatcher = true }
 ITEM.AmmoPrice = -1
 ITEM.SecondaryAmmoPrice = -1
