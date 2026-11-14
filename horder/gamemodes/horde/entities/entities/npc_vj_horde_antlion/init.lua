@@ -7,7 +7,7 @@ ENT.HullType = HULL_LARGE
 
 ENT.SightDistance = 10000
 ENT.SightAngle = 360
-ENT.EnemyXRayDetection = true
+ENT.EnemyXRayDetection = false
 
 ENT.VJ_NPC_Class = {"CLASS_PLAYER_ALLY", "CLASS_COMBINE"}
 ENT.FriendlyMinion = true
@@ -229,7 +229,7 @@ function ENT:BugPulse()
 	for _, ent in pairs(ents.FindInSphere(self:GetPos(), r[self.Evolve_Stage])) do
 		if ent:IsPlayer() then
 			local healer = self.Owner
-			if not healer then
+			if not IsValid(healer) then
 				healer = self
 			else
 				hook.Run("Horde_OnAntlionPulse", healer, self, ent)
@@ -269,21 +269,45 @@ function ENT:OverrideMove(inv)
         })
         local ent = result.Entity
         if(IsValid(ent) && ent:GetClass() == self:GetClass() && ent:GetMoveVelocity() == vector_origin) then
-            self:SetPos(self:GetOwner():GetPos())
+            -- Two antlions overlapping: step this one sideways to free space
+            -- instead of teleporting it onto the owner's head.
+            local width = (self:OBBMaxs().x - self:OBBMins().x) * self:GetModelScale()
+            for _ = 1, 6 do
+                local dir = VectorRand()
+                dir.z = 0
+                dir:Normalize()
+                local try = origin + dir * (width + 8)
+                local tr = util.TraceHull({
+                    start = origin, endpos = try,
+                    mins = self:OBBMins(), maxs = self:OBBMaxs(),
+                    filter = {self, ent}, mask = MASK_NPCSOLID,
+                })
+                if not tr.StartSolid and tr.Fraction >= 1 then
+                    self:SetPos(try)
+                    break
+                end
+            end
             ent.NextUnstuckCheck = CurTime() + 1
         end
         self.NextUnstuckCheck = CurTime() + 0.2
     end
 end
 
+ENT.NextLeashCheck = 0
 function ENT:CustomOnThink()
-	if self.LastPulse <= CurTime() then
-		local d = self:GetPos():DistToSqr(self.Owner:GetPos())
-		if d >= 640000 then
+	if not IsValid(self.Owner) then return end
+
+	-- Leash: checked every second, not only on pulse ticks.
+	if self.NextLeashCheck <= CurTime() then
+		self.NextLeashCheck = CurTime() + 1
+		if self:GetPos():DistToSqr(self.Owner:GetPos()) >= 640000 then
 			local v = VectorRand() * 20
 			v.z = 0
 			self:SetPos(self.Owner:GetPos() + v)
 		end
+	end
+
+	if self.LastPulse <= CurTime() then
 		self:BugPulse()
 		local t = 5
 		if self.Evolve_Stage == 2 then
@@ -330,7 +354,7 @@ function ENT:RangeAttackLocation(pos)
 		end
 	end
 	if !selfData.TimeUntilRangeAttackProjectileRelease then
-		attackTimers[VJ_ATTACK_RANGE](self)
+		attackTimers[VJ.ATTACK_TYPE_RANGE](self)
 	else
 		timer.Create("timer_range_start"..self:EntIndex(), selfData.TimeUntilRangeAttackProjectileRelease / self:GetPlaybackRate(), selfData.RangeAttackReps, function() self:RangeAttackP(pos) end)
 	end

@@ -25,7 +25,9 @@ ITEM.Description = [[Only usable by Hatcher subclass!
     - Stage III:
         - Increased health, damage and attack speed.
         - Increased Aroma Pulse radius and reduce Bug Pulse cooldown.
-        - Immune to Poison damage and Break.]]
+        - Immune to Poison damage and Break.
+    - Stage IV (requires Metamorphosis):
+        - Becomes an Antlion Guard with greatly increased health and damage.]]
 ITEM.Whitelist = { Hatcher = true }
 ITEM.AmmoPrice = -1
 ITEM.SecondaryAmmoPrice = -1
