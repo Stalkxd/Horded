@@ -31,17 +31,64 @@ function HORDE:CalcEscapeProgress()
     return (alive > 0) and math.Clamp(at_exit / alive * 100, 0, 100) or 0
 end
 
+HORDE.OBJ_BAR_COMBINED_ID = 1
+
+-- Every objective set running this wave is shown as ONE bar. Maps that ask
+-- for several separate deliveries/holds used to stack a bar per set; now the
+-- parts of all sets are pooled, so the bar fills as each part is completed
+-- and only disappears once everything is done.
+function HORDE:GetCombinedObjectiveBar()
+    local sets = HORDE.horde_objectives
+    if not sets or not next(sets) then return end
+
+    local merged = { hold = {}, payload = {} }
+    local kind, label
+    local mixed_kind, mixed_label = false, false
+    local any_open = false
+
+    for _, set in ipairs(sets) do
+        if not set.finished then any_open = true end
+        for _, zone in ipairs(set.hold or {}) do merged.hold[#merged.hold + 1] = zone end
+        for _, spawn in ipairs(set.payload or {}) do merged.payload[#merged.payload + 1] = spawn end
+
+        if kind == nil then
+            kind = set.kind
+        elseif kind ~= set.kind then
+            mixed_kind = true
+        end
+
+        local l = set.label or ""
+        if label == nil then
+            label = l
+        elseif label ~= l then
+            mixed_label = true
+        end
+    end
+
+    if not any_open then return end
+
+    if mixed_kind then
+        kind = (#merged.hold > 0 and #merged.payload > 0) and HORDE.OBJECTIVE_MIXED
+            or (#merged.hold > 0 and HORDE.OBJECTIVE_HOLD)
+            or HORDE.OBJECTIVE_PAYLOAD
+    end
+    -- Several sets with different names: fall back to the generic
+    -- "Defend All Objectives" / "Deliver All Payloads" / "Objectives" text.
+    if mixed_label then label = "" end
+
+    return {
+        kind     = kind or HORDE.OBJECTIVE_PAYLOAD,
+        label    = label or "",
+        progress = HORDE:CalcObjectiveSetProgress(merged),
+    }
+end
+
 function HORDE:GetActiveObjectiveBars()
     local bars = {}
 
-    for _, set in ipairs(HORDE.horde_objectives or {}) do
-        if not set.finished then
-            bars[set.id] = {
-                kind     = set.kind,
-                label    = set.label or "",
-                progress = HORDE:CalcObjectiveSetProgress(set),
-            }
-        end
+    local combined = HORDE:GetCombinedObjectiveBar()
+    if combined then
+        bars[HORDE.OBJ_BAR_COMBINED_ID] = combined
     end
 
     if HORDE.horde_active_escapezones then
