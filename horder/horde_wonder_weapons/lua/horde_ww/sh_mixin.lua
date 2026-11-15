@@ -81,8 +81,12 @@ end
 local function IsHostile(ply, ent)
     if ent == ply or not IsValid(ent) then return false end
     if not (ent:IsNPC() or ent:IsNextBot()) or ent:Health() <= 0 then return false end
-    -- Horde knows its minions and buildables, like an engineer's walls
-    if HORDE and HORDE.IsEnemy then return HORDE:IsEnemy(ent) end
+    -- Horde knows its minions and buildables, like an engineer's walls.
+    -- IsEnemyNPC skips the valid/NPC checks done just above.
+    if HORDE then
+        if HORDE.IsEnemyNPC then return HORDE:IsEnemyNPC(ent) end
+        if HORDE.IsEnemy then return HORDE:IsEnemy(ent) end
+    end
     if ent:GetNWEntity("HordeOwner"):IsPlayer() then return false end
     return true
 end

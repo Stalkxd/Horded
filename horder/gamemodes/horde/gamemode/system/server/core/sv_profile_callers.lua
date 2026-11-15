@@ -26,6 +26,8 @@ local targets = {
     { name = "HORDE:IsPlayerOrMinion", tbl = function() return HORDE end, key = "IsPlayerOrMinion" },
     { name = "HORDE:IsFriendlyUnit",   tbl = function() return HORDE end, key = "IsFriendlyUnit" },
     { name = "HORDE:IsEnemy",          tbl = function() return HORDE end, key = "IsEnemy" },
+    { name = "HORDE:IsEnemyNPC",       tbl = function() return HORDE end, key = "IsEnemyNPC" },
+    { name = "HORDE_WW.IsHostile",     tbl = function() return HORDE_WW end, key = "IsHostile" },
 }
 
 local running = false

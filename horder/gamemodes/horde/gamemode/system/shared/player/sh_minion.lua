@@ -118,6 +118,17 @@ function HORDE:IsEnemy(ent)
     return not HasPlayerOwner(ent, t)
 end
 
+-- IsEnemy for a caller that has already checked that ent is a valid NPC or
+-- nextbot, such as the wonder weapons' target filter.
+function HORDE:IsEnemyNPC(ent)
+    local t = ent:GetTable()
+    local relation = MapRelation(ent, t)
+    if relation ~= nil then
+        return relation == (self.HammerRelation and self.HammerRelation.ENEMY)
+    end
+    return not HasPlayerOwner(ent, t)
+end
+
 HORDE.IsPlayerOrMinion = HORDE.IsFriendlyUnit
 
 function HORDE:IsPlayerMinion(ent)
