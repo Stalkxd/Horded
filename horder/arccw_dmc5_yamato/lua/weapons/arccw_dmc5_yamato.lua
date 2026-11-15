@@ -120,14 +120,14 @@ SWEP.Animations = {
 -- Swings by the direction the player moves in. time = until the next swing, hit = seconds
 -- into the swing when it lands, range/radius = reach and width, maxhits = enemies per swing.
 local G1, G2 = ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE, ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE2
-local FWD = { anims = { "slash" }, dmg = 125, time = 0.6, hit = 0.12, range = 100, radius = 60, maxhits = 4, gesture = G1 }
-local HEAVY = { anims = { "slash2" }, dmg = 260, time = 0.95, hit = 0.15, range = 110, radius = 80, maxhits = 8, gesture = G2 }
+local FWD = { anims = { "slash" }, dmg = 225, time = 0.6, hit = 0.12, range = 100, radius = 60, maxhits = 4, gesture = G1 }
+local HEAVY = { anims = { "slash2" }, dmg = 360, time = 0.95, hit = 0.15, range = 110, radius = 80, maxhits = 8, gesture = G2 }
 SWEP.YamatoSwings = {
     primary = {
         F = FWD,
         B = FWD,
-        L = { anims = { "hitlift1", "hitlift2", "hitlift3" }, dmg = 90, time = 0.35, hit = 0.05, range = 100, radius = 60, maxhits = 3, gesture = G1 },
-        R = { anims = { "hitright1", "hitright2", "hitright3" }, dmg = 90, time = 0.35, hit = 0.05, range = 100, radius = 60, maxhits = 3, gesture = G1 },
+        L = { anims = { "hitlift1", "hitlift2", "hitlift3" }, dmg = 190, time = 0.35, hit = 0.05, range = 100, radius = 60, maxhits = 3, gesture = G1 },
+        R = { anims = { "hitright1", "hitright2", "hitright3" }, dmg = 190, time = 0.35, hit = 0.05, range = 100, radius = 60, maxhits = 3, gesture = G1 },
     },
     secondary = {
         F = HEAVY,
@@ -167,6 +167,7 @@ SWEP.YamatoComboRange = 600      -- how far the teleport reaches a launched enem
 SWEP.YamatoLaunchWindow = 1.5    -- seconds after the launcher to teleport to the enemy
 SWEP.YamatoFreezeTime = 2        -- how long a caught enemy hangs in the air
 SWEP.YamatoFreezeMax = 4         -- slashing it keeps it up, but never longer than this
+SWEP.YamatoAirComboSpeed = 0.4   -- swing delay multiplier while hanging in the air with a caught enemy
 SWEP.YamatoJCEDamage = 4000
 SWEP.YamatoJCERadius = 1400
 SWEP.YamatoJCECooldown = 60      -- seconds after Judgment Cut End before it can be used again
@@ -333,7 +334,8 @@ function SWEP:YamatoHang(t)
     local owner = self:GetOwner()
     if CLIENT or not IsValid(owner) then return end
     if not self.YamatoHangUntil then self.YamatoOldGravity = owner:GetGravity() end
-    self.YamatoHangUntil = CurTime() + t
+    self.YamatoHangUntil = math.max(self.YamatoHangUntil or 0, CurTime() + t)
+    self:SetNW2Float("YamatoHangUntil", self.YamatoHangUntil) -- the client needs it for the swing speed
     owner:SetGravity(0.02)
     owner:SetVelocity(-owner:GetVelocity())
 end
@@ -342,6 +344,7 @@ function SWEP:YamatoStopHang()
     local owner = self:GetOwner()
     if not self.YamatoHangUntil then return end
     self.YamatoHangUntil = nil
+    self:SetNW2Float("YamatoHangUntil", 0)
     if IsValid(owner) then owner:SetGravity(self.YamatoOldGravity or 1) end
 end
 
@@ -373,7 +376,10 @@ function SWEP:YamatoDamage(ent, dmg, pos, force)
     info:SetDamageForce(force or (ent:WorldSpaceCenter() - owner:GetPos()):GetNormalized() * 5000)
     ent:TakeDamageInfo(info)
     -- Every hit on an enemy held in the air keeps it up a little longer
-    if Frozen[ent] then self:YamatoFreeze(ent, 0.4) end
+    if Frozen[ent] then
+        self:YamatoFreeze(ent, 0.4)
+        if self.YamatoHangUntil then self:YamatoHang(math.min(0.4, Frozen[ent].untill - CurTime())) end
+    end
 end
 
 -- Area cut around a point, used by the abilities. Server only. Returns the entities it hit.
@@ -473,7 +479,7 @@ function SWEP:YamatoRapidSlash()
     for _, t in ipairs(steps) do
         timer.Simple(t, function()
             if not IsValid(self) or not self:YamatoActive() then return end
-            self:YamatoAoE(owner:GetPos(), 200, 34)
+            self:YamatoAoE(owner:GetPos(), 200, 134)
             if anims[t] then self:YamatoAnim(anims[t], false) end
             if t == 0.15 then owner:SetVelocity(push) end
         end)
@@ -483,7 +489,7 @@ function SWEP:YamatoRapidSlash()
         self:YamatoAnim("slash2", false)
         owner:ViewPunch(Angle(0, -260, 3))
         owner:SetAnimation(PLAYER_ATTACK1)
-        self:YamatoAoE(owner:GetPos(), 220, 120)
+        self:YamatoAoE(owner:GetPos(), 220, 220)
     end)
     return true
 end
@@ -501,14 +507,14 @@ function SWEP:YamatoLauncher()
 
     owner:ViewPunch(Angle(-30, -6, -4))
     self:YamatoIFrames(0.25)
-    for _, ent in ipairs(self:YamatoAoE(owner:GetPos() + owner:GetForward() * 60, 150, 80)) do
+    for _, ent in ipairs(self:YamatoAoE(owner:GetPos() + owner:GetForward() * 60, 150, 180)) do
         self:YamatoLaunch(ent)
     end
     timer.Simple(0.2, function()
         if not IsValid(self) or not self:YamatoActive() then return end
         if owner:KeyDown(IN_ATTACK2) then
             owner:SetVelocity(Vector(0, 0, 500))
-            self:YamatoAoE(owner:GetPos(), 200, 34)
+            self:YamatoAoE(owner:GetPos(), 200, 134)
         end
     end)
     return true
@@ -635,7 +641,7 @@ function SWEP:YamatoJudgmentCut()
         for _, ent in pairs(rings) do if IsValid(ent) then ent:SetModelScale(s, t) end end
     end
     timer.Simple(0.01, function()
-        if IsValid(self) then self:YamatoAoE(pos, 150, 95) end
+        if IsValid(self) then self:YamatoAoE(pos, 150, 195) end
         scale(15, 0.005)
     end)
     timer.Simple(0.1, function() scale(0.01, 0.05) end)
@@ -788,8 +794,11 @@ function SWEP:Bash(melee2)
 
     self.Primary.Automatic = true
     self:YamatoAnim(anim, true)
-    self:SetNextPrimaryFire(CurTime() + swing.time)
-    self:SetNextSecondaryFire(CurTime() + swing.time)
+    -- Much faster swings while hanging in the air with a caught enemy
+    local delay = swing.time
+    if CurTime() < self:GetNW2Float("YamatoHangUntil", 0) then delay = delay * self.YamatoAirComboSpeed end
+    self:SetNextPrimaryFire(CurTime() + delay)
+    self:SetNextSecondaryFire(CurTime() + delay)
     owner:DoAnimationEvent(swing.gesture)
     owner:SetAnimation(PLAYER_ATTACK1)
     if SERVER then owner:ViewPunch(Angle(1, (dir == "L" and -5) or (dir == "R" and 5) or 2, 0)) end
