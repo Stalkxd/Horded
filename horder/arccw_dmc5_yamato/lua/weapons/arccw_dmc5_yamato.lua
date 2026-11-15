@@ -5,8 +5,9 @@ if not ArcCWInstalled then return end
 -- Left click slashes in the direction you move (A / D give the side slashes, otherwise the
 -- forward slash). Right click is the heavy slash, the uppercut when holding S.
 --
--- Abilities cost Concentration, the bar under the crosshair. It fills when your slashes hit
--- and slowly on its own.
+-- Abilities cost Concentration, the bar under the crosshair. Like Vergil's in DMC5 it fills
+-- when your slashes hit, when you walk slowly (+walk) or stand still, and drains when you
+-- run, sprint, swing at nothing or get hit.
 --   R                 teleport a short distance, onto the floor only; aimed at an enemy you
 --                     launched, it takes you to them in the air and holds them there for a combo
 --   S + R             Judgment Cut: a burst of cuts where you aim (no cooldown, only the cost)
@@ -141,7 +142,13 @@ SWEP.YamatoSwings = {
 SWEP.YamatoEnergy = {
     max = 100,
     start = 30,
-    regen = 1.5,
+    regen = 1.5,        -- per second standing still
+    regen_walk = 4,     -- per second walking slowly (+walk, or moving under walk_speed)
+    drain_run = 3,      -- per second running normally
+    drain_sprint = 10,  -- per second sprinting
+    walk_speed = 120,   -- slower than this counts as walking
+    miss = 2,           -- a slash that hits nothing
+    hurt = 5,           -- each time you take damage
     per_hit = 3,
     per_ability_hit = 1,
     cost = {
@@ -207,7 +214,7 @@ local debug_cvar = CreateConVar("arccw_yamato_debug", "0", FCVAR_ARCHIVE, "Print
 
 function SWEP:YamatoAddEnergy(n, why)
     if CLIENT then return end
-    if n < 0 and debug_cvar:GetBool() then
+    if n < -0.5 and debug_cvar:GetBool() then
         local owner = self:GetOwner()
         print(string.format("[Yamato] %s spent %.1f on %s (bar %.1f)", IsValid(owner) and owner:Nick() or "?", -n,
             tostring(why), self:YamatoGetEnergy()))
@@ -231,8 +238,15 @@ local Frozen = {}
 
 if SERVER then
     -- Brief invulnerability during abilities, as in the TFA version (no GodEnable, so it can't stick)
-    hook.Add("EntityTakeDamage", "ArcCW_DMC5_Yamato_IFrames", function(ent)
+    hook.Add("EntityTakeDamage", "ArcCW_DMC5_Yamato_IFrames", function(ent, dmg)
         if ent.ArcCW_Yamato_IFrames and ent.ArcCW_Yamato_IFrames > CurTime() then return true end
+        -- Getting hit breaks concentration
+        if ent:IsPlayer() and dmg:GetDamage() > 0 then
+            local wep = ent:GetActiveWeapon()
+            if IsValid(wep) and wep.YamatoAddEnergy and wep.YamatoEnergy then
+                wep:YamatoAddEnergy(-wep.YamatoEnergy.hurt, "getting hit")
+            end
+        end
     end)
 
     local function Release(ent, data)
@@ -424,9 +438,12 @@ function SWEP:YamatoSlash(swing)
     if hits > 0 then
         self:YamatoAddEnergy(math.min(hits, 3) * self.YamatoEnergy.per_hit)
         self:MyEmitSound(self.MeleeHitNPCSound, 75, 100, 1, CHAN_STATIC)
-    elseif tr.HitWorld then
-        self:MyEmitSound(self.MeleeHitSound, 75, 100, 1, CHAN_STATIC)
-        util.Decal("ManhackCut", tr.HitPos + tr.HitNormal, tr.HitPos - tr.HitNormal)
+    else
+        self:YamatoAddEnergy(-self.YamatoEnergy.miss, "a missed slash")
+        if tr.HitWorld then
+            self:MyEmitSound(self.MeleeHitSound, 75, 100, 1, CHAN_STATIC)
+            util.Decal("ManhackCut", tr.HitPos + tr.HitNormal, tr.HitPos - tr.HitNormal)
+        end
     end
 end
 
@@ -821,11 +838,25 @@ function SWEP:Think()
         end
 
         if SERVER then
-            -- Concentration regen
+            -- Concentration over time, by how you move: standing or walking slowly fills it,
+            -- running drains it, sprinting drains it fast. In the air it holds.
             local last = self.YamatoLastRegen or now
             self.YamatoLastRegen = now
+            local dt = now - last
             -- only while the sword is out: a long gap means it was put away
-            if now - last > 0 and now - last < 0.5 then self:YamatoAddEnergy(self.YamatoEnergy.regen * (now - last)) end
+            if dt > 0 and dt < 0.5 and owner:IsOnGround() then
+                local E = self.YamatoEnergy
+                local speed = owner:GetVelocity():Length2D()
+                if speed < 10 then
+                    self:YamatoAddEnergy(E.regen * dt)
+                elseif owner:KeyDown(IN_WALK) or speed < E.walk_speed then
+                    self:YamatoAddEnergy(E.regen_walk * dt)
+                elseif owner:KeyDown(IN_SPEED) then
+                    self:YamatoAddEnergy(-E.drain_sprint * dt, "sprinting")
+                else
+                    self:YamatoAddEnergy(-E.drain_run * dt, "running")
+                end
+            end
 
             -- End the air hang when the combo is over or the player lands
             if self.YamatoHangUntil and (now > self.YamatoHangUntil or owner:IsOnGround()) then
