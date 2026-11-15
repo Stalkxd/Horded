@@ -643,11 +643,13 @@ end
 
 function HORDE:ScanEnemies()
     local enemies = {}
-    for ent_idx, _ in pairs(HORDE.spawned_enemies) do
-        if not IsValid(Entity(ent_idx)) then
-            HORDE.spawned_enemies[ent_idx] = nil
+    local spawned = HORDE.spawned_enemies
+    for ent_idx, _ in pairs(spawned) do
+        local ent = Entity(ent_idx)
+        if not IsValid(ent) then
+            spawned[ent_idx] = nil
         else
-            table.insert(enemies, Entity(ent_idx))
+            enemies[#enemies + 1] = ent
         end
     end
     return enemies
@@ -1988,7 +1990,7 @@ function HORDE:Direct()
 end
 
 timer.Create("Horde_Main", HORDE:GetDirectorInterval(), 0, function()
-    local status, err = pcall(function() HORDE:Direct() end)
+    local status, err = pcall(HORDE.Direct, HORDE)
 
     if not status then
         print(err)

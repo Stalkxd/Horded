@@ -420,6 +420,7 @@ local SYSTEMS_MANIFEST = {
     { path = "server/core/sv_misc.lua",              server_only = true, desc = "Misc server" },
     { path = "server/core/sv_properties.lua",        server_only = true, desc = "Blocked sandbox properties (SHG bugfix)" },
     { path = "server/core/sv_objective_rewards.lua", server_only = true, desc = "Kill rewards tied to objectives" },
+    { path = "server/core/sv_profile_callers.lua",   server_only = true, desc = "horde_profile_callers diagnostic" },
 
     { path = "server/persistence/sv_persistence.lua", server_only = true, desc = "SQLite player persistence" },
     { path = "server/persistence/sv_migration.lua",   server_only = true, desc = "Legacy data/ -> SQLite migration" },

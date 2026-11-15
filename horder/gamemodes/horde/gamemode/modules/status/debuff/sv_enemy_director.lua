@@ -57,20 +57,64 @@ local function ApplyVJSettings(ent)
     if ent.SetMaxLookDistance then ent:SetMaxLookDistance(ent.SightDistance) end
 end
 
+-- One shared Think replacement for every enemy, instead of a new closure per
+-- enemy. The far-think interval is read from the convar once per director pass.
+local far_interval = far_think:GetFloat()
+
+local function DirectorThink(self)
+    local t = self:GetTable()
+    if t.Horde_FarFromPlayers and far_interval > 0 then
+        local now = CurTime()
+        if now < (t.Horde_NextFarThink or 0) then return end
+        t.Horde_NextFarThink = now + far_interval
+    end
+    return t.Horde_OrigThink(self)
+end
+
 local function WrapThink(ent)
     local orig = ent.Think
-    if not orig then return end
-    ent.Think = function(self)
-        if self.Horde_FarFromPlayers then
-            local interval = far_think:GetFloat()
-            if interval > 0 then
-                local now = CurTime()
-                if now < (self.Horde_NextFarThink or 0) then return end
-                self.Horde_NextFarThink = now + interval
-            end
-        end
-        return orig(self)
-    end
+    if not orig or orig == DirectorThink then return end
+    ent.Horde_OrigThink = orig
+    ent.Think = DirectorThink
+end
+
+-- VJ creatures call UpdatePoseParamTracking from every Think to turn their
+-- head and aim pose parameters towards the enemy, which is most of the
+-- math.ApproachAngle cost in the profile. It moves each pose parameter by up
+-- to PoseParameterLooking_TurningSpeed degrees per call, so running it every
+-- pose_interval seconds with the speed scaled by the time that passed keeps
+-- the same turn rate. Human base enemies are left alone because their pose
+-- parameters aim their guns.
+local pose_think = CreateConVar("horde_enemy_pose_interval", 0.1, FCVAR_ARCHIVE, "Seconds between head and aim pose updates for VJ creature enemies. 0 updates every think.")
+local pose_interval = pose_think:GetFloat()
+local tick = engine.TickInterval()
+
+local function DirectorPoseTracking(self, resetPoses)
+    local t = self:GetTable()
+    local orig = t.Horde_OrigPoseTracking
+    if pose_interval <= 0 then return orig(self, resetPoses) end
+
+    local now = CurTime()
+    if now < (t.Horde_NextPoseT or 0) then return end
+    local elapsed = now - (t.Horde_LastPoseT or (now - tick))
+    t.Horde_NextPoseT = now + pose_interval
+    t.Horde_LastPoseT = now
+
+    local speed = t.PoseParameterLooking_TurningSpeed
+    if not speed then return orig(self, resetPoses) end
+    -- Capped so a long gap (a far enemy, a pause) does not snap the pose instantly.
+    local steps = math.max(1, math.min(elapsed, pose_interval * 2) / tick)
+    t.PoseParameterLooking_TurningSpeed = speed * steps
+    orig(self, resetPoses)
+    t.PoseParameterLooking_TurningSpeed = speed
+end
+
+local function WrapPoseTracking(ent)
+    if not ent.IsVJBaseSNPC_Creature or ent.IsVJBaseSNPC_Human then return end
+    local orig = ent.UpdatePoseParamTracking
+    if not orig or orig == DirectorPoseTracking then return end
+    ent.Horde_OrigPoseTracking = orig
+    ent.UpdatePoseParamTracking = DirectorPoseTracking
 end
 
 local function GiveTarget(ent, ply)
@@ -97,6 +141,9 @@ timer.Create("Horde_EnemyDirector", CHECK_INTERVAL, 0, function()
         if Targetable(ply) then plys[#plys + 1] = ply end
     end
 
+    far_interval = far_think:GetFloat()
+    pose_interval = pose_think:GetFloat()
+
     local now = CurTime()
     local far_sqr = far_dist:GetFloat() ^ 2
     local director = enabled:GetBool()
@@ -111,6 +158,7 @@ timer.Create("Horde_EnemyDirector", CHECK_INTERVAL, 0, function()
             ent.Horde_DirectorSetup = true
             ApplyVJSettings(ent)
             WrapThink(ent)
+            WrapPoseTracking(ent)
         end
 
         local pos = ent:GetPos()
