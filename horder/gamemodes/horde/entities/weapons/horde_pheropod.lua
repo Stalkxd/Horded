@@ -241,8 +241,11 @@ function SWEP:Come()
 	if not HORDE.player_drop_entities[self.Owner:SteamID()] then return end
 	for id, ent in pairs(HORDE.player_drop_entities[self.Owner:SteamID()]) do
 		if ent:IsValid() and ent:IsNPC() and ent:GetClass() == "npc_vj_horde_antlion" then
-			ent:SetLastPosition(self.Owner:GetPos())
-			ent:SetSchedule(SCHED_FORCED_GO_RUN)
+			-- Antlions holding a guard point refuse the recall.
+			if not ent.Horde_Recall or ent:Horde_Recall() ~= false then
+				ent:SetLastPosition(self.Owner:GetPos())
+				ent:SetSchedule(SCHED_FORCED_GO_RUN)
+			end
 		end
 	end
 end
