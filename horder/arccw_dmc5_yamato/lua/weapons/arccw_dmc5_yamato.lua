@@ -3,18 +3,19 @@ if not ArcCWInstalled then return end
 -- Vergil's Yamato (DMC5), remade on ArcCW's melee base from the TFA version.
 --
 -- Left click slashes in the direction you move (A / D give the side slashes, otherwise the
--- forward slash). Right click is the heavy slash, and the long overhead combo when holding S.
+-- forward slash). Right click is the heavy slash, the uppercut when holding S.
 --
 -- Abilities cost Concentration, the bar under the crosshair. It fills when your slashes hit
 -- and slowly on its own.
 --   R                 teleport a short distance, onto the floor only; aimed at an enemy you
 --                     launched, it takes you to them in the air and holds them there for a combo
---   S + R             Judgment Cut: a burst of cuts where you aim
---   E + R             Judgment Cut End: needs a full bar, cuts everything around you for 4000
+--   S + R             Judgment Cut: a burst of cuts where you aim (no cooldown, only the cost)
+--   E + R             Judgment Cut End: needs a full bar, cuts everything around you for 4000,
+--                     then a 60 second cooldown
 --   E + A / D         dash sideways (a short hop in the air)
 --   E + W + click     rapid slash: dash forward through enemies
---   E + S + click     launcher: an upward cut that throws enemies into the air,
---                     keep holding click to jump up with it
+--   S + right click   uppercut: throws enemies into the air,
+--                     keep holding right click to jump up with it
 --   +800 run speed while held
 
 local snd = function(name, file, chan)
@@ -27,7 +28,7 @@ snd("ArcCW_DMC5_Yamato.HitLeft", "weapons/yamato_hitleft.wav")
 snd("ArcCW_DMC5_Yamato.HitRight", "weapons/yamato_hitright.wav")
 snd("ArcCW_DMC5_Yamato.JudgmentCut", "weapons/yamato_jcn.wav", CHAN_STATIC)
 snd("ArcCW_DMC5_Yamato.JudgmentCutEnd", "weapons/yamato_jc.wav", CHAN_STATIC)
-snd("ArcCW_DMC5_Yamato.Dash", "weapons/yamato_tele.wav", CHAN_BODY)
+snd("ArcCW_DMC5_Yamato.Dash", "weapons/yamato_tele.wav", CHAN_STATIC)
 
 DEFINE_BASECLASS("arccw_base_melee")
 SWEP.Base = "arccw_base_melee"
@@ -37,7 +38,7 @@ SWEP.AdminOnly = false
 
 SWEP.PrintName = "Yamato"
 SWEP.Trivia_Class = "Melee Weapon"
-SWEP.Trivia_Desc = "Vergil's katana. A sword that cuts through anything.\n\nR: teleport. S+R: Judgment Cut. E+R (full bar): Judgment Cut End. E+A/D: dash. E+W+click: rapid slash. E+S+click: launcher."
+SWEP.Trivia_Desc = "Vergil's katana. A sword that cuts through anything.\n\nR: teleport. S+R: Judgment Cut. E+R (full bar): Judgment Cut End. E+A/D: dash. E+W+click: rapid slash. S+right click: uppercut."
 SWEP.Trivia_Manufacturer = "Sparda"
 SWEP.Trivia_Calibre = "N/A"
 SWEP.Trivia_Mechanism = "Slashing Weapon"
@@ -131,7 +132,7 @@ SWEP.YamatoSwings = {
         F = HEAVY,
         L = HEAVY,
         R = HEAVY,
-        B = { anims = { "slash3" }, dmg = 400, time = 1.65, hit = 0.2, range = 120, radius = 100, maxhits = 10, gesture = G2 },
+        B = HEAVY, -- S + right click is the uppercut; this is only used in the air
     },
 }
 
@@ -147,7 +148,7 @@ SWEP.YamatoEnergy = {
         teleport = 10,
         judgment_cut = 20,
         judgment_cut_end = 100,
-        dash = 8,
+        dash = 5,
         rapid_slash = 20,
         launcher = 15,
     },
@@ -161,6 +162,7 @@ SWEP.YamatoFreezeTime = 2        -- how long a caught enemy hangs in the air
 SWEP.YamatoFreezeMax = 4         -- slashing it keeps it up, but never longer than this
 SWEP.YamatoJCEDamage = 4000
 SWEP.YamatoJCERadius = 1400
+SWEP.YamatoJCECooldown = 60      -- seconds after Judgment Cut End before it can be used again
 SWEP.YamatoRunSpeed = 800
 
 SWEP.YamatoNextSkill = 0 -- rapid slash / launcher cooldown
@@ -333,7 +335,9 @@ end
 -- pred: true when called from a predicted hook (both sides), false from a server timer
 function SWEP:YamatoAnim(key, pred)
     if not self.Animations[key] then return end
-    self:PlayAnimation(key, 1, pred, 0, true)
+    -- tt (5th) stays false: with it, ArcCW locks attacks for the whole animation, and slash3
+    -- is 6.5 seconds long. Every caller sets its own delay instead.
+    self:PlayAnimation(key, 1, pred, 0, false)
 end
 
 function SWEP:YamatoDamage(ent, dmg, pos, force)
@@ -427,9 +431,9 @@ function SWEP:YamatoRapidSlash()
     if not self:YamatoSpend("rapid_slash") then return false end
     local owner = self:GetOwner()
     self.YamatoNextSkill = CurTime() + 1
+    self:YamatoAnim("hitlift1", true)
     self:SetNextPrimaryFire(CurTime() + 1)
     self:SetNextSecondaryFire(CurTime() + 1)
-    self:YamatoAnim("hitlift1", true)
     owner:DoAnimationEvent(G1)
     if CLIENT then return true end
 
@@ -459,15 +463,14 @@ function SWEP:YamatoRapidSlash()
     return true
 end
 
--- E + S + click on the ground: upward cut that throws the enemies it hits into the air.
--- Keep holding click to jump up with it. Teleport (R) to a launched enemy to catch it.
+-- S + right click on the ground: upward cut that throws the enemies it hits into the air.
+-- Keep holding right click to jump up with it. Teleport (R) to a launched enemy to catch it.
 function SWEP:YamatoLauncher()
     if not self:YamatoSpend("launcher") then return false end
     local owner = self:GetOwner()
-    self.YamatoNextSkill = CurTime() + 1.7
-    self:SetNextPrimaryFire(CurTime() + 0.85)
-    self:SetNextSecondaryFire(CurTime() + 0.85)
     self:YamatoAnim("slash3", true)
+    self:SetNextPrimaryFire(CurTime() + 0.6)
+    self:SetNextSecondaryFire(CurTime() + 0.6)
     owner:DoAnimationEvent(G2)
     if CLIENT then return true end
 
@@ -478,7 +481,7 @@ function SWEP:YamatoLauncher()
     end
     timer.Simple(0.2, function()
         if not IsValid(self) or not self:YamatoActive() then return end
-        if owner:KeyDown(IN_ATTACK) then
+        if owner:KeyDown(IN_ATTACK2) then
             owner:SetVelocity(Vector(0, 0, 500))
             self:YamatoAoE(owner:GetPos(), 200, 34)
         end
@@ -560,7 +563,7 @@ function SWEP:YamatoTeleport()
     owner:ViewPunch(Angle(5, 0, 0))
     owner:DoAnimationEvent(ACT_LAND)
     util.ScreenShake(dest, 3, 3, 0.2, 300)
-    self:MyEmitSound("ArcCW_DMC5_Yamato.Dash", 75, 100, 1, CHAN_BODY)
+    self:MyEmitSound("ArcCW_DMC5_Yamato.Dash", 75, 100, 1, CHAN_STATIC)
 
     if target then
         self:YamatoFreeze(target, self.YamatoFreezeTime)
@@ -574,10 +577,9 @@ end
 function SWEP:YamatoJudgmentCut()
     if not self:YamatoSpend("judgment_cut") then return end
     local owner = self:GetOwner()
-    self.YamatoNextCut = CurTime() + 1
-    self:SetNextPrimaryFire(CurTime() + 0.5)
-    self:SetNextSecondaryFire(CurTime() + 0.5)
     self:YamatoAnim("jc", true)
+    self:SetNextPrimaryFire(CurTime() + 0.3)
+    self:SetNextSecondaryFire(CurTime() + 0.3)
     if CLIENT then return end
 
     local pos = owner:GetEyeTrace().HitPos
@@ -619,17 +621,26 @@ end
 
 -- E + R with a full bar: Judgment Cut End. Six seconds of build-up (you are invulnerable and
 -- can't attack, but can still move), then everything around you takes 4000. Nobody is frozen.
+-- The cooldown is kept on the player, so dropping and picking up a new sword doesn't reset it
+function SWEP:YamatoJCECooldownLeft()
+    local owner = self:GetOwner()
+    if not IsValid(owner) then return 0 end
+    return math.max(0, owner:GetNW2Float("ArcCW_Yamato_JCEReady", 0) - CurTime())
+end
+
 function SWEP:YamatoJudgmentCutEnd()
     if self:YamatoGetEnergy() < self.YamatoEnergy.cost.judgment_cut_end then return end
+    if self:YamatoJCECooldownLeft() > 0 then return end
     self:YamatoSpend("judgment_cut_end")
     local owner = self:GetOwner()
     local now = CurTime()
+    if SERVER then owner:SetNW2Float("ArcCW_Yamato_JCEReady", now + 6.2 + self.YamatoJCECooldown) end
     self.YamatoJCEUntil = now + 6.2
     self.YamatoNextCut = now + 6.2
     self.YamatoNextSkill = now + 6.2
+    self:YamatoAnim("jce_start", true)
     self:SetNextPrimaryFire(now + 6.2)
     self:SetNextSecondaryFire(now + 6.2)
-    self:YamatoAnim("jce_start", true)
     if CLIENT then return end
 
     self:YamatoIFrames(6.2)
@@ -739,13 +750,13 @@ function SWEP:Bash(melee2)
     if CurTime() < self.YamatoJCEUntil then return end
 
     local owner = self:GetOwner()
+    local dir = MoveDir(owner)
     if not melee2 and owner:KeyDown(IN_USE) and owner:IsOnGround() and CurTime() > self.YamatoNextSkill then
         if owner:KeyDown(IN_FORWARD) and self:YamatoRapidSlash() then return end
-        if owner:KeyDown(IN_BACK) and self:YamatoLauncher() then return end
     end
+    if melee2 and dir == "B" and owner:IsOnGround() and self:YamatoLauncher() then return end
 
     local set = melee2 and self.YamatoSwings.secondary or self.YamatoSwings.primary
-    local dir = MoveDir(owner)
     local swing = set[dir] or set.F
     local n = #swing.anims
     local anim = swing.anims[math.Clamp(math.floor(util.SharedRandom("ArcCW_Yamato", 1, n + 1)), 1, n)]
@@ -773,27 +784,30 @@ function SWEP:Think()
         local busy = now < self.YamatoJCEUntil
 
         -- R abilities
-        if not busy and owner:KeyPressed(IN_RELOAD) and now >= self.YamatoNextCut
-                and self:GetNextPrimaryFire() <= now then
-            if owner:KeyDown(IN_USE) then
-                self:YamatoJudgmentCutEnd()
-            elseif owner:KeyDown(IN_BACK) then
-                self:YamatoJudgmentCut()
-            else
-                self:YamatoTeleport()
+        if not busy and owner:KeyPressed(IN_RELOAD) then
+            if owner:KeyDown(IN_BACK) and not owner:KeyDown(IN_USE) then
+                self:YamatoJudgmentCut() -- no cooldown, only the cost
+            elseif now >= self.YamatoNextCut and self:GetNextPrimaryFire() <= now then
+                if owner:KeyDown(IN_USE) then
+                    self:YamatoJudgmentCutEnd()
+                else
+                    self:YamatoTeleport()
+                end
             end
         end
 
-        -- E + A / D: sideways dash, a long one on the ground and a short hop in the air
-        if not busy and owner:KeyDown(IN_USE) and now > self.YamatoNextDash then
+        -- E + A / D: sideways dash, a long one on the ground and a short hop in the air.
+        -- Only on a fresh press of E or A / D, so holding them while running never repeats it.
+        local pressed = owner:KeyPressed(IN_USE) or owner:KeyPressed(IN_MOVELEFT) or owner:KeyPressed(IN_MOVERIGHT)
+        if not busy and pressed and owner:KeyDown(IN_USE) and now > self.YamatoNextDash then
             local side = (owner:KeyDown(IN_MOVELEFT) and -1) or (owner:KeyDown(IN_MOVERIGHT) and 1) or nil
             if side and self:YamatoGetEnergy() >= self.YamatoEnergy.cost.dash then
                 self:YamatoSpend("dash")
                 owner:SetLocalVelocity(owner:GetRight() * side * (owner:IsOnGround() and 3700 or 700))
-                self.YamatoNextDash = now + 1
+                self.YamatoNextDash = now + 0.5
                 if SERVER then
                     owner:ViewPunch(Angle(0, 10 * side, 0))
-                    self:MyEmitSound("ArcCW_DMC5_Yamato.Dash", 75, 100, 1, CHAN_BODY)
+                    self:MyEmitSound("ArcCW_DMC5_Yamato.Dash", 75, 100, 1, CHAN_STATIC)
                 end
             end
         end
@@ -888,6 +902,7 @@ if CLIENT then
         local x = math.floor(ScrW() * 0.5 - BAR_W * 0.5)
         local y = math.floor(ScrH() * 0.86)
         local full = energy >= self.YamatoEnergy.cost.judgment_cut_end
+        local cd = self:YamatoJCECooldownLeft()
         local pulse = full and (0.75 + 0.25 * math.sin(CurTime() * 6)) or 1
 
         surface.SetDrawColor(0, 0, 0, 180)
@@ -907,7 +922,10 @@ if CLIENT then
         local col = Color(200, 190, 255, 255)
         draw.SimpleText("CONCENTRATION", "DermaDefaultBold", x, y - 5, col, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
         draw.SimpleText(math.floor(energy), "DermaDefaultBold", x + BAR_W, y - 5, col, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
-        if full then
+        if cd > 0 then
+            draw.SimpleText("JUDGMENT CUT END  " .. math.ceil(cd) .. "s", "DermaDefaultBold", ScrW() * 0.5, y + BAR_H + 6,
+                Color(150, 140, 200, 200), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+        elseif full then
             draw.SimpleText("E + R   JUDGMENT CUT END", "DermaDefaultBold", ScrW() * 0.5, y + BAR_H + 6,
                 Color(220, 210, 255, 255 * pulse), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
         end
