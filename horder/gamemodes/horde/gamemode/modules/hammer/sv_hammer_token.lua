@@ -17,6 +17,12 @@ function HORDE:Horde_SpawnMapToken(kind, pos, angles, cfg)
     cfg = cfg or {}
     kind = HORDE:Horde_ParseHammerToken(kind, HORDE.HammerToken.MONEY)
 
+    -- Budget mode only pays out through the shared kill drops, so maps
+    -- that spawn money tokens (e.g. on objective OnCompleted) must not add cash.
+    if kind == HORDE.HammerToken.MONEY and HORDE.budget_mode then
+        return nil, "money tokens are disabled in Budget mode"
+    end
+
     local class = HORDE.MapTokenEntities[kind]
     if not class then
         return nil, "unknown token kind: " .. tostring(kind)
