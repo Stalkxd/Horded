@@ -1,0 +1,6 @@
+{
+	"title": "[ArcCW] DMC5 Yamato",
+	"type": "weapon",
+	"tags": ["fun", "realism"],
+	"ignore": ["*.psd", "*.txt"]
+}

@@ -1,25 +1,16 @@
 if not ArcCWInstalled then return end
 
--- Vergil's Yamato (DMC5), remade on Horde's ArcCW melee base from the TFA version.
+-- Vergil's Yamato (DMC5), remade on ArcCW's melee base from the TFA version.
 -- Kept: the model, the slash animations and sounds. Removed: every special ability of the
 -- TFA weapon (R teleport, E+R Judgment Cut End, S+R Judgment Cut, E+strafe dash, E+W+click
 -- rapid slash, E+S+click launcher, the 800 run speed on deploy), so it is a plain sword.
 
-sound.Add({ name = "Horde_Yamato.Slash", channel = CHAN_WEAPON, level = 75, sound = "weapons/yamato_slash.wav" })
-sound.Add({ name = "Horde_Yamato.Slash2", channel = CHAN_WEAPON, level = 75, sound = "weapons/yamato_slash2.wav" })
-sound.Add({ name = "Horde_Yamato.Hit", channel = CHAN_STATIC, level = 75, sound = {
-    "horde/weapons/katana/melee_katana_01.ogg",
-    "horde/weapons/katana/melee_katana_02.ogg",
-    "horde/weapons/katana/melee_katana_03.ogg",
-} })
-sound.Add({ name = "Horde_Yamato.HitWorld", channel = CHAN_STATIC, level = 75, sound = {
-    "horde/weapons/katana/katana_impact_world1.ogg",
-    "horde/weapons/katana/katana_impact_world2.ogg",
-} })
+sound.Add({ name = "ArcCW_DMC5_Yamato.Slash", channel = CHAN_WEAPON, level = 75, sound = "weapons/yamato_slash.wav" })
+sound.Add({ name = "ArcCW_DMC5_Yamato.Slash2", channel = CHAN_WEAPON, level = 75, sound = "weapons/yamato_slash2.wav" })
 
-SWEP.Base = "arccw_horde_base_melee"
+SWEP.Base = "arccw_base_melee"
 SWEP.Spawnable = true
-SWEP.Category = "Horde - Melee"
+SWEP.Category = "ArcCW - Melee"
 SWEP.AdminOnly = false
 
 SWEP.PrintName = "Yamato"
@@ -43,7 +34,10 @@ SWEP.ViewModelFOV = 85
 SWEP.DefaultSkin = 0
 SWEP.DefaultWMSkin = 0
 
--- Left click: quick slash. Right click: heavy wide slash.
+SWEP.Primary.Ammo = "none"
+SWEP.Primary.ClipSize = -1
+
+-- Left click: quick slash. Right click: heavy slash.
 SWEP.MeleeDamage = 125
 SWEP.Melee2Damage = 260
 
@@ -61,19 +55,9 @@ SWEP.Melee2AttackTime = 0.15
 SWEP.Melee2Time = 0.95
 SWEP.Melee2Gesture = ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE2
 
-SWEP.MaximumDurability = 1200
-SWEP.MaxHits = 4
-SWEP.MaxHitsSecondary = 8
-SWEP.MeleeBoundingBox = {
-    primary = { wide = 36, tall = 32, length = 105 },
-    secondary = { wide = 48, tall = 36, length = 115 },
-}
-
--- Swing sounds come from the animations' sound tables, hits from the melee code
+-- Swing sounds come from the animations' sound tables; hit sounds are ArcCW's defaults
 SWEP.MeleeSwingSound = nil
 SWEP.MeleeMissSound = nil
-SWEP.MeleeHitSound = "Horde_Yamato.HitWorld"
-SWEP.MeleeHitNPCSound = "Horde_Yamato.Hit"
 
 SWEP.Firemodes = {
     { Mode = 1, PrintName = "MELEE" },
@@ -81,8 +65,6 @@ SWEP.Firemodes = {
 
 SWEP.HoldtypeHolstered = "normal"
 SWEP.HoldtypeActive = "melee"
-
-SWEP.Primary.ClipSize = -1
 
 SWEP.AttachmentElements = {}
 SWEP.Attachments = {}
@@ -95,11 +77,11 @@ SWEP.Animations = {
     ["ready"] = { Source = "draw" },
     ["bash"] = {
         Source = "slash",
-        SoundTable = { { s = "Horde_Yamato.Slash", t = 0 } },
+        SoundTable = { { s = "ArcCW_DMC5_Yamato.Slash", t = 0 } },
     },
     ["bash2"] = {
         Source = "slash2",
-        SoundTable = { { s = "Horde_Yamato.Slash2", t = 0 } },
+        SoundTable = { { s = "ArcCW_DMC5_Yamato.Slash2", t = 0 } },
     },
 }
 
