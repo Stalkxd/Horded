@@ -202,8 +202,16 @@ function SWEP:YamatoGetEnergy()
     return self:GetNW2Float("YamatoEnergy", 0)
 end
 
-function SWEP:YamatoAddEnergy(n)
+-- arccw_yamato_debug 1 prints every spend to the server console, with what caused it
+local debug_cvar = CreateConVar("arccw_yamato_debug", "0", FCVAR_ARCHIVE, "Print Yamato Concentration spending to the console")
+
+function SWEP:YamatoAddEnergy(n, why)
     if CLIENT then return end
+    if n < 0 and debug_cvar:GetBool() then
+        local owner = self:GetOwner()
+        print(string.format("[Yamato] %s spent %.1f on %s (bar %.1f)", IsValid(owner) and owner:Nick() or "?", -n,
+            tostring(why), self:YamatoGetEnergy()))
+    end
     self:SetNW2Float("YamatoEnergy", math.Clamp(self:YamatoGetEnergy() + n, 0, self.YamatoEnergy.max))
 end
 
@@ -211,7 +219,7 @@ end
 function SWEP:YamatoSpend(ability)
     local cost = self.YamatoEnergy.cost[ability] or 0
     if self:YamatoGetEnergy() < cost then return false end
-    self:YamatoAddEnergy(-cost)
+    self:YamatoAddEnergy(-cost, ability)
     return true
 end
 
