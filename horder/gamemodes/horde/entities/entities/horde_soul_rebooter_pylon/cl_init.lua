@@ -187,8 +187,9 @@ function ENT:Draw()
     local x, y = math.Round(scr.x), math.Round(scr.y)
     local radius = ler * 40
     local seg = 360
-    local per = self._Ler2 / 100
-    if not isnumber(per) then per = 1 end
+    local per = (tonumber(self._Ler2) or 100) / 100
+    if per ~= per then per = 1 end -- NaN
+    per = math.Clamp(per, 0, 1)
 
     cam.Start2D()
     render.OverrideDepthEnable(true, false)
@@ -208,9 +209,13 @@ function ENT:Draw()
             v = math.cos(a) / 2 + 0.5
         })
     end
-    surface.SetMaterial(RingMat)
-    surface.SetDrawColor(255, 200, 25, 255 * ler)
-    surface.DrawPoly(cir)
+    -- At 0% (just placed) or with the overlay still opening (radius 0) there is no arc yet,
+    -- and DrawPoly errors on fewer than three vertices.
+    if #cir >= 3 and radius > 0 then
+        surface.SetMaterial(RingMat)
+        surface.SetDrawColor(255, 200, 25, 255 * ler)
+        surface.DrawPoly(cir)
+    end
 
     draw.TextShadow({
         text = math.Clamp(math.Round(self._Ler2), 0, 100) .. "%",
