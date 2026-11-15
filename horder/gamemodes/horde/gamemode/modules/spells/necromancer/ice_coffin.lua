@@ -35,12 +35,20 @@ SPELL.Fire           = function (ply, wpn, charge_stage)
     end
 
     timer.Simple(3, function ()
+        if IsValid(p) then p:Remove() end
+        if not IsValid(ply) then return end
+        -- Died inside the coffin: leave them dead instead of spawning them back in, and clear
+        -- the flags so their next real respawn runs the normal cleanup.
+        if not ply:Alive() or not ply.Horde_Fake_Respawn then
+            ply.Horde_Fake_Respawn = nil
+            ply.Horde_Invincible = nil
+            return
+        end
         local health = ply:Health()
         local mind = ply:Horde_GetMind()
         local ply_angles = ply:EyeAngles()
         ply:UnSpectate()
         ply:DrawViewModel(true)
-        p:Remove()
         ply:Spawn()
         ply.Horde_Fake_Respawn = nil
         ply:SetPos(ply_pos)

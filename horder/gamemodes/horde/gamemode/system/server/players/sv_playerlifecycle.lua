@@ -965,6 +965,13 @@ end
 
 function HORDE:ClearSpectatorState(ply)
     if not IsValid(ply) then return end
+    -- The death cam puts dead players into roaming with SetObserverMode, and neither
+    -- UnSpectate nor Spawn reliably takes that back off. A player left in observer mode is
+    -- skipped by every damage check, so reset it explicitly.
+    if ply:GetObserverMode() ~= OBS_MODE_NONE then
+        ply:SetObserverMode(OBS_MODE_NONE)
+    end
+    ply:UnSpectate()
     ply:SetCollisionGroup(15)
     ply:SetCanZoom(false)
     ply:SetMoveType(MOVETYPE_WALK)
@@ -976,12 +983,55 @@ function HORDE:ClearSpectatorState(ply)
     if ply.SetNoTarget then ply:SetNoTarget(false) end
 end
 
+-- A living player must never keep anything left over from being dead. The damage checks
+-- treat observer mode, the observer move type and the ghost flags as "this player is a
+-- spectator", so a player who comes back with any of them still set (respawned by an admin
+-- command, the Soul Rebooter or a beacon) walks around taking no damage and ignored by
+-- enemies. This puts such a player back into the normal living state.
+function HORDE:SanitizeLivingPlayer(ply)
+    if not IsValid(ply) or not ply:Alive() then return end
+    -- Ice Coffin and Omnislash put a living player into spectate on purpose and undo it themselves.
+    if ply.Horde_Fake_Respawn then return end
+
+    local stale = ply.Horde_SpectatorGhost
+        or ply.Horde_DebuffImmune
+        or ply:GetMoveType() == MOVETYPE_OBSERVER
+        or ply:GetObserverMode() ~= OBS_MODE_NONE
+
+    if stale then
+        HORDE:ClearSpectatorState(ply)
+    end
+end
+
+-- Called when a player dies, so a death in the middle of Ice Coffin, Omnislash or Flash
+-- cannot leave their "you are invulnerable / fake respawning" flags behind.
+local function Horde_ClearAbilityStateOnDeath(ply)
+    if not IsValid(ply) then return end
+    ply.Horde_Fake_Respawn = nil
+    ply.Horde_Invincible = nil
+    ply.Horde_In_Flash = nil
+    ply.Horde_In_Omni = nil
+end
+hook.Add("DoPlayerDeath", "Horde_ClearAbilityStateOnDeath", Horde_ClearAbilityStateOnDeath)
+hook.Add("PlayerSilentDeath", "Horde_ClearAbilityStateOnDeath", Horde_ClearAbilityStateOnDeath)
+
 hook.Add("PlayerSpawn", "Horde_PlayerInitialSpawn", function(ply)
     if ply.Horde_Fake_Respawn == true then return end
     if ply:IsValid() then
+        -- A new life: any pending "turn into a spectator" timer from the last death is now stale.
+        ply.Horde_DeathSerial = (ply.Horde_DeathSerial or 0) + 1
+        -- Short invulnerability windows from abilities never carry into a new life.
+        ply.Horde_Invincible = nil
+        ply.Horde_In_Flash = nil
+        ply.Horde_In_Omni = nil
         HORDE:ClearSpectatorState(ply)
         net.Start("Horde_ForceCloseShop")
         net.Send(ply)
+
+        -- The rest of the spawn (the base gamemode, other hooks, the caller placing the
+        -- player) runs after this, so check again once it has all finished.
+        timer.Simple(0, function() HORDE:SanitizeLivingPlayer(ply) end)
+        timer.Simple(0.5, function() HORDE:SanitizeLivingPlayer(ply) end)
     end
 end)
 
@@ -1028,22 +1078,29 @@ end)
 local function Horde_DeathSpectatingFunction(victim, inflictor, attacker)
     if not HORDE.start_game or HORDE.current_break_time > 0 then return end
 
-    if IsValid(victim) then
+    if not IsValid(victim) then return end
+
+    victim:SetNoDraw(true)
+    victim:DrawShadow(false)
+    victim.Horde_SpectatorGhost = true
+    victim.Horde_DebuffImmune = true
+    if victim.SetNoTarget then victim:SetNoTarget(true) end
+
+    -- Only act for this death. If the player was respawned (and maybe died again) in the
+    -- meantime, this timer belongs to an old life and must not touch them.
+    local serial = victim.Horde_DeathSerial
+    timer.Simple(1, function()
+        if not IsValid(victim) then return end
+        if victim.Horde_DeathSerial ~= serial then return end
+        if victim:Alive() then
+            HORDE:SanitizeLivingPlayer(victim)
+            return
+        end
+        victim:SetObserverMode(OBS_MODE_ROAMING)
+        victim:SetMoveType(MOVETYPE_OBSERVER)
         victim:SetNoDraw(true)
         victim:DrawShadow(false)
         victim.Horde_SpectatorGhost = true
-        victim.Horde_DebuffImmune = true
-        if victim.SetNoTarget then victim:SetNoTarget(true) end
-    end
-
-    timer.Simple(1, function()
-        if victim:IsValid() and (not victim:Alive()) then
-            victim:SetObserverMode(OBS_MODE_ROAMING)
-            victim:SetMoveType(MOVETYPE_OBSERVER)
-            victim:SetNoDraw(true)
-            victim:DrawShadow(false)
-            victim.Horde_SpectatorGhost = true
-        end
     end)
 end
 

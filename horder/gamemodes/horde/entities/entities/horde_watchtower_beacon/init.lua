@@ -167,8 +167,12 @@ function ENT:Horde_BeaconResurrect(ply)
         ply:SetPos(pos)
         ply:SetAngles(ang)
         ply:SetVelocity(vector_origin)
-        ply:SetObserverMode(OBS_MODE_NONE)
-        ply:UnSpectate()
+        if HORDE and HORDE.ClearSpectatorState then
+            HORDE:ClearSpectatorState(ply)
+        else
+            ply:SetObserverMode(OBS_MODE_NONE)
+            ply:UnSpectate()
+        end
 
         if ply.Horde_SetGivenStarterWeapons then
             ply:Horde_SetGivenStarterWeapons(nil)

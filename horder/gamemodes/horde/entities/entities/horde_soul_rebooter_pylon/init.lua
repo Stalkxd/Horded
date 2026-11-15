@@ -182,6 +182,14 @@ function ENT:SoulResurrect()
         target:SetPos(pos)
         target:SetAngles(ang)
         target:SetVelocity(vector_origin)
+        -- The target was in the death cam (roaming observer). Spawn does not take that off,
+        -- and a living player still in observer mode cannot be damaged, so clear it here.
+        if HORDE and HORDE.ClearSpectatorState then
+            HORDE:ClearSpectatorState(target)
+        else
+            target:SetObserverMode(OBS_MODE_NONE)
+            target:UnSpectate()
+        end
 
         if target.Horde_SetGivenStarterWeapons then
             target:Horde_SetGivenStarterWeapons(nil)

@@ -401,12 +401,23 @@ hook.Add("PlayerSpawn", "Horde_Economy_Sync", function (ply)
     if HORDE.start_game and HORDE.current_break_time <= 0 then
         if ply:IsValid() then
             local ret = hook.Run("Horde_OnPlayerShouldRespawnDuringWave", ply)
-            if not ret then
-                ply:KillSilent()
-                HORDE:SendNotification("You will respawn next wave.", 0, ply)
+            -- Nothing in Horde respawns a dead player on its own during a wave, so a spawn here is
+            -- either a player joining mid-wave or someone bringing a player back on purpose (an
+            -- admin/console respawn, Soul Rebooter, beacon). Only the joiner has to wait.
+            if not ret and not ply.Horde_HasLived then
+                -- Killing a player from inside their own PlayerSpawn does not finish cleanly: the
+                -- death hooks still turn them into a spectator ghost, but they can be left standing
+                -- alive, which is the "immortal after respawn" bug. Do it once the spawn is done.
+                timer.Simple(0, function()
+                    if not IsValid(ply) or not ply:Alive() then return end
+                    if not HORDE.start_game or HORDE.current_break_time > 0 then return end
+                    ply:KillSilent()
+                    HORDE:SendNotification("You will respawn next wave.", 0, ply)
+                end)
             end
         end
     end
+    ply.Horde_HasLived = true
 
     if not ply:IsValid() or not ply.Horde_Init_Complete then return end
     if not ply:Horde_GetCurrentSubclass() then return end

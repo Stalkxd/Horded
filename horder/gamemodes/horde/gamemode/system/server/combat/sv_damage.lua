@@ -340,12 +340,14 @@ hook.Add("ScaleNPCDamage", "Horde_ApplyDamage", function(npc, hitgroup, dmginfo)
     end
 end)
 
+-- Spectators take no damage. This goes by the player's real state (dead, or in observer
+-- mode); the Horde_SpectatorGhost flag is only bookkeeping for the death cam and is not
+-- trusted here, because a respawned player who still carried it became unkillable.
 hook.Add("PlayerShouldTakeDamage", "Horde_SpectatorNoDamage", function(ply, attacker)
     if not IsValid(ply) then return end
     if not ply:Alive()
         or ply:GetObserverMode() ~= OBS_MODE_NONE
-        or ply:GetMoveType() == MOVETYPE_OBSERVER
-        or ply.Horde_SpectatorGhost then
+        or ply:GetMoveType() == MOVETYPE_OBSERVER then
         return false
     end
 end)
@@ -357,8 +359,7 @@ hook.Add("EntityTakeDamage", "Horde_ApplyDamageTaken", function(target, dmg)
 
     if not ply:Alive()
         or ply:GetObserverMode() ~= OBS_MODE_NONE
-        or ply:GetMoveType() == MOVETYPE_OBSERVER
-        or ply.Horde_SpectatorGhost then
+        or ply:GetMoveType() == MOVETYPE_OBSERVER then
         return true
     end
 
