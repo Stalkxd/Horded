@@ -14,12 +14,14 @@ if CLIENT then return end
 --    of rebuilding it whenever the player moves (sv_enemy_pathing.lua).
 --  * VJ settings: horde enemies never wander, notice players in every
 --    direction and keep a long sight range, so they commit to the chase.
+--    They also skip VJ's call for help unless horde_enemy_callhelp is 1.
 
 local enabled   = CreateConVar("horde_enemy_director", 1, FCVAR_ARCHIVE, "Give idle enemies a target and teleport ones that never find one.")
 local far_dist  = CreateConVar("horde_enemy_far_distance", 3000, FCVAR_ARCHIVE, "Enemies further than this from every player think less often.")
 local far_think = CreateConVar("horde_enemy_far_think", 0.3, FCVAR_ARCHIVE, "Seconds between VJ think runs for far enemies. 0 turns it off.")
 local mid_dist  = CreateConVar("horde_enemy_mid_distance", 1200, FCVAR_ARCHIVE, "Enemies further than this (but closer than horde_enemy_far_distance) from every player think a little less often.")
 local mid_think = CreateConVar("horde_enemy_mid_think", 0.05, FCVAR_ARCHIVE, "Seconds between VJ think runs for mid-distance enemies. 0 turns it off.")
+local call_help = CreateConVar("horde_enemy_callhelp", 0, FCVAR_ARCHIVE, "Let horde enemies run VJ's call for help (a 2000 unit ally search every 4 seconds per enemy). 0 = off, since every horde enemy already hunts players.")
 local ally_recheck = CreateConVar("horde_enemy_ally_recheck", 5, FCVAR_ARCHIVE, "Seconds between VJ relationship checks of one horde enemy against another. 0 checks them every pass, like plain VJ Base.")
 
 local CHECK_INTERVAL     = 1.0
@@ -60,6 +62,7 @@ local function ApplyVJSettings(ent)
     ent.FindEnemy_UseSphere = true
     ent.SightDistance = math.max(ent.SightDistance or 0, SIGHT_DISTANCE)
     if ent.SetMaxLookDistance then ent:SetMaxLookDistance(ent.SightDistance) end
+    if not call_help:GetBool() then ent.CallForHelp = false end
 end
 
 -- One shared Think replacement for every enemy, instead of a new closure per
