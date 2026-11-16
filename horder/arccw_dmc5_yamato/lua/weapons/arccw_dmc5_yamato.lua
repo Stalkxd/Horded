@@ -186,15 +186,42 @@ local function MoveDir(owner)
     return "F"
 end
 
+local function IsCharacter(ent)
+    return ent:IsNPC() or ent:IsPlayer() or ent:IsNextBot()
+end
+
+-- Players and anything on their side: owned by a player, or an NPC that likes players
+-- (minions, followers, friendly turrets). The sword never touches these.
+local function IsFriendly(ent)
+    if ent:IsPlayer() then return true end
+    local owner = ent:GetOwner()
+    if IsValid(owner) and owner:IsPlayer() then return true end
+    local nwowner = ent:GetNWEntity("Owner")
+    if IsValid(nwowner) and nwowner:IsPlayer() then return true end
+    if ent.PlayerFriendly == true then return true end -- VJ Base allies
+    local class = ent.VJ_NPC_Class
+    if istable(class) and table.HasValue(class, "CLASS_PLAYER_ALLY") then return true end
+    if SERVER and ent:IsNPC() then
+        for _, ply in ipairs(player.GetAll()) do
+            if ent:Disposition(ply) == D_LI then return true end
+        end
+    end
+    return false
+end
+
 local function CanDamage(owner, ent)
     if not IsValid(ent) or ent == owner or ent:IsWeapon() then return false end
-    if ent:GetOwner() == owner then return false end
-    if ent:IsPlayer() then return ent:Alive() end
+    if IsFriendly(ent) then return false end
     return ent:IsNPC() or ent:IsNextBot() or ent:Health() > 0
 end
 
-local function IsCharacter(ent)
-    return ent:IsNPC() or ent:IsPlayer() or ent:IsNextBot()
+-- Only hits on enemy characters fill Concentration, not props
+local function CountEnemies(list, n)
+    local count = 0
+    for i = 1, math.min(#list, n or #list) do
+        if IsCharacter(list[i]) then count = count + 1 end
+    end
+    return count
 end
 
 --------------------------------------------------------------------------------------------
@@ -394,7 +421,7 @@ function SWEP:YamatoAoE(pos, radius, dmg, energy)
         end
     end
     if energy ~= false then
-        self:YamatoAddEnergy(math.min(#hit, 3) * self.YamatoEnergy.per_ability_hit)
+        self:YamatoAddEnergy(math.min(CountEnemies(hit), 3) * self.YamatoEnergy.per_ability_hit)
     end
     return hit
 end
@@ -442,7 +469,7 @@ function SWEP:YamatoSlash(swing)
     owner:LagCompensation(false)
 
     if hits > 0 then
-        self:YamatoAddEnergy(math.min(hits, 3) * self.YamatoEnergy.per_hit)
+        self:YamatoAddEnergy(math.min(CountEnemies(targets, hits), 3) * self.YamatoEnergy.per_hit)
         self:MyEmitSound(self.MeleeHitNPCSound, 75, 100, 1, CHAN_STATIC)
     else
         self:YamatoAddEnergy(-self.YamatoEnergy.miss, "a missed slash")
