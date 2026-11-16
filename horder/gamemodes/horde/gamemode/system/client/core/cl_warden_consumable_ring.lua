@@ -102,9 +102,12 @@ hook.Add("HUDPaint", "Horde_WardenConsumableRing", function()
             ring_color = Color(230, 60, 60, 255 * ler)
         end
 
-        surface.SetMaterial(ring_mat)
-        surface.SetDrawColor(ring_color)
-        surface.DrawPoly(cir)
+        -- DrawPoly errors with fewer than three vertices (ring at 0%).
+        if #cir >= 3 and radius > 0 then
+            surface.SetMaterial(ring_mat)
+            surface.SetDrawColor(ring_color)
+            surface.DrawPoly(cir)
+        end
 
         local label
         if ctype == "damage_charges" then
