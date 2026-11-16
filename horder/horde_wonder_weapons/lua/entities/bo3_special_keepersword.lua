@@ -130,7 +130,12 @@ function ENT:Think()
 				self:ResetSequence("idle")
 			end
 
-			self:SetTarget(self:FindNearestEntity(self:GetPos(), 256, self.TargetsToIgnore))
+			-- Horde: look for a new target ten times a second instead of every tick.
+			-- Each search checks every entity within 256 units, which in a crowd is a lot.
+			if CurTime() >= (self.Horde_NextSeek or 0) then
+				self.Horde_NextSeek = CurTime() + 0.1
+				self:SetTarget(self:FindNearestEntity(self:GetPos(), 256, self.TargetsToIgnore))
+			end
 
 			if IsValid(ply) and ply:Alive() then
 				local forward = Angle(0, ply:EyeAngles()[2], ply:EyeAngles()[3]):Forward()

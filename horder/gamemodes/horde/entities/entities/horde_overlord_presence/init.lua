@@ -123,8 +123,11 @@ function ENT:Think()
     local radius = self.Area_of_Effect_Radius
     for _, ent in ipairs(ents.FindInSphere(self:GetPos(), radius)) do
         if not IsValid(ply) then return end
+        -- Horde: only enemies and players matter, so filter them first and run the
+        -- line-of-sight trace only for those, not for every prop and projectile in range.
+        if not (HORDE:IsEnemy(ent) or ent:IsPlayer()) then continue end
         if self:LoSCheckType(ent) then continue end
-        if HORDE:IsEnemy(ent) or ent:IsPlayer() then
+        do
             if(!ply.EntitiesInside[ent:EntIndex()]) and self:CheckCD(ent) then
                 self:OnEntityEnter(ent)
                 ply.Entities[ent:EntIndex()] = CurTime() + self:GetDelayInterval()
