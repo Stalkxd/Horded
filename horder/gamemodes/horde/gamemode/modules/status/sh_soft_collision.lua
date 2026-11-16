@@ -23,6 +23,23 @@ local function SafeDirection(posA, posB, seed)
     return dir / len, len
 end
 
+-- Only enemies the player really bumps into should push them. Some enemies are
+-- made to be walked through or are not there to see: the Plague Platoon boss is
+-- an invisible zero-size point at its spawn that lives until the platoon dies,
+-- and the spectres have zero-size hulls. Pushing from those shoved players in
+-- one direction from nothing visible (always the same direction when standing
+-- right on top of the point).
+local function BlocksPlayer(ply, ent)
+    if ent.Dead then return false end
+    if not ent:IsSolid() or ent:GetNoDraw() then return false end
+    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+    if (maxs.x - mins.x) < 2 or (maxs.y - mins.y) < 2 or (maxs.z - mins.z) < 2 then return false end
+    if ent:GetRenderMode() ~= RENDERMODE_NORMAL and ent:GetColor().a == 0 then return false end
+    if IsValid(ent:GetParent()) then return false end
+    if hook.Run("ShouldCollide", ply, ent) == false then return false end
+    return true
+end
+
 local function UpdatePlayerEnemySeparation()
     if CLIENT then return end
 
@@ -40,7 +57,8 @@ local function UpdatePlayerEnemySeparation()
             if not IsValid(ent) or ent == ply then continue end
             if not (ent:IsNPC() or ent:IsNextBot()) then continue end
             if ent:Health() <= 0 then continue end
-            if HORDE and HORDE.IsPlayerMinion and HORDE:IsPlayerMinion(ent) then continue end
+            if HORDE and HORDE.IsEnemy and not HORDE:IsEnemy(ent) then continue end
+            if not BlocksPlayer(ply, ent) then continue end
 
             local emins, emaxs = ent:WorldSpaceAABB()
             if AABBsTouch(pmins, pmaxs, emins, emaxs) then

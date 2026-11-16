@@ -22,6 +22,26 @@ local function IsBoss(ent)
     return IsValid(ent) and ent:GetVar("is_boss") == true
 end
 
+-- Bosses that never walk (the Plague Platoon is an invisible, stationary
+-- controller that only holds the three platoon bosses) always look "stuck".
+-- Treating them as stuck flung every player within KNOCK_RADIUS away every
+-- few seconds, through walls, from a spot nobody could see.
+local function IsStationary(ent)
+    if VJ_MOVETYPE_STATIONARY ~= nil and ent.MovementType == VJ_MOVETYPE_STATIONARY then return true end
+    local mt = ent:GetMoveType()
+    return mt == MOVETYPE_NONE
+end
+
+-- Only push what the boss can actually reach: no knockback through walls or floors.
+local function InLineOfSight(boss, ent)
+    local tr = util.TraceLine({
+        start = boss:WorldSpaceCenter(),
+        endpos = ent:WorldSpaceCenter(),
+        mask = MASK_SOLID_BRUSHONLY,
+    })
+    return not tr.Hit
+end
+
 local function IsAttacking(ent)
     if not IsValid(ent) then return false end
 
@@ -36,7 +56,7 @@ local function IsAttacking(ent)
     return false
 end
 
-local function BossKnockback(boss)
+local function BossKnockback(boss, crowded)
     if not IsValid(boss) then return end
     local now = CurTime()
     if last_knock[boss] and (now - last_knock[boss]) < KNOCK_COOLDOWN then return end
@@ -51,7 +71,10 @@ local function BossKnockback(boss)
         effects.BeamRingPoint(effect_origin, 0.3, 2, KNOCK_RADIUS * 0.7, 16, 0, Color(188, 220, 255), { material = "sprites/vj_bms_shockwave", framerate = 20 })
     end
 
-    for _, ent in ipairs(ents.FindInSphere(origin, KNOCK_RADIUS)) do
+    -- A crowd around the boss is cleared out to KNOCK_RADIUS. A boss that is only
+    -- stuck on the map pushes away just what is standing right next to it.
+    local radius = crowded and KNOCK_RADIUS or CROWD_RADIUS
+    for _, ent in ipairs(ents.FindInSphere(origin, radius)) do
         if not IsValid(ent) or ent == boss then continue end
 
         if HORDE:IsPlayerBuildable(ent) then continue end
@@ -68,7 +91,15 @@ local function BossKnockback(boss)
             end
         end
 
-        local direction = (ent:GetPos() - origin):GetNormalized()
+        if not InLineOfSight(boss, ent) then continue end
+
+        local direction = ent:GetPos() - origin
+        direction.z = 0
+        if direction:LengthSqr() < 1 then
+            local a = math.rad(math.random(0, 359))
+            direction = Vector(math.cos(a), math.sin(a), 0)
+        end
+        direction:Normalize()
         local force = KNOCK_NORMAL
         if is_npc and ent.Horde_IsElite then
             force = KNOCK_ELITE
@@ -134,6 +165,7 @@ timer.Create("Horde_BossAntiStuck", CHECK_INTERVAL, 0, function()
         local ent = Entity(idx)
         if not IsBoss(ent) then continue end
         if ent:Health() <= 0 then continue end
+        if IsStationary(ent) then continue end
 
         local pos = ent:GetPos()
         local prev = last_pos[ent]
@@ -163,10 +195,10 @@ timer.Create("Horde_BossAntiStuck", CHECK_INTERVAL, 0, function()
                     print("[HORDE] Boss is stuck. Teleporting to a free node...")
                     stuck_since[ent] = nil
                 else
-                    BossKnockback(ent)
+                    BossKnockback(ent, crowded)
                 end
             elseif crowded or stuck_for >= STUCK_TIME then
-                BossKnockback(ent)
+                BossKnockback(ent, crowded)
             end
         end
     end
