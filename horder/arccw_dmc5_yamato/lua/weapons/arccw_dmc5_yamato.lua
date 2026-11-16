@@ -151,6 +151,7 @@ SWEP.YamatoEnergy = {
     hurt = 5,           -- each time you take damage
     per_hit = 3,
     per_ability_hit = 1,
+    per_judgment_cut_hit = 5, -- up to 3 enemies, so at most 15 back of its 20 cost
     cost = {
         teleport = 10,
         judgment_cut = 20,
@@ -421,7 +422,8 @@ function SWEP:YamatoAoE(pos, radius, dmg, energy)
         end
     end
     if energy ~= false then
-        self:YamatoAddEnergy(math.min(CountEnemies(hit), 3) * self.YamatoEnergy.per_ability_hit)
+        local per = isnumber(energy) and energy or self.YamatoEnergy.per_ability_hit
+        self:YamatoAddEnergy(math.min(CountEnemies(hit), 3) * per)
     end
     return hit
 end
@@ -668,7 +670,7 @@ function SWEP:YamatoJudgmentCut()
         for _, ent in pairs(rings) do if IsValid(ent) then ent:SetModelScale(s, t) end end
     end
     timer.Simple(0.01, function()
-        if IsValid(self) then self:YamatoAoE(pos, 150, 195) end
+        if IsValid(self) then self:YamatoAoE(pos, 150, 195, self.YamatoEnergy.per_judgment_cut_hit) end
         scale(15, 0.005)
     end)
     timer.Simple(0.1, function() scale(0.01, 0.05) end)
