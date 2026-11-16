@@ -16,7 +16,7 @@ SWEP.WorldModelOffset = {
 }
 SWEP.ActivePos = Vector(0, -6, -1.5)
 
-SWEP.MeleeDamage = 120 -- per hit, two hits a swing
+SWEP.MeleeDamage = 275 -- per hit, two hits a swing
 SWEP.MeleeDamageType = DMG_SLASH
 SWEP.MeleeRange = 90
 SWEP.MeleeAttackTime = 0.2
