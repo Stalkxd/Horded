@@ -10,6 +10,8 @@ if CLIENT then return end
 --  * Far enemies: VJ Base runs most of its per-NPC Lua in ENT:Think. Enemies
 --    further than horde_enemy_far_distance from every player only run it every
 --    horde_enemy_far_think seconds. The engine still moves them every AI tick.
+--  * Pathing: chasing VJ enemies keep their path to a control point instead
+--    of rebuilding it whenever the player moves (sv_enemy_pathing.lua).
 --  * VJ settings: horde enemies never wander, notice players in every
 --    direction and keep a long sight range, so they commit to the chase.
 
@@ -236,7 +238,10 @@ timer.Create("Horde_EnemyDirector", CHECK_INTERVAL, 0, function()
             ApplyVJSettings(ent)
             WrapThink(ent)
             WrapPoseTracking(ent)
-            if IsVJ(ent) then WrapRelationships(ent) end
+            if IsVJ(ent) then
+                WrapRelationships(ent)
+                if HORDE.WrapEnemyPathing then HORDE.WrapEnemyPathing(ent) end
+            end
         end
 
         local pos = ent:GetPos()
