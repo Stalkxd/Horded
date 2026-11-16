@@ -161,11 +161,24 @@ HORDE:AddPlayerTick("Horde_Misc", function(ply, mv)
         mins = Vector(-8, -8, -8),
         maxs = Vector(8, 8, 8),
     })
-    if tr.Entity and HORDE:IsEnemy(tr.Entity) and tr.Entity:Health() > 0 then
-        local vrand = VectorRand()
-        vrand.z = 0
-        vrand = vrand * 200
-        ply:SetVelocity(vrand)
+    local enemy = tr.Entity
+    if IsValid(enemy) and HORDE:IsEnemy(enemy) and enemy:Health() > 0 then
+        -- Slide the player off the enemy they stand on. This runs every tick, and a
+        -- new random 200 u/s shove each tick piled up into a fling in whatever
+        -- direction the dice summed to. Push away from the enemy's centre instead,
+        -- and only up to a set sliding speed.
+        local dir = ply:GetPos() - enemy:WorldSpaceCenter()
+        dir.z = 0
+        if dir:LengthSqr() < 1 then
+            local a = (enemy:EntIndex() * 57 % 360) * (math.pi / 180)
+            dir = Vector(math.cos(a), math.sin(a), 0)
+        end
+        dir:Normalize()
+        local vel = ply:GetVelocity()
+        local along = vel.x * dir.x + vel.y * dir.y
+        if along < 200 then
+            ply:SetVelocity(dir * math.min(200 - along, 40))
+        end
     end
 end)
 
