@@ -534,7 +534,8 @@ While you have at least {1} armor:
 LANGUAGE["Perk_Title_heavy_reactive_armor"] = [[Reactive Armor]]
 LANGUAGE["Perk_heavy_reactive_armor"] = [[Gain a reactive armor that negates critical damage taken.
 Activates on taking more than {1} damage and recharges after {2} seconds.
-Uses {3} of your maximum armor when triggered.]]
+Uses {3} of your maximum armor when triggered.
+Explodes when triggered, dealing 100 Blast damage around you.]]
 
 LANGUAGE["Perk_Title_Heavy_Tier_4"] = [[Technology]]
 LANGUAGE["Perk_Title_heavy_nanomachine"] = [[Nanomachine]]
@@ -818,7 +819,8 @@ LANGUAGE["Perk_Title_Cremator_Tier_2"] = [[Energy Absorption]]
 LANGUAGE["Perk_Title_cremator_positron_array"] = [[Positron Array]]
 LANGUAGE["Perk_cremator_positron_array"] = [[
 Immune to Fire damage.
-Absorb {1} of Fire damage taken as health.]]
+Absorb {1} of Fire damage taken as health.
+Fire from players heals {2} health per hit.]]
 
 LANGUAGE["Perk_Title_cremator_entropy_shield"] = [[Entropy Shield]]
 LANGUAGE["Perk_cremator_entropy_shield"] = [[Gain an Entropy Shield that reduces damage taken on hit.

@@ -32,26 +32,46 @@ function plymeta:Horde_GetReactiveArmorEnabled()
     return self.Horde_ReactiveArmorEnabled or nil
 end
 
-hook.Add("Horde_OnPlayerDamageTaken", "Horde_ReactiveArmorDamage", function (ply, dmginfo, bonus, silent)
-    if silent then return end
-    if ply:IsValid() and ply:Horde_GetReactiveArmorEnabled() and ply:Horde_GetReactiveArmor() == 1 and dmginfo:GetAttacker() ~= ply and dmginfo:GetDamage() >= 25 and ply:Health() < dmginfo:GetDamage() then
-        bonus.resistance = 1
-        local dmg = DamageInfo()
-        dmg:SetAttacker(ply)
-        dmg:SetInflictor(ply)
-        dmg:SetDamageType(DMG_BLAST)
-        dmg:SetDamage(100)
-        util.BlastDamageInfo(dmg, ply:GetPos(), 150)
-        local effectdata = EffectData()
-        effectdata:SetOrigin( ply:GetPos() )
-        util.Effect("Explosion", effectdata)
-        ply:Horde_RemoveReactiveArmor()
-        ply:SetArmor(math.max(0, ply:Armor() - ply:GetMaxArmor() * 0.25))
-        timer.Remove("Horde_RestockReactiveArmor" .. ply:SteamID())
-        timer.Create("Horde_RestockReactiveArmor" .. ply:SteamID(), 6, 1, function ()
-            ply:Horde_AddReactiveArmor()
-        end)
-    end
+-- Values come from the perk so the description and the behaviour stay in sync.
+local function ReactiveParam(i, fallback)
+    local perk = HORDE.perks and HORDE.perks["heavy_reactive_armor"]
+    local param = perk and perk.Params and perk.Params[i]
+    return (param and param.value) or fallback
+end
+
+function plymeta:Horde_ReactiveArmorTimerName()
+    return "Horde_RestockReactiveArmor" .. self:EntIndex()
+end
+
+-- Runs after evasion, resistances and damage reduction, so the threshold is checked
+-- against the damage the hit would really deal. Any hit above the threshold is negated.
+hook.Add("Horde_OnPlayerDamageTakenPost", "Horde_ReactiveArmorDamage", function (ply, dmginfo, bonus)
+    if not ply:IsValid() or not ply:Horde_GetReactiveArmorEnabled() then return end
+    if ply:Horde_GetReactiveArmor() ~= 1 then return end
+    if dmginfo:GetAttacker() == ply then return end
+    if dmginfo:GetDamage() <= ReactiveParam(1, 25) then return end
+
+    dmginfo:SetDamage(0)
+
+    local dmg = DamageInfo()
+    dmg:SetAttacker(ply)
+    dmg:SetInflictor(ply)
+    dmg:SetDamageType(DMG_BLAST)
+    dmg:SetDamage(100)
+    util.BlastDamageInfo(dmg, ply:GetPos(), 150)
+    local effectdata = EffectData()
+    effectdata:SetOrigin(ply:GetPos())
+    util.Effect("Explosion", effectdata)
+
+    ply:Horde_RemoveReactiveArmor()
+    ply:SetArmor(math.max(0, ply:Armor() - ply:GetMaxArmor() * ReactiveParam(3, 0.25)))
+
+    local name = ply:Horde_ReactiveArmorTimerName()
+    timer.Remove(name)
+    timer.Create(name, ReactiveParam(2, 6), 1, function ()
+        if not IsValid(ply) or not ply:Horde_GetReactiveArmorEnabled() then return end
+        ply:Horde_AddReactiveArmor()
+    end)
 end)
 
 hook.Add("Horde_ResetStatus", "Horde_ReactiveArmorReset", function(ply)
