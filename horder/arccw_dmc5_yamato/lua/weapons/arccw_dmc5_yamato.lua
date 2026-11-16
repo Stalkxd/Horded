@@ -120,14 +120,14 @@ SWEP.Animations = {
 -- Swings by the direction the player moves in. time = until the next swing, hit = seconds
 -- into the swing when it lands, range/radius = reach and width, maxhits = enemies per swing.
 local G1, G2 = ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE, ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE2
-local FWD = { anims = { "slash" }, dmg = 125, time = 0.6, hit = 0.12, range = 100, radius = 60, maxhits = 4, gesture = G1 }
-local HEAVY = { anims = { "slash2" }, dmg = 260, time = 0.95, hit = 0.15, range = 110, radius = 80, maxhits = 8, gesture = G2 }
+local FWD = { anims = { "slash" }, dmg = 225, time = 0.6, hit = 0.12, range = 100, radius = 60, maxhits = 4, gesture = G1 }
+local HEAVY = { anims = { "slash2" }, dmg = 360, time = 0.95, hit = 0.15, range = 110, radius = 80, maxhits = 8, gesture = G2 }
 SWEP.YamatoSwings = {
     primary = {
         F = FWD,
         B = FWD,
-        L = { anims = { "hitlift1", "hitlift2", "hitlift3" }, dmg = 90, time = 0.35, hit = 0.05, range = 100, radius = 60, maxhits = 3, gesture = G1 },
-        R = { anims = { "hitright1", "hitright2", "hitright3" }, dmg = 90, time = 0.35, hit = 0.05, range = 100, radius = 60, maxhits = 3, gesture = G1 },
+        L = { anims = { "hitlift1", "hitlift2", "hitlift3" }, dmg = 190, time = 0.35, hit = 0.05, range = 100, radius = 60, maxhits = 3, gesture = G1 },
+        R = { anims = { "hitright1", "hitright2", "hitright3" }, dmg = 190, time = 0.35, hit = 0.05, range = 100, radius = 60, maxhits = 3, gesture = G1 },
     },
     secondary = {
         F = HEAVY,
@@ -151,6 +151,7 @@ SWEP.YamatoEnergy = {
     hurt = 5,           -- each time you take damage
     per_hit = 3,
     per_ability_hit = 1,
+    per_judgment_cut_hit = 5, -- up to 3 enemies, so at most 15 back of its 20 cost
     cost = {
         teleport = 10,
         judgment_cut = 20,
@@ -167,6 +168,7 @@ SWEP.YamatoComboRange = 600      -- how far the teleport reaches a launched enem
 SWEP.YamatoLaunchWindow = 1.5    -- seconds after the launcher to teleport to the enemy
 SWEP.YamatoFreezeTime = 2        -- how long a caught enemy hangs in the air
 SWEP.YamatoFreezeMax = 4         -- slashing it keeps it up, but never longer than this
+SWEP.YamatoAirComboSpeed = 0.4   -- swing delay multiplier while hanging in the air with a caught enemy
 SWEP.YamatoJCEDamage = 4000
 SWEP.YamatoJCERadius = 1400
 SWEP.YamatoJCECooldown = 60      -- seconds after Judgment Cut End before it can be used again
@@ -185,15 +187,42 @@ local function MoveDir(owner)
     return "F"
 end
 
+local function IsCharacter(ent)
+    return ent:IsNPC() or ent:IsPlayer() or ent:IsNextBot()
+end
+
+-- Players and anything on their side: owned by a player, or an NPC that likes players
+-- (minions, followers, friendly turrets). The sword never touches these.
+local function IsFriendly(ent)
+    if ent:IsPlayer() then return true end
+    local owner = ent:GetOwner()
+    if IsValid(owner) and owner:IsPlayer() then return true end
+    local nwowner = ent:GetNWEntity("Owner")
+    if IsValid(nwowner) and nwowner:IsPlayer() then return true end
+    if ent.PlayerFriendly == true then return true end -- VJ Base allies
+    local class = ent.VJ_NPC_Class
+    if istable(class) and table.HasValue(class, "CLASS_PLAYER_ALLY") then return true end
+    if SERVER and ent:IsNPC() then
+        for _, ply in ipairs(player.GetAll()) do
+            if ent:Disposition(ply) == D_LI then return true end
+        end
+    end
+    return false
+end
+
 local function CanDamage(owner, ent)
     if not IsValid(ent) or ent == owner or ent:IsWeapon() then return false end
-    if ent:GetOwner() == owner then return false end
-    if ent:IsPlayer() then return ent:Alive() end
+    if IsFriendly(ent) then return false end
     return ent:IsNPC() or ent:IsNextBot() or ent:Health() > 0
 end
 
-local function IsCharacter(ent)
-    return ent:IsNPC() or ent:IsPlayer() or ent:IsNextBot()
+-- Only hits on enemy characters fill Concentration, not props
+local function CountEnemies(list, n)
+    local count = 0
+    for i = 1, math.min(#list, n or #list) do
+        if IsCharacter(list[i]) then count = count + 1 end
+    end
+    return count
 end
 
 --------------------------------------------------------------------------------------------
@@ -333,7 +362,8 @@ function SWEP:YamatoHang(t)
     local owner = self:GetOwner()
     if CLIENT or not IsValid(owner) then return end
     if not self.YamatoHangUntil then self.YamatoOldGravity = owner:GetGravity() end
-    self.YamatoHangUntil = CurTime() + t
+    self.YamatoHangUntil = math.max(self.YamatoHangUntil or 0, CurTime() + t)
+    self:SetNW2Float("YamatoHangUntil", self.YamatoHangUntil) -- the client needs it for the swing speed
     owner:SetGravity(0.02)
     owner:SetVelocity(-owner:GetVelocity())
 end
@@ -342,6 +372,7 @@ function SWEP:YamatoStopHang()
     local owner = self:GetOwner()
     if not self.YamatoHangUntil then return end
     self.YamatoHangUntil = nil
+    self:SetNW2Float("YamatoHangUntil", 0)
     if IsValid(owner) then owner:SetGravity(self.YamatoOldGravity or 1) end
 end
 
@@ -362,7 +393,9 @@ function SWEP:YamatoAnim(key, pred)
     self:PlayAnimation(key, 1, pred, 0, false)
 end
 
-function SWEP:YamatoDamage(ent, dmg, pos, force)
+-- tr: a trace that hit ent; with it the damage goes through TraceAttack, so the hit group
+-- (head, limbs) counts and headshot multipliers and hooks apply
+function SWEP:YamatoDamage(ent, dmg, pos, force, tr)
     local owner = self:GetOwner()
     local info = DamageInfo()
     info:SetAttacker(owner)
@@ -371,9 +404,17 @@ function SWEP:YamatoDamage(ent, dmg, pos, force)
     info:SetDamageType(DMG_SLASH)
     info:SetDamagePosition(pos or ent:WorldSpaceCenter())
     info:SetDamageForce(force or (ent:WorldSpaceCenter() - owner:GetPos()):GetNormalized() * 5000)
-    ent:TakeDamageInfo(info)
+    if tr and tr.Entity == ent then
+        info:SetDamagePosition(tr.HitPos)
+        ent:DispatchTraceAttack(info, tr, tr.Normal)
+    else
+        ent:TakeDamageInfo(info)
+    end
     -- Every hit on an enemy held in the air keeps it up a little longer
-    if Frozen[ent] then self:YamatoFreeze(ent, 0.4) end
+    if Frozen[ent] then
+        self:YamatoFreeze(ent, 0.4)
+        if self.YamatoHangUntil then self:YamatoHang(math.min(0.4, Frozen[ent].untill - CurTime())) end
+    end
 end
 
 -- Area cut around a point, used by the abilities. Server only. Returns the entities it hit.
@@ -388,7 +429,8 @@ function SWEP:YamatoAoE(pos, radius, dmg, energy)
         end
     end
     if energy ~= false then
-        self:YamatoAddEnergy(math.min(#hit, 3) * self.YamatoEnergy.per_ability_hit)
+        local per = isnumber(energy) and energy or self.YamatoEnergy.per_ability_hit
+        self:YamatoAddEnergy(math.min(CountEnemies(hit), 3) * per)
     end
     return hit
 end
@@ -425,18 +467,33 @@ function SWEP:YamatoSlash(swing)
     end
     table.sort(targets, function(a, b) return a:GetPos():DistToSqr(eye) < b:GetPos():DistToSqr(eye) end)
 
+    -- The enemy under the crosshair is hit where you aim, so aiming at the head is a headshot.
+    -- The others in the swing are hit by a trace to their middle, so their limbs count too.
+    local aim = util.TraceLine({ start = eye, endpos = eye + fwd * (swing.range + 32), filter = owner, mask = MASK_SHOT })
+    if IsValid(aim.Entity) and CanDamage(owner, aim.Entity) and not seen[aim.Entity] then
+        seen[aim.Entity] = true
+        table.insert(targets, 1, aim.Entity)
+    end
+
     local hits = 0
     for _, ent in ipairs(targets) do
         if hits >= swing.maxhits then break end
+        local hittr
+        if aim.Entity == ent then
+            hittr = aim
+        else
+            local t = util.TraceLine({ start = eye, endpos = ent:WorldSpaceCenter(), filter = owner, mask = MASK_SHOT })
+            if t.Entity == ent then hittr = t end
+        end
         local pos = (ent == tr.Entity) and tr.HitPos or ent:NearestPoint(eye)
-        self:YamatoDamage(ent, swing.dmg, pos, fwd * 8000 + owner:GetRight() * math.Rand(-3000, 3000))
+        self:YamatoDamage(ent, swing.dmg, pos, fwd * 8000 + owner:GetRight() * math.Rand(-3000, 3000), hittr)
         hits = hits + 1
     end
 
     owner:LagCompensation(false)
 
     if hits > 0 then
-        self:YamatoAddEnergy(math.min(hits, 3) * self.YamatoEnergy.per_hit)
+        self:YamatoAddEnergy(math.min(CountEnemies(targets, hits), 3) * self.YamatoEnergy.per_hit)
         self:MyEmitSound(self.MeleeHitNPCSound, 75, 100, 1, CHAN_STATIC)
     else
         self:YamatoAddEnergy(-self.YamatoEnergy.miss, "a missed slash")
@@ -473,7 +530,7 @@ function SWEP:YamatoRapidSlash()
     for _, t in ipairs(steps) do
         timer.Simple(t, function()
             if not IsValid(self) or not self:YamatoActive() then return end
-            self:YamatoAoE(owner:GetPos(), 200, 34)
+            self:YamatoAoE(owner:GetPos(), 200, 134)
             if anims[t] then self:YamatoAnim(anims[t], false) end
             if t == 0.15 then owner:SetVelocity(push) end
         end)
@@ -483,7 +540,7 @@ function SWEP:YamatoRapidSlash()
         self:YamatoAnim("slash2", false)
         owner:ViewPunch(Angle(0, -260, 3))
         owner:SetAnimation(PLAYER_ATTACK1)
-        self:YamatoAoE(owner:GetPos(), 220, 120)
+        self:YamatoAoE(owner:GetPos(), 220, 220)
     end)
     return true
 end
@@ -501,14 +558,14 @@ function SWEP:YamatoLauncher()
 
     owner:ViewPunch(Angle(-30, -6, -4))
     self:YamatoIFrames(0.25)
-    for _, ent in ipairs(self:YamatoAoE(owner:GetPos() + owner:GetForward() * 60, 150, 80)) do
+    for _, ent in ipairs(self:YamatoAoE(owner:GetPos() + owner:GetForward() * 60, 150, 180)) do
         self:YamatoLaunch(ent)
     end
     timer.Simple(0.2, function()
         if not IsValid(self) or not self:YamatoActive() then return end
         if owner:KeyDown(IN_ATTACK2) then
             owner:SetVelocity(Vector(0, 0, 500))
-            self:YamatoAoE(owner:GetPos(), 200, 34)
+            self:YamatoAoE(owner:GetPos(), 200, 134)
         end
     end)
     return true
@@ -635,7 +692,7 @@ function SWEP:YamatoJudgmentCut()
         for _, ent in pairs(rings) do if IsValid(ent) then ent:SetModelScale(s, t) end end
     end
     timer.Simple(0.01, function()
-        if IsValid(self) then self:YamatoAoE(pos, 150, 95) end
+        if IsValid(self) then self:YamatoAoE(pos, 150, 195, self.YamatoEnergy.per_judgment_cut_hit) end
         scale(15, 0.005)
     end)
     timer.Simple(0.1, function() scale(0.01, 0.05) end)
@@ -788,8 +845,11 @@ function SWEP:Bash(melee2)
 
     self.Primary.Automatic = true
     self:YamatoAnim(anim, true)
-    self:SetNextPrimaryFire(CurTime() + swing.time)
-    self:SetNextSecondaryFire(CurTime() + swing.time)
+    -- Much faster swings while hanging in the air with a caught enemy
+    local delay = swing.time
+    if CurTime() < self:GetNW2Float("YamatoHangUntil", 0) then delay = delay * self.YamatoAirComboSpeed end
+    self:SetNextPrimaryFire(CurTime() + delay)
+    self:SetNextSecondaryFire(CurTime() + delay)
     owner:DoAnimationEvent(swing.gesture)
     owner:SetAnimation(PLAYER_ATTACK1)
     if SERVER then owner:ViewPunch(Angle(1, (dir == "L" and -5) or (dir == "R" and 5) or 2, 0)) end
