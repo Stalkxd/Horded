@@ -393,7 +393,9 @@ function SWEP:YamatoAnim(key, pred)
     self:PlayAnimation(key, 1, pred, 0, false)
 end
 
-function SWEP:YamatoDamage(ent, dmg, pos, force)
+-- tr: a trace that hit ent; with it the damage goes through TraceAttack, so the hit group
+-- (head, limbs) counts and headshot multipliers and hooks apply
+function SWEP:YamatoDamage(ent, dmg, pos, force, tr)
     local owner = self:GetOwner()
     local info = DamageInfo()
     info:SetAttacker(owner)
@@ -402,7 +404,12 @@ function SWEP:YamatoDamage(ent, dmg, pos, force)
     info:SetDamageType(DMG_SLASH)
     info:SetDamagePosition(pos or ent:WorldSpaceCenter())
     info:SetDamageForce(force or (ent:WorldSpaceCenter() - owner:GetPos()):GetNormalized() * 5000)
-    ent:TakeDamageInfo(info)
+    if tr and tr.Entity == ent then
+        info:SetDamagePosition(tr.HitPos)
+        ent:DispatchTraceAttack(info, tr, tr.Normal)
+    else
+        ent:TakeDamageInfo(info)
+    end
     -- Every hit on an enemy held in the air keeps it up a little longer
     if Frozen[ent] then
         self:YamatoFreeze(ent, 0.4)
@@ -460,11 +467,26 @@ function SWEP:YamatoSlash(swing)
     end
     table.sort(targets, function(a, b) return a:GetPos():DistToSqr(eye) < b:GetPos():DistToSqr(eye) end)
 
+    -- The enemy under the crosshair is hit where you aim, so aiming at the head is a headshot.
+    -- The others in the swing are hit by a trace to their middle, so their limbs count too.
+    local aim = util.TraceLine({ start = eye, endpos = eye + fwd * (swing.range + 32), filter = owner, mask = MASK_SHOT })
+    if IsValid(aim.Entity) and CanDamage(owner, aim.Entity) and not seen[aim.Entity] then
+        seen[aim.Entity] = true
+        table.insert(targets, 1, aim.Entity)
+    end
+
     local hits = 0
     for _, ent in ipairs(targets) do
         if hits >= swing.maxhits then break end
+        local hittr
+        if aim.Entity == ent then
+            hittr = aim
+        else
+            local t = util.TraceLine({ start = eye, endpos = ent:WorldSpaceCenter(), filter = owner, mask = MASK_SHOT })
+            if t.Entity == ent then hittr = t end
+        end
         local pos = (ent == tr.Entity) and tr.HitPos or ent:NearestPoint(eye)
-        self:YamatoDamage(ent, swing.dmg, pos, fwd * 8000 + owner:GetRight() * math.Rand(-3000, 3000))
+        self:YamatoDamage(ent, swing.dmg, pos, fwd * 8000 + owner:GetRight() * math.Rand(-3000, 3000), hittr)
         hits = hits + 1
     end
 
