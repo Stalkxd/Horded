@@ -16,6 +16,10 @@ local horde_force_spawn_enemies = {}
 
 HORDE.horde_boss = nil
 HORDE.horde_boss_name = nil
+HORDE.horde_boss_wave = nil
+-- Boss rush: names of bosses already killed this run, so later waves pick someone new.
+HORDE.defeated_bosses = {}
+HORDE.last_defeated_boss = nil
 HORDE.finished_objs = 0
 HORDE.max_objs = 0
 local horde_boss_spawned = false
@@ -253,6 +257,10 @@ function HORDE:OnEnemyKilled(victim, killer, weapon)
         end
 
         if boss_properties then
+            if boss_properties.is_boss and HORDE.horde_boss_name then
+                HORDE.defeated_bosses[HORDE.horde_boss_name] = true
+                HORDE.last_defeated_boss = HORDE.horde_boss_name
+            end
             HORDE.horde_boss = nil
             horde_boss_properties = nil
             if boss_properties.end_wave and boss_properties.end_wave == true then
@@ -430,6 +438,9 @@ function HORDE:HardResetDirector()
     horde_boss_properties = nil
     horde_boss_reposition = false
     HORDE.horde_boss_name = nil
+    HORDE.horde_boss_wave = nil
+    HORDE.defeated_bosses = {}
+    HORDE.last_defeated_boss = nil
     if boss_music_loop then
         boss_music_loop:Stop()
         boss_music_loop = nil
@@ -1096,7 +1107,8 @@ function HORDE:SpawnBoss(enemies, valid_nodes)
         local enemy_wave = HORDE.enemy_wave_index or HORDE:ResolveEnemyWaveIndex()
         local spawned_enemy
 
-        local enemy = HORDE.bosses[HORDE.horde_boss_name .. tostring(enemy_wave)]
+        local enemy = HORDE.horde_boss_wave and HORDE.bosses[HORDE.horde_boss_name .. tostring(HORDE.horde_boss_wave)]
+            or HORDE.bosses[HORDE.horde_boss_name .. tostring(enemy_wave)]
         if not enemy then
             if HORDE.wave666_mode then
                 enemy = HORDE.bosses[HORDE.horde_boss_name .. "10"]
@@ -1436,6 +1448,74 @@ function HORDE:InBreak()
     return horde_in_break
 end
 
+local function PickWeightedBoss(pool)
+    if not pool or next(pool) == nil then return nil end
+    local total = 0
+    for _, weight in pairs(pool) do total = total + (tonumber(weight) or 0) end
+    if total <= 0 then return next(pool) end
+    local roll, cumulative = HORDE:Random() * total, 0
+    local last
+    for name, weight in pairs(pool) do
+        cumulative = cumulative + (tonumber(weight) or 0)
+        last = name
+        if roll <= cumulative then return name end
+    end
+    return last
+end
+
+-- Boss rush: choose a boss nobody has beaten yet this run.
+-- Order of preference:
+--   1. an undefeated boss from this wave's own boss list (normal weights);
+--   2. an undefeated boss registered for a later (harder or equal) wave;
+--   3. an undefeated boss from any wave;
+--   4. everyone has been beaten: start a fresh cycle, only avoiding the boss
+--      killed last wave so the same fight never happens twice in a row.
+-- Returns the boss name and the wave slot it is registered under.
+function HORDE:PickBossRushBoss(wave)
+    local defeated = HORDE.defeated_bosses or {}
+
+    local own = {}
+    for name, weight in pairs(HORDE.bosses_normalized[wave] or {}) do
+        if not defeated[name] and (tonumber(weight) or 0) > 0 then own[name] = weight end
+    end
+    local picked = PickWeightedBoss(own)
+    if picked then return picked, wave end
+
+    -- Borrow from other waves. Group by name so a boss listed in several waves
+    -- is one candidate, and remember the closest wave it is registered for.
+    local function borrow(min_wave)
+        local pool, slot_of = {}, {}
+        for _, enemy in pairs(HORDE.bosses or {}) do
+            if istable(enemy) and enemy.name and enemy.wave and enemy.wave ~= HORDE.WAVE666_ENEMY_WAVE
+                and not defeated[enemy.name] and enemy.wave >= min_wave
+                and (tonumber(enemy.weight) or 1) > 0 then
+                pool[enemy.name] = (pool[enemy.name] or 0) + (tonumber(enemy.weight) or 1)
+                local cur = slot_of[enemy.name]
+                if not cur or math.abs(enemy.wave - wave) < math.abs(cur - wave) then
+                    slot_of[enemy.name] = enemy.wave
+                end
+            end
+        end
+        local name = PickWeightedBoss(pool)
+        if name then return name, slot_of[name] end
+    end
+
+    local name, slot = borrow(wave)
+    if name then return name, slot end
+    name, slot = borrow(-math.huge)
+    if name then return name, slot end
+
+    -- Pool exhausted: reset it and pick from this wave again.
+    HORDE.defeated_bosses = {}
+    local fresh = {}
+    for n, weight in pairs(HORDE.bosses_normalized[wave] or {}) do
+        if n ~= HORDE.last_defeated_boss and (tonumber(weight) or 0) > 0 then fresh[n] = weight end
+    end
+    picked = PickWeightedBoss(fresh)
+    if picked then return picked, wave end
+    return nil
+end
+
 function HORDE:WaveStart()
     HORDE:ApplyPendingConfigs()
 
@@ -1529,21 +1609,25 @@ function HORDE:WaveStart()
     HORDE.current_break_time = -1
     HORDE.killed_enemies_this_wave = 0
 
+    if HORDE.current_wave <= 1 then
+        HORDE.defeated_bosses = {}
+        HORDE.last_defeated_boss = nil
+    end
+
     local has_boss = HORDE.bosses_normalized[current_wave] and not table.IsEmpty(HORDE.bosses_normalized[current_wave])
     if has_boss then
-        local p = HORDE:Random()
-        local p_cum = 0
-        local picked
-        for name, weight in pairs(HORDE.bosses_normalized[current_wave]) do
-            p_cum = p_cum + weight
-            if p <= p_cum then
-                picked = name
-                break
-            end
+        local picked, picked_wave
+        if HORDE.boss_rush_mode then
+            picked, picked_wave = HORDE:PickBossRushBoss(current_wave)
+        end
+        if not picked then
+            picked = PickWeightedBoss(HORDE.bosses_normalized[current_wave])
+            picked_wave = current_wave
         end
         HORDE.horde_boss_name = picked or next(HORDE.bosses_normalized[current_wave])
+        HORDE.horde_boss_wave = picked_wave or current_wave
 
-        horde_boss_properties = HORDE.bosses[HORDE.horde_boss_name .. current_wave].boss_properties
+        horde_boss_properties = HORDE.bosses[HORDE.horde_boss_name .. HORDE.horde_boss_wave].boss_properties
         if horde_boss_properties.enemies_spawn_threshold <= 0 and horde_boss_properties.end_wave == true then
             HORDE.total_enemies_this_wave = 1
             HORDE.total_enemies_this_wave_fixed = 1
@@ -1608,6 +1692,7 @@ function HORDE:WaveEnd()
         and (HORDE.current_wave % 10 == 0)
     HORDE.horde_boss = nil
     HORDE.horde_boss_name = nil
+    HORDE.horde_boss_wave = nil
     horde_in_break = nil
     horde_boss_spawned = false
     horde_boss_properties = nil
