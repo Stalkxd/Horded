@@ -247,6 +247,7 @@ local function ApplyDifficulty()
     HORDE.unarmed_mode = false
     HORDE.wave666_mode = false
     HORDE.purism_mode = false
+    HORDE.boss_rush_mode = false
     HORDE.budget_mode = false
     HORDE.hundred_scale_per_wave = 0
     HORDE.victory_skulls = nil
@@ -306,6 +307,8 @@ local function ApplyDifficulty()
         HORDE.max_waves = d.MaxWaves or 10
         HORDE.purism_mode = true
     end
+
+    HORDE.boss_rush_mode = string.upper(tostring(d.Name)) == "BOSS_RUSH"
 
     HORDE.extended_waves = HORDE.max_waves > HORDE.max_max_waves
     HORDE._hundred_mutation_bonus = 0
