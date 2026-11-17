@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$basetexture" "arccw/weaponicons/arccw_dmc5_yamato"
+	"$translucent" 1
+	"$vertexalpha" 1
+}
