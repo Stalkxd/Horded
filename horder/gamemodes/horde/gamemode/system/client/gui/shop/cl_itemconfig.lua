@@ -1100,6 +1100,15 @@ function PANEL:LoadItem(item)
         elseif t == HORDE.ENTITY_PROPERTY_GADGET then etype = "gadget"
         end
     end
+    -- Armor and special upgrade items have no entry in the type picker; keep their
+    -- properties as they are instead of saving them back as a weapon.
+    local preserved_ep
+    if item.entity_properties then
+        local t = item.entity_properties.type
+        if t == HORDE.ENTITY_PROPERTY_ARMOR or t == HORDE.ENTITY_PROPERTY_SPECIAL_UPGRADE then
+            preserved_ep = table.Copy(item.entity_properties)
+        end
+    end
     self.e = {
         entity_type    = etype,
         class          = item.class         or "",
@@ -1127,6 +1136,7 @@ function PANEL:LoadItem(item)
         is_arccw  = item.entity_properties and item.entity_properties.is_arccw_attachment or false,
         arccw_type= item.entity_properties and item.entity_properties.arccw_attachment_type or "",
     }
+    self.e.preserved_ep = preserved_ep
     self:_PopRight()
 end
 
@@ -1314,6 +1324,9 @@ function PANEL:_DoSave()
         ep.x = e.drop_x; ep.z = e.drop_z; ep.yaw = e.drop_yaw; ep.limit = e.drop_limit
     elseif e.entity_type == "gadget" then
         ep.type = HORDE.ENTITY_PROPERTY_GADGET
+    end
+    if e.preserved_ep and e.entity_type == "weapon" then
+        ep = table.Copy(e.preserved_ep)
     end
 
     local whitelist = {}
