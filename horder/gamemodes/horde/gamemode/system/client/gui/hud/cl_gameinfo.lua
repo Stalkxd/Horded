@@ -119,6 +119,7 @@ function HORDE:PlayNotification(text, type, icon, col)
         surface.DrawTexturedRect(ScreenScale(2), ScreenScale(2), ScreenScale(10), ScreenScale(10))
     end
     local anim = Derma_Anim("Linear", main, function(pnl, anim, delta, data)
+        if not IsValid(pnl) then return end
         pnl:SetPos(ScrW() - s - ScreenScale(8), inQuad(delta, y_start, - ScreenScale(30)))
         pnl:SetAlpha(delta * 255)
     end)
@@ -132,7 +133,10 @@ function HORDE:PlayNotification(text, type, icon, col)
         anim:Run()
     end
     timer.Simple(5, function ()
+        -- The panel may already be gone (e.g. replaced by another banner).
+        if not IsValid(main) then HORDE.Notifications_Count = math.max(0, HORDE.Notifications_Count - 1) return end
         local anim2 = Derma_Anim("Linear", main, function(pnl, anim, delta, data)
+            if not IsValid(pnl) then return end
             pnl:SetAlpha(255 - delta * 255)
         end)
         anim2:Start(0.5)
@@ -145,7 +149,7 @@ function HORDE:PlayNotification(text, type, icon, col)
             end
         end
         timer.Simple(0.5, function ()
-            main:Remove()
+            if IsValid(main) then main:Remove() end
             HORDE.Notifications_Count = math.max(0, HORDE.Notifications_Count - 1)
         end)
     end)
@@ -174,6 +178,7 @@ function HORDE:PlayWaveNotification(wave)
         draw.SimpleText(text, "Horde_Wave_Banner", ScrW()/2, ScreenScale(12), color_white, TEXT_ALIGN_CENTER)
     end
     local anim = Derma_Anim("Linear", main, function(pnl, anim, delta, data)
+        if not IsValid(pnl) then return end
         pnl:SetTall(delta * h)
         pnl:SetPos(0, y_start - h/2 * delta)
         pnl:SetAlpha(delta * 255)
@@ -188,7 +193,10 @@ function HORDE:PlayWaveNotification(wave)
         anim:Run()
     end
     timer.Simple(5, function ()
+        -- The panel may already be gone (e.g. replaced by another banner).
+        if not IsValid(main) then return end
         local anim2 = Derma_Anim("Linear", main, function(pnl, anim, delta, data)
+            if not IsValid(pnl) then return end
             pnl:SetTall((1 - delta) * h)
             pnl:SetPos(0, y_start - h/2 + h/2 * delta)
             pnl:SetAlpha(255 - delta * 255)
@@ -236,6 +244,7 @@ function HORDE:DisplayObjective(text, type, icon, col)
         surface.DrawTexturedRect(ScreenScale(2), ScreenScale(2), ScreenScale(10), ScreenScale(10))
     end
     local anim = Derma_Anim("Linear", main, function(pnl, anim, delta, data)
+        if not IsValid(pnl) then return end
         pnl:SetPos(ScrW() - s - ScreenScale(8), inQuad(delta, y_start, - ScreenScale(30)))
         pnl:SetAlpha(delta * 255)
     end)
@@ -249,7 +258,10 @@ function HORDE:DisplayObjective(text, type, icon, col)
         anim:Run()
     end
     timer.Simple(5, function ()
+        -- The panel may already be gone (e.g. replaced by another banner).
+        if not IsValid(main) then HORDE.Notifications_Count = math.max(0, HORDE.Notifications_Count - 1) return end
         local anim2 = Derma_Anim("Linear", main, function(pnl, anim, delta, data)
+            if not IsValid(pnl) then return end
             pnl:SetAlpha(255 - delta * 255)
         end)
         anim2:Start(0.5)
@@ -262,7 +274,7 @@ function HORDE:DisplayObjective(text, type, icon, col)
             end
         end
         timer.Simple(0.5, function ()
-            main:Remove()
+            if IsValid(main) then main:Remove() end
         end)
         HORDE.Notifications_Count = math.max(0, HORDE.Notifications_Count - 1)
     end)
