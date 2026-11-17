@@ -368,8 +368,12 @@ function ENT:Draw()
 			table.insert( cir, { x = x +math.sin( a )*radius, y = y +math.cos( a )*radius, u = math.sin( a )/2 +0.5, v = math.cos( a )/2 +0.5 } )
 		end
 		local a = math.rad( 0 )
-		surface.SetMaterial( Mat ) surface.SetDrawColor( 255, 200, 25, 255*ler )
-		surface.DrawPoly( cir )
+		-- DrawPoly errors with fewer than three vertices (0% progress or radius 0),
+		-- which would also skip cam.End2D below.
+		if #cir >= 3 and radius > 0 then
+			surface.SetMaterial( Mat ) surface.SetDrawColor( 255, 200, 25, 255*ler )
+			surface.DrawPoly( cir )
+		end
 		draw.TextShadow( {
 			text = math.Clamp( math.Round( self._Ler2 ), 0, 100 ).."%",
 			pos = { x, y },

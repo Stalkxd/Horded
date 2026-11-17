@@ -130,6 +130,49 @@ function ENT:Think()
     self._Ler2 = Lerp(0.1, self._Ler2, self:GetSoulPercent())
 end
 
+local function DrawSoulOverlay(self, x, y, radius, seg, per, ler)
+    for i = 1, 6 do
+        surface.DrawCircle(x, y, radius - 7 + i, Color(0, 0, 0, 192 * ler))
+    end
+
+    local cir = { { x = x, y = y, u = 0.5, v = 0.5 } }
+    for i = 0, seg do
+        if i > math.ceil(seg * per) then break end
+        local a = math.rad((i / seg) * -360 + 180)
+        table.insert(cir, {
+            x = x + math.sin(a) * radius,
+            y = y + math.cos(a) * radius,
+            u = math.sin(a) / 2 + 0.5,
+            v = math.cos(a) / 2 + 0.5
+        })
+    end
+    -- At 0% (just placed) or with the overlay still opening (radius 0) there is no arc yet,
+    -- and DrawPoly errors on fewer than three vertices.
+    if #cir >= 3 and radius > 0 then
+        surface.SetMaterial(RingMat)
+        surface.SetDrawColor(255, 200, 25, 255 * ler)
+        surface.DrawPoly(cir)
+    end
+
+    draw.TextShadow({
+        text = math.Clamp(math.Round(tonumber(self._Ler2) or 0), 0, 100) .. "%",
+        pos = { x, y },
+        font = "Trebuchet24",
+        xalign = TEXT_ALIGN_CENTER,
+        yalign = TEXT_ALIGN_CENTER,
+        color = Color(255, 200, 25, ler * 255)
+    }, 1, ler * 255)
+
+    draw.TextShadow({
+        text = self:GetNWString("HordeSoulTargetName", ""),
+        pos = { x, y - ler * 52 },
+        font = "TargetID",
+        xalign = TEXT_ALIGN_CENTER,
+        yalign = TEXT_ALIGN_CENTER,
+        color = Color(255, 200, 25, ler * 255)
+    }, 1, ler * 255)
+end
+
 function ENT:Draw()
     if not IsValid(self.SoulDisplayModel) then
         self:CreateDisplayModel()
@@ -193,50 +236,12 @@ function ENT:Draw()
 
     cam.Start2D()
     render.OverrideDepthEnable(true, false)
-
-    for i = 1, 6 do
-        surface.DrawCircle(x, y, radius - 7 + i, Color(0, 0, 0, 192 * ler))
-    end
-
-    local cir = { { x = x, y = y, u = 0.5, v = 0.5 } }
-    for i = 0, seg do
-        if i > math.ceil(seg * per) then break end
-        local a = math.rad((i / seg) * -360 + 180)
-        table.insert(cir, {
-            x = x + math.sin(a) * radius,
-            y = y + math.cos(a) * radius,
-            u = math.sin(a) / 2 + 0.5,
-            v = math.cos(a) / 2 + 0.5
-        })
-    end
-    -- At 0% (just placed) or with the overlay still opening (radius 0) there is no arc yet,
-    -- and DrawPoly errors on fewer than three vertices.
-    if #cir >= 3 and radius > 0 then
-        surface.SetMaterial(RingMat)
-        surface.SetDrawColor(255, 200, 25, 255 * ler)
-        surface.DrawPoly(cir)
-    end
-
-    draw.TextShadow({
-        text = math.Clamp(math.Round(self._Ler2), 0, 100) .. "%",
-        pos = { x, y },
-        font = "Trebuchet24",
-        xalign = TEXT_ALIGN_CENTER,
-        yalign = TEXT_ALIGN_CENTER,
-        color = Color(255, 200, 25, ler * 255)
-    }, 1, ler * 255)
-
-    draw.TextShadow({
-        text = self:GetNWString("HordeSoulTargetName", ""),
-        pos = { x, y - ler * 52 },
-        font = "TargetID",
-        xalign = TEXT_ALIGN_CENTER,
-        yalign = TEXT_ALIGN_CENTER,
-        color = Color(255, 200, 25, ler * 255)
-    }, 1, ler * 255)
-
+    -- Run the 2D drawing protected so an error can never skip cam.End2D
+    -- (that leaves the 2D context open and breaks the rest of the frame).
+    local ok, err = pcall(DrawSoulOverlay, self, x, y, radius, seg, per, ler)
     render.OverrideDepthEnable(false)
     cam.End2D()
+    if not ok then ErrorNoHalt("[Horde] Soul Rebooter pylon overlay: " .. tostring(err) .. "\n") end
 end
 
 function ENT:OnRemove()
