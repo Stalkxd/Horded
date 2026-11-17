@@ -290,6 +290,19 @@ local function GetStarterWeapons()
     end
 end
 
+-- Older saved configs (and the item editor, which has no "armor" type) list some armor,
+-- e.g. Full Kevlar Armor, as a weapon, so buying it silently did nothing. Armor items
+-- always keep the armor properties from their definition.
+function HORDE:RestoreArmorProperties(item, base)
+    if not istable(item) or not istable(base) then return end
+    local base_ep = base.entity_properties
+    local item_ep = item.entity_properties
+    if istable(base_ep) and base_ep.type == HORDE.ENTITY_PROPERTY_ARMOR
+        and not (istable(item_ep) and item_ep.type == HORDE.ENTITY_PROPERTY_ARMOR) then
+        item.entity_properties = table.Copy(base_ep)
+    end
+end
+
 local function GetItemsData()
     if not SERVER then return end
     if not file.IsDir("horde", "DATA") then
@@ -328,6 +341,7 @@ local function GetItemsData()
                                 item[fn] = base[fn]
                             end
                         end
+                        HORDE:RestoreArmorProperties(item, base)
                     end
                     HORDE.items[class] = item
                 end
@@ -587,6 +601,7 @@ if SERVER then
                             item[fn] = base[fn]
                         end
                     end
+                    HORDE:RestoreArmorProperties(item, base)
                 end
             end
             HORDE.items = tbl
