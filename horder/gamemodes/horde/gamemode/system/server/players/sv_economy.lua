@@ -73,6 +73,19 @@ function plymeta:Horde_SetMaxHealth(base)
     end)
 end
 
+-- Special armor that raises maximum armor while worn, so batteries, Full Kevlar Armor
+-- and armor regen refill up to the higher cap instead of stopping at 100%.
+HORDE.SPECIAL_ARMOR_MAX_BONUS = {
+    armor_heavy = 0.25, -- Bulldozer Suit: 125% maximum armor
+}
+
+hook.Add("Horde_OnSetMaxArmor", "Horde_SpecialArmorMaxBonus", function (ply, bonus)
+    local inc = ply.Horde_Special_Armor and HORDE.SPECIAL_ARMOR_MAX_BONUS[ply.Horde_Special_Armor]
+    if inc then
+        bonus.increase = bonus.increase + inc
+    end
+end)
+
 function plymeta:Horde_SetMaxArmor(base)
     timer.Simple(0, function ()
         if not self:IsValid() then return end
@@ -779,9 +792,18 @@ net.Receive("Horde_BuyItem", function (len, ply)
                 if item.OnPickup then
                     item.OnPickup(ply, item)
                 end
-                ply:SetArmor(ply:GetMaxArmor() * item.entity_properties.armor / 100)
-                ply:Horde_SetMaxHealth()
-                ply:Horde_SetMaxArmor()
+                if HORDE.SPECIAL_ARMOR_MAX_BONUS[item.class] then
+                    -- This suit raises maximum armor: recompute the max first, then fill to it.
+                    ply:Horde_SetMaxHealth()
+                    ply:Horde_SetMaxArmor()
+                    timer.Simple(0, function ()
+                        if IsValid(ply) then ply:SetArmor(ply:GetMaxArmor()) end
+                    end)
+                else
+                    ply:SetArmor(ply:GetMaxArmor() * item.entity_properties.armor / 100)
+                    ply:Horde_SetMaxHealth()
+                    ply:Horde_SetMaxArmor()
+                end
                 ply:Horde_AddMoney(-price)
                 ply:Horde_AddSkullTokens(-skull_tokens)
                 ply:Horde_SyncEconomy()
