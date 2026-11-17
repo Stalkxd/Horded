@@ -15,8 +15,9 @@ PERK.OwnerHooks.Horde_OnPlayerDamageTaken = function (ply, dmginfo, bonus)
     local damage = dmginfo:GetDamage()
     if damage <= 0 then return end
 
-    -- Fire from your own or a teammate's weapons (blaster, flamethrower...) only heals
-    -- a flat 1 health per hit, so you can't sustain yourself by shooting your own fire.
+    -- Fire from your own weapons (blaster, flamethrower...) only heals a flat 1 health
+    -- per hit, so you can't sustain yourself by shooting your own fire. A teammate's fire
+    -- is blocked before this hook and heals through Horde_OnPlayerFriendlyFireTaken below.
     local attacker = dmginfo:GetAttacker()
     local heal
     if IsValid(attacker) and attacker:IsPlayer() then
@@ -25,4 +26,12 @@ PERK.OwnerHooks.Horde_OnPlayerDamageTaken = function (ply, dmginfo, bonus)
         heal = math.max(1, damage * 0.06)
     end
     HORDE:OnPlayerHeal(ply, HealInfo:New({amount = heal, healer = ply}))
+end
+
+-- Teammates' fire never damages you, so it doesn't reach Horde_OnPlayerDamageTaken.
+-- It still heals a flat 1 health per hit.
+PERK.OwnerHooks.Horde_OnPlayerFriendlyFireTaken = function (ply, dmginfo)
+    if not ply:Horde_GetPerk("cremator_positron_array") then return end
+    if not HORDE:IsFireDamage(dmginfo) then return end
+    HORDE:OnPlayerHeal(ply, HealInfo:New({amount = 1, healer = ply}))
 end

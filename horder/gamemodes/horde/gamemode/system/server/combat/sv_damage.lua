@@ -352,6 +352,20 @@ hook.Add("PlayerShouldTakeDamage", "Horde_SpectatorNoDamage", function(ply, atta
     end
 end)
 
+function HORDE:IsFriendlyFire(ply, dmg)
+    local attacker = dmg:GetAttacker()
+    return IsValid(attacker) and attacker:IsPlayer() and attacker ~= ply
+end
+
+-- Runs Horde_OnPlayerFriendlyFireTaken once for a teammate's hit that is about to be
+-- blocked. The damage itself is never applied.
+function HORDE:OnPlayerFriendlyFire(ply, dmg)
+    if not IsValid(ply) or not ply:Alive() then return end
+    if dmg:GetDamageCustom() ~= 0 then return end
+    if dmg:GetDamage() <= 0.5 then return end
+    hook.Run("Horde_OnPlayerFriendlyFireTaken", ply, dmg)
+end
+
 hook.Add("EntityTakeDamage", "Horde_ApplyDamageTaken", function(target, dmg)
     if not target:IsValid() or not target:IsPlayer() then return end
     if dmg:GetDamageCustom() ~= 0 then return true end
@@ -360,6 +374,15 @@ hook.Add("EntityTakeDamage", "Horde_ApplyDamageTaken", function(target, dmg)
     if not ply:Alive()
         or ply:GetObserverMode() ~= OBS_MODE_NONE
         or ply:GetMoveType() == MOVETYPE_OBSERVER then
+        return true
+    end
+
+    -- Teammates never hurt each other, but perks that react to friendly fire
+    -- (Positron Array healing from a teammate's fire) still get to see the hit.
+    -- Horde_EntityTakeDamage blocks the same hits; both go through this helper so
+    -- the result doesn't depend on which EntityTakeDamage hook happens to run first.
+    if HORDE:IsFriendlyFire(ply, dmg) then
+        HORDE:OnPlayerFriendlyFire(ply, dmg)
         return true
     end
 

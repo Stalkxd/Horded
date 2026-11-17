@@ -416,6 +416,7 @@ hook.Add("EntityTakeDamage", "Horde_EntityTakeDamage", function(target, dmg)
                 dmg:ScaleDamage(dmg:GetAttacker():GetVar("damage_scale"))
             end
         elseif dmg:GetAttacker():IsPlayer() and dmg:GetAttacker() ~= target then
+            HORDE:OnPlayerFriendlyFire(target, dmg)
             return true
         elseif dmg:IsDamageType(DMG_CRUSH) then
             dmg:SetDamage(math.min(dmg:GetDamage(), 20))
