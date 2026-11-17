@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$basetexture" "arccw/weaponicons/arccw_ww_zodsword"
+	"$translucent" 1
+	"$vertexalpha" 1
+}
