@@ -820,7 +820,7 @@ LANGUAGE["Perk_Title_cremator_positron_array"] = [[Positron Array]]
 LANGUAGE["Perk_cremator_positron_array"] = [[
 Immune to Fire damage.
 Absorb {1} of Fire damage taken as health.
-Fire from players heals {2} health per hit.]]
+Fire from players heals {2} health per hit, up to {3} health per second.]]
 
 LANGUAGE["Perk_Title_cremator_entropy_shield"] = [[Entropy Shield]]
 LANGUAGE["Perk_cremator_entropy_shield"] = [[Gain an Entropy Shield that reduces damage taken on hit.

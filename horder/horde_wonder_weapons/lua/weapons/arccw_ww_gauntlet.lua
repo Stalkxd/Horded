@@ -25,14 +25,14 @@ SWEP.HullSize = 16
 SWEP.TracerNum = 0
 SWEP.Penetration = 0
 
-SWEP.Primary.ClipSize = 200
-SWEP.Primary.DefaultClip = 200
+SWEP.Primary.ClipSize = 300
+SWEP.Primary.DefaultClip = 300
 SWEP.Primary.Ammo = "none"
 SWEP.Delay = 60 / 700
 SWEP.WW_NoReload = true
 SWEP.WW_NoSights = true
-SWEP.WW_Regen = 12
-SWEP.WW_RegenDelay = 0.5
+SWEP.WW_Regen = 30
+SWEP.WW_RegenDelay = 0.25
 
 SWEP.WW_DashCost = 20
 SWEP.WW_DashDamage = 500

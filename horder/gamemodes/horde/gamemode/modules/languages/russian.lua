@@ -1019,7 +1019,7 @@ LANGUAGE["Perk_Title_cremator_positron_array"] = [[Позитронная реш
 LANGUAGE["Perk_cremator_positron_array"] = [[
 Иммунитет к урону от огня.
 Вы впитываете {1} получаемого урона от огня в качестве здоровья.
-Огонь от игроков лечит на {2} здоровья за попадание.]]
+Огонь от игроков лечит на {2} здоровья за попадание, не более {3} здоровья в секунду.]]
 
 LANGUAGE["Perk_Title_cremator_entropy_shield"] = [[Энтропийный щит]]
 LANGUAGE["Perk_cremator_entropy_shield"] = [[
