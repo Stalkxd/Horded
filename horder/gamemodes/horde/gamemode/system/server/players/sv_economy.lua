@@ -628,7 +628,7 @@ net.Receive("Horde_BuyItem", function (len, ply)
     local level_satisfy = true
     if levels and (HORDE.disable_levels_restrictions == 0) then
         for c, level in pairs(levels) do
-            if ply:Horde_GetLevel(c) < level then
+            if HORDE:IsLevelClass(c) and ply:Horde_GetLevel(c) < level then
                 level_satisfy = false
                 break
             end

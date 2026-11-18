@@ -403,7 +403,10 @@ Complexity: EASY
 
 Attacks have {5} chance to Ignite enemies.
 Ignite base duration is {6} and deals damage over time based on hit damage.
-Fire damage has {7} Ignite chance.]]
+Fire damage has {7} Ignite chance.
+
+Like a Demolition's explosives, your fire burns you too: Fire damage you deal
+within {8} units of yourself splashes back up to {9} of it on you.]]
 
 LANGUAGE["Perk_psycho_base"] = [[
 The Psycho class focuses on dealing critical damage with both melee and ranged weapons.
@@ -818,9 +821,9 @@ LANGUAGE["Perk_cremator_napalm"] = [[
 LANGUAGE["Perk_Title_Cremator_Tier_2"] = [[Energy Absorption]]
 LANGUAGE["Perk_Title_cremator_positron_array"] = [[Positron Array]]
 LANGUAGE["Perk_cremator_positron_array"] = [[
-Immune to Fire damage.
-Absorb {1} of Fire damage taken as health.
-Fire from players heals {2} health per hit.]]
+{1} increased Fire damage resistance.
+Absorb {2} of Fire damage from enemies as health.
+Fire from players hurts you and does not heal.]]
 
 LANGUAGE["Perk_Title_cremator_entropy_shield"] = [[Entropy Shield]]
 LANGUAGE["Perk_cremator_entropy_shield"] = [[Gain an Entropy Shield that reduces damage taken on hit.
