@@ -583,8 +583,9 @@ LANGUAGE["Perk_cremator_napalm"] = [[
 LANGUAGE["Perk_Title_Cremator_Tier_2"] = [[Absorción de Energía]]
 LANGUAGE["Perk_Title_cremator_positron_array"] = [[Formación de Positrones]]
 LANGUAGE["Perk_cremator_positron_array"] = [[
-Inmune al daño de Fuego.
-Absorbes {1} del daño de Fuego recibido como vida.]]
+{1} más de resistencia al daño de Fuego.
+Absorbes {2} del daño de Fuego de los enemigos como vida.
+El fuego de los jugadores te hace daño y no cura.]]
 
 LANGUAGE["Perk_Title_cremator_entropy_shield"] = [[Escudo de Entropía]]
 

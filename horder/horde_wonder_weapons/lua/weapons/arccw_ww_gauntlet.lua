@@ -25,14 +25,15 @@ SWEP.HullSize = 16
 SWEP.TracerNum = 0
 SWEP.Penetration = 0
 
-SWEP.Primary.ClipSize = 200
-SWEP.Primary.DefaultClip = 200
+SWEP.Primary.ClipSize = 300
+SWEP.Primary.DefaultClip = 300
 SWEP.Primary.Ammo = "none"
 SWEP.Delay = 60 / 700
 SWEP.WW_NoReload = true
 SWEP.WW_NoSights = true
-SWEP.WW_Regen = 12
-SWEP.WW_RegenDelay = 0.5
+-- Refills 300 charge in about 12 seconds (was 200 in about 17)
+SWEP.WW_Regen = 25
+SWEP.WW_RegenDelay = 0.3
 
 SWEP.WW_DashCost = 20
 SWEP.WW_DashDamage = 500
@@ -94,36 +95,6 @@ function SWEP:Hook_PostFireBullets()
         self:WW_ServerSound("TFA_BO3_GAUNTLET.ShootLoop")
     end
     self.WW_LastShot = CurTime()
-    if SERVER then self:WW_SelfBurn() end
-end
-
--- Like Horde's flamethrowers, fire splashing close to a Cremator burns them too, so
--- their fire perks (fire damage healing them) work with the Gauntlet. Nobody else is
--- burned by their own Gauntlet.
-SWEP.WW_SelfBurnRange = 96
-SWEP.WW_SelfBurnInterval = 0.2
-
-function SWEP:WW_SelfBurn()
-    local owner = self:GetOwner()
-    if not owner.Horde_GetCurrentSubclass or owner:Horde_GetCurrentSubclass() ~= "Cremator" then return end
-    if (self.WW_NextSelfBurn or 0) > CurTime() then return end
-    self.WW_NextSelfBurn = CurTime() + self.WW_SelfBurnInterval
-
-    local tr = util.TraceLine({
-        start = owner:GetShootPos(),
-        endpos = owner:GetShootPos() + owner:GetAimVector() * self.Distance,
-        filter = { owner, self },
-        mask = MASK_SHOT_HULL,
-    })
-    if not tr.Hit or tr.HitPos:Distance(owner:WorldSpaceCenter()) > self.WW_SelfBurnRange then return end
-
-    local dmg = DamageInfo()
-    dmg:SetAttacker(owner)
-    dmg:SetInflictor(self)
-    dmg:SetDamage(self.Damage)
-    dmg:SetDamageType(DMG_BURN)
-    dmg:SetDamagePosition(owner:WorldSpaceCenter())
-    owner:TakeDamageInfo(dmg)
 end
 
 -- WWFlag: dashing, WWStateEnd: when the dash ends

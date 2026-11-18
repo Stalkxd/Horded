@@ -1137,6 +1137,11 @@ function PANEL:LoadItem(item)
         arccw_type= item.entity_properties and item.entity_properties.arccw_attachment_type or "",
     }
     self.e.preserved_ep = preserved_ep
+    -- Requirements on classes that don't exist have no box here, so they could never be
+    -- cleared and silently kept the item unbuyable. Saving drops them.
+    for cls in pairs(self.e.levels) do
+        if not HORDE:IsLevelClass(cls) then self.e.levels[cls] = nil end
+    end
     self:_PopRight()
 end
 

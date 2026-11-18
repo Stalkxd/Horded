@@ -1017,9 +1017,9 @@ LANGUAGE["Perk_cremator_napalm"] = [[
 LANGUAGE["Perk_Title_Cremator_Tier_2"] = [[Поглощение энергии]]
 LANGUAGE["Perk_Title_cremator_positron_array"] = [[Позитронная решетка]]
 LANGUAGE["Perk_cremator_positron_array"] = [[
-Иммунитет к урону от огня.
-Вы впитываете {1} получаемого урона от огня в качестве здоровья.
-Огонь от игроков лечит на {2} здоровья за попадание.]]
+Сопротивление урону от огня увеличено на {1}.
+Вы впитываете {2} урона от огня врагов в качестве здоровья.
+Огонь от игроков наносит вам урон и не лечит.]]
 
 LANGUAGE["Perk_Title_cremator_entropy_shield"] = [[Энтропийный щит]]
 LANGUAGE["Perk_cremator_entropy_shield"] = [[
@@ -3257,7 +3257,9 @@ LANGUAGE["Gadget_Desc_gadget_ectoplasm_injection"] = [[
 
 LANGUAGE["Gadget_gadget_soul_swapper"] = [[Обмен Душ]]
 LANGUAGE["Gadget_Desc_gadget_soul_swapper"] = [[
-Меняет вас местами с врагом.
+Меняет вас местами с врагом, в которого вы целитесь (до 1500 единиц).
+Наносит 1 урон за каждые 5 единиц расстояния, до 275.
+Не работает на элитных врагах и боссах.
 ]]
 
 LANGUAGE["Gadget_gadget_windy_blast"] = [[Ветряной Взрыв]]

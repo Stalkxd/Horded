@@ -98,7 +98,7 @@ function PANEL:SetData(item, description_panel, infusion_panel)
     self.level_satisfy = true
     if self.item.levels then
         for class, level in pairs(self.item.levels) do
-            if MySelf:Horde_GetLevel(class) < level then
+            if HORDE:IsLevelClass(class) and MySelf:Horde_GetLevel(class) < level then
                 self.level_satisfy = false
                 break
             end

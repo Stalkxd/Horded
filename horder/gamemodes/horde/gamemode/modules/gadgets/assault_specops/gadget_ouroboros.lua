@@ -38,5 +38,12 @@ end
 
 GADGET.Hooks.Horde_OnPlayerDamage = function (ply, npc, bonus, hitgroup, dmginfo)
     if ply:Horde_GetGadget() ~= "gadget_ouroboros" then return end
-    bonus.increase = bonus.increase + 0.8 * ply:Health() / ply:GetMaxHealth()
+    -- The bonus grows with missing health, as the description says: +0.8% per 1% missing,
+    -- so +40% at the 50% the gadget pulls you towards and +80% at most. It used to grow with
+    -- current health instead, giving the biggest bonus (+80%, more with max health boosts)
+    -- at full health.
+    local max_hp = ply:GetMaxHealth()
+    if max_hp <= 0 then return end
+    local missing = 1 - math.Clamp(ply:Health() / max_hp, 0, 1)
+    bonus.increase = bonus.increase + 0.8 * missing
 end

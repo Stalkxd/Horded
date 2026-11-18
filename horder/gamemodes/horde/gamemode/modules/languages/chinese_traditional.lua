@@ -738,8 +738,9 @@ LANGUAGE["Perk_cremator_napalm"] = [[
 LANGUAGE["Perk_Title_Cremator_Tier_2"] = [[能量汲取]]
 LANGUAGE["Perk_Title_cremator_positron_array"] = [[陽電子陣列]]
 LANGUAGE["Perk_cremator_positron_array"] = [[
-免疫火焰傷害。
-吸收 {1} 受到的火焰傷害為生命值。]]
+提升 {1} 火焰傷害抗性。
+吸收 {2} 來自敵人的火焰傷害為生命值。
+來自玩家的火焰會傷害你且不會治療。]]
 
 LANGUAGE["Perk_Title_cremator_entropy_shield"] = [[熵護盾]]
 

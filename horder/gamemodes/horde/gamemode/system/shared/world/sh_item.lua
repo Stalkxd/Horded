@@ -303,6 +303,31 @@ function HORDE:RestoreArmorProperties(item, base)
     end
 end
 
+-- Level requirements name a class or subclass. A requirement on a class that doesn't exist
+-- (e.g. "Translocationist" from another Horde version, which saved configs carry for Soul
+-- Swapper) can never be met, and the item editor has no box for it, so the item could never
+-- be bought. Such entries are dropped.
+function HORDE:IsLevelClass(name)
+    return (HORDE.classes and HORDE.classes[name] ~= nil)
+        or (HORDE.subclasses and HORDE.subclasses[name] ~= nil)
+end
+
+function HORDE:DropUnknownLevelClasses(item)
+    if not istable(item) or not istable(item.levels) then return false end
+    local changed = false
+    local total = 0
+    for c, level in pairs(item.levels) do
+        if not HORDE:IsLevelClass(c) then
+            item.levels[c] = nil
+            changed = true
+        else
+            total = total + (tonumber(level) or 0)
+        end
+    end
+    if changed then item.total_levels = total end
+    return changed
+end
+
 local function GetItemsData()
     if not SERVER then return end
     if not file.IsDir("horde", "DATA") then
@@ -342,6 +367,9 @@ local function GetItemsData()
                             end
                         end
                         HORDE:RestoreArmorProperties(item, base)
+                    end
+                    if HORDE:DropUnknownLevelClasses(item) then
+                        print("[HORDE] - Removed level requirements on unknown classes from '" .. tostring(class) .. "'.")
                     end
                     HORDE.items[class] = item
                 end
