@@ -61,9 +61,18 @@ local SKIP_INFLICTORS = { arccw_horde_fire = true, entityflame = true }
 PERK.OwnerHooks.Horde_OnPlayerDamage = function (ply, npc, bonus, hitgroup, dmginfo)
     if not ply:Horde_GetPerk("cremator_base") then return end
     if not HORDE:IsFireDamage(dmginfo) then return end
+    if dmginfo:GetDamageCustom() == HORDE.DMG_OVER_TIME then return end
     local inflictor = dmginfo:GetInflictor()
-    if not IsValid(inflictor) or inflictor == ply or SKIP_INFLICTORS[inflictor:GetClass()] then return end
-    if HORDE:IsMinion(inflictor) then return end
+    if inflictor == ply then
+        -- Hitscan bullets can name the player as the inflictor; count them as the
+        -- weapon in hand. Entropy Shield's slow-burn pulse doesn't splash back.
+        if not dmginfo:IsDamageType(DMG_BURN) then return end
+        inflictor = ply:GetActiveWeapon()
+    end
+    if not IsValid(inflictor) or SKIP_INFLICTORS[inflictor:GetClass()] then return end
+    -- Turrets and pets don't burn their owner. (HORDE:IsMinion was used here, but it is
+    -- also true for the Cremator's own weapon and projectiles, so nothing ever splashed.)
+    if inflictor:IsNPC() or inflictor:IsNextBot() then return end
     if (ply.Horde_CrematorSelfBurnNext or 0) > CurTime() then return end
 
     local center = ply:WorldSpaceCenter()
