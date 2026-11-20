@@ -803,7 +803,7 @@ function HORDE:PlayerInit(ply)
 
     local ready_count = 0
     local total_player = 0
-    for _, other_ply in pairs(player.GetAll()) do
+    for _, other_ply in pairs(HORDE:GetActivePlayers()) do
         if HORDE.player_ready[other_ply] == 1 then
             ready_count = ready_count + 1
         end
@@ -953,13 +953,17 @@ end)
 
 HORDE.VoteChangeMap = function (ply)
     HORDE.player_vote_map_change[ply] = 1
-    if table.Count(HORDE.player_vote_map_change) == table.Count(player.GetAll()) then
+    local voters = 0
+    for voter in pairs(HORDE.player_vote_map_change) do
+        if IsValid(voter) and not voter.Horde_AFK then voters = voters + 1 end
+    end
+    if voters >= math.max(1, HORDE:CountActivePlayers()) then
         HORDE:SendNotification("All players want to change map! Initiating map vote...", 0)
         timer.Simple(1, function ()
             HORDE:GameEnd("Change Map")
         end)
     else
-        HORDE:SendNotification(ply:GetName() .. " wants to change the map. (" .. tostring(table.Count(HORDE.player_vote_map_change)) .. "/" .. tostring(table.Count(player.GetAll())) .. ")", 0)
+        HORDE:SendNotification(ply:GetName() .. " wants to change the map. (" .. tostring(voters) .. "/" .. tostring(HORDE:CountActivePlayers()) .. ")", 0)
     end
 end
 
@@ -1285,6 +1289,7 @@ function HORDE:CheckAlivePlayers()
 end
 
 hook.Add("PlayerDeathThink", "Horde_PlayerDeathThink", function (ply)
+    if ply.Horde_AFK then return false end
     if HORDE.current_break_time > 0 then return true end
     if HORDE.start_game then return false end
     return true

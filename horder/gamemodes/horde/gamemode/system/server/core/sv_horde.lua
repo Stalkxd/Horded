@@ -1393,7 +1393,7 @@ end
 
 local function CountReadyPlayers()
     local ready, total = 0, 0
-    for _, ply in pairs(player.GetAll()) do
+    for _, ply in pairs(HORDE:GetActivePlayers()) do
         if HORDE.player_ready[ply] == 1 then ready = ready + 1 end
         total = total + 1
     end
@@ -1538,7 +1538,8 @@ function HORDE:WaveStart()
 
     HORDE.enemy_wave_index = HORDE:ResolveEnemyWaveIndex()
     local current_wave = HORDE.enemy_wave_index
-    horde_players_count = table.Count(player.GetAll())
+    -- AFK spectators do not make the wave bigger.
+    horde_players_count = math.max(1, HORDE:CountActivePlayers())
     local _enemy_src = HORDE.enemies_normalized[current_wave]
     if not _enemy_src or table.IsEmpty(_enemy_src) then
         local found
@@ -1738,7 +1739,7 @@ function HORDE:WaveEnd()
     for _, ply in pairs(player.GetAll()) do
         if not ply:Alive() then ply:Spawn() end
         HORDE.player_class_changed[ply:SteamID()] = false
-        HORDE.player_ready[ply] = 0
+        HORDE.player_ready[ply] = (not ply.Horde_AFK) and 0 or nil
 
         if (HORDE.current_wave < HORDE.max_waves) then
             net.Start("Horde_ShowLeaderboardsTemporarily")
@@ -1903,7 +1904,7 @@ function HORDE:Direct()
 
         local ready_count = 0
         local total_player = 0
-        for _, ply in pairs(player.GetAll()) do
+        for _, ply in pairs(HORDE:GetActivePlayers()) do
             if HORDE.player_ready[ply] == 1 then
                 ready_count = ready_count + 1
             end

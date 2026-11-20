@@ -151,6 +151,10 @@ function PANEL:RefreshPlayer()
 
 	local name = pl:LongName()
 	local color = color_white
+	if pl:GetNWBool("Horde_AFK", false) then
+		name = "[AFK] " .. name
+		color = Color(170, 170, 170)
+	end
 
 	self.m_AvatarPanel:CenterVertical()
 
@@ -205,6 +209,9 @@ function PANEL:Paint()
 		col = Color(40,40,40,200)
 		if not pl:Alive() then
 			col = Color(100, 0, 0, 200)
+		end
+		if pl:GetNWBool("Horde_AFK", false) then
+			col = Color(70, 70, 70, 200)
 		end
 
 		if self.Hovered then
