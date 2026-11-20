@@ -432,6 +432,7 @@ local SYSTEMS_MANIFEST = {
     { path = "server/players/sv_minion.lua",         server_only = true, desc = "Minion registration & spawn (server)" },
     { path = "server/players/sv_commands.lua",       server_only = true, desc = "Console commands" },
     { path = "server/players/sv_playerlifecycle.lua",server_only = true, desc = "Player join/leave/vote" },
+    { path = "server/players/sv_afk.lua",            server_only = true, desc = "Anti-AFK (idle -> spectators, !afk)" },
     { path = "server/players/sv_leaderboard.lua",    server_only = true, desc = "Leaderboard" },
     { path = "server/players/sv_scoreboard_ping.lua", server_only = true, desc = "Fast scoreboard ping" },
     { path = "server/players/sv_achievements.lua",   server_only = true, desc = "Player achievements (tracking, SQLite, rewards)" },
@@ -447,6 +448,7 @@ local SYSTEMS_MANIFEST = {
     { path = "client/core/cl_killfeed.lua",    client_only = true, desc = "Killfeed (replaces GMod death notices)" },
     { path = "client/core/cl_warden_consumable_ring.lua", client_only = true, desc = "Warden Watchtower consumable ring indicator" },
     { path = "client/core/cl_spectator_ghost.lua", client_only = true, desc = "Spectator ghost sprite (blueflare)" },
+    { path = "client/core/cl_afk.lua",         client_only = true, desc = "Anti-AFK warning, taskbar flash, AFK banner" },
     { path = "client/core/cl_init.lua",        client_only = true, desc = "Client init" },
 
     { path = "server/core/sv_specialwaves.lua", server_only = true, desc = "Special Waves — presets & wave injection" },

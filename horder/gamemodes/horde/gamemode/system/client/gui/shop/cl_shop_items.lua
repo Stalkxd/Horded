@@ -67,7 +67,7 @@ local function level_ok(item)
     local levels = item.levels or (is_spell_item(item) and item._spell and item._spell.Levels)
     if levels and (HORDE.disable_levels_restrictions == 0) then
         for class, level in pairs(levels) do
-            if MySelf:Horde_GetLevel(class) < level then return false end
+            if HORDE:IsLevelClass(class) and MySelf:Horde_GetLevel(class) < level then return false end
         end
     end
     return true

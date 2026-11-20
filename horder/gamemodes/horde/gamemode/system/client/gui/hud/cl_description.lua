@@ -311,7 +311,7 @@ function PANEL:SetData(item)
     self.level_satisfy = true
     if self.item and self.item.levels and (HORDE.disable_levels_restrictions == 0) then
         for class, level in pairs(self.item.levels) do
-            if MySelf:Horde_GetLevel(class) < level then
+            if HORDE:IsLevelClass(class) and MySelf:Horde_GetLevel(class) < level then
                 self.level_satisfy = false
                 break
             end

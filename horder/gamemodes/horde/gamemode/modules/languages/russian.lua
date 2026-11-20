@@ -485,7 +485,10 @@ Cложность: ЛЁГКАЯ
 У атак имеется {5} шанс поджечь врагов.
 
 Базовая продолжительность горения составляет {6} и наносит урон всё время в зависимости от попадания.
-Урон огнём имеет {7} шанс поджога.]]
+Урон огнём имеет {7} шанс поджога.
+
+Как взрывы Подрывника, ваш огонь обжигает и вас: огненный урон, нанесённый
+в пределах {8} единиц от вас, возвращается к вам в размере до {9}.]]
 
 LANGUAGE["Perk_samurai_base"] = [[
 СЛОЖНОСТЬ: ВЫСОКАЯ
@@ -1017,9 +1020,9 @@ LANGUAGE["Perk_cremator_napalm"] = [[
 LANGUAGE["Perk_Title_Cremator_Tier_2"] = [[Поглощение энергии]]
 LANGUAGE["Perk_Title_cremator_positron_array"] = [[Позитронная решетка]]
 LANGUAGE["Perk_cremator_positron_array"] = [[
-Иммунитет к урону от огня.
-Вы впитываете {1} получаемого урона от огня в качестве здоровья.
-Огонь от игроков лечит на {2} здоровья за попадание, не более {3} здоровья в секунду.]]
+Сопротивление урону от огня увеличено на {1}.
+Вы впитываете {2} урона от огня врагов в качестве здоровья.
+Огонь от игроков наносит вам урон и не лечит.]]
 
 LANGUAGE["Perk_Title_cremator_entropy_shield"] = [[Энтропийный щит]]
 LANGUAGE["Perk_cremator_entropy_shield"] = [[
@@ -3257,7 +3260,9 @@ LANGUAGE["Gadget_Desc_gadget_ectoplasm_injection"] = [[
 
 LANGUAGE["Gadget_gadget_soul_swapper"] = [[Обмен Душ]]
 LANGUAGE["Gadget_Desc_gadget_soul_swapper"] = [[
-Меняет вас местами с врагом.
+Меняет вас местами с врагом, в которого вы целитесь (до 1500 единиц).
+Наносит 1 урон за каждые 5 единиц расстояния, до 275.
+Не работает на элитных врагах и боссах.
 ]]
 
 LANGUAGE["Gadget_gadget_windy_blast"] = [[Ветряной Взрыв]]
@@ -4065,3 +4070,42 @@ LANGUAGE["F1_Enemy_Plague_Watchtower_Desc"] = "Вариация Plague Elite б�
 LANGUAGE["F1_Enemy_Plague_Watchtower_Abil"] = [==[
 Бьёт без остановки и умеет прыгать.
 Шанс появления: 10% (20% с 10-й волны на Hundred / Unarmed / Wave 666).]==]
+
+-- Меню передачи (Alt+E на игроке)
+LANGUAGE["GiveMenu_GiveTo"] = "Передать: %s"
+LANGUAGE["GiveMenu_Tab_Money"] = "Деньги"
+LANGUAGE["GiveMenu_Tab_Skulls"] = "Черепа"
+LANGUAGE["GiveMenu_Tab_Weapons"] = "Оружие"
+LANGUAGE["GiveMenu_BudgetShared"] = "В режиме Budget деньги общие, передавать их нельзя."
+LANGUAGE["GiveMenu_YouHaveMoney"] = "У вас $%d."
+LANGUAGE["GiveMenu_YouHaveSkulls"] = "У вас черепов: %d."
+LANGUAGE["GiveMenu_Amount"] = "Сумма"
+LANGUAGE["GiveMenu_All"] = "Всё"
+LANGUAGE["GiveMenu_NotEnoughMoney"] = "У вас нет столько денег."
+LANGUAGE["GiveMenu_NotEnoughSkulls"] = "У вас нет столько черепов."
+LANGUAGE["GiveMenu_UnknownClass"] = "Неизвестный класс"
+LANGUAGE["GiveMenu_TargetInfo"] = "%s: %s, свободно веса %d / %d"
+LANGUAGE["GiveMenu_NoWeapons"] = "У вас нет оружия, которое можно передать."
+LANGUAGE["GiveMenu_Weight"] = "Вес %d"
+LANGUAGE["GiveMenu_Give"] = "Передать"
+LANGUAGE["GiveMenu_Reason_NotOwned"] = "У вас его больше нет"
+LANGUAGE["GiveMenu_Reason_NotShop"] = "Не из магазина"
+LANGUAGE["GiveMenu_Reason_CantGive"] = "Нельзя передать"
+LANGUAGE["GiveMenu_Reason_Relic"] = "Реликвия класса"
+LANGUAGE["GiveMenu_Reason_HasIt"] = "У игрока оно уже есть"
+LANGUAGE["GiveMenu_Reason_TooHeavy"] = "Слишком тяжёлое (нужно %d, свободно %d)"
+LANGUAGE["GiveMenu_Reason_Class"] = "Его класс не может это использовать"
+LANGUAGE["GiveMenu_Reason_CantTake"] = "Игрок не может это взять"
+LANGUAGE["GiveMenu_Notify_Budget"] = "В режиме Budget деньги общие. Передача отключена."
+LANGUAGE["GiveMenu_Notify_NoMoney"] = "Недостаточно денег!"
+LANGUAGE["GiveMenu_Notify_NoSkulls"] = "Недостаточно черепов!"
+LANGUAGE["GiveMenu_Notify_GaveMoney"] = "Вы передали $%d игроку %s"
+LANGUAGE["GiveMenu_Notify_GotMoney"] = "%s передал вам $%d"
+LANGUAGE["GiveMenu_Notify_GaveSkulls"] = "Вы передали черепа (%d) игроку %s"
+LANGUAGE["GiveMenu_Notify_GotSkulls"] = "%s передал вам черепа: %d"
+LANGUAGE["GiveMenu_Notify_GaveWeapon"] = "Вы передали %s игроку %s"
+LANGUAGE["GiveMenu_Notify_GotWeapon"] = "%s передал вам %s"
+LANGUAGE["GiveMenu_Notify_Refused"] = "Нельзя передать: %s"
+LANGUAGE["GiveMenu_Notify_Failed"] = "Не удалось передать %s игроку %s."
+LANGUAGE["GiveMenu_Notify_TooFar"] = "Вы слишком далеко от игрока %s."
+LANGUAGE["GiveMenu_Notify_BadAmount"] = "Неверная сумма!"

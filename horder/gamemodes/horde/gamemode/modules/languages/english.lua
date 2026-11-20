@@ -403,7 +403,10 @@ Complexity: EASY
 
 Attacks have {5} chance to Ignite enemies.
 Ignite base duration is {6} and deals damage over time based on hit damage.
-Fire damage has {7} Ignite chance.]]
+Fire damage has {7} Ignite chance.
+
+Like a Demolition's explosives, your fire burns you too: Fire damage you deal
+within {8} units of yourself splashes back up to {9} of it on you.]]
 
 LANGUAGE["Perk_psycho_base"] = [[
 The Psycho class focuses on dealing critical damage with both melee and ranged weapons.
@@ -818,9 +821,9 @@ LANGUAGE["Perk_cremator_napalm"] = [[
 LANGUAGE["Perk_Title_Cremator_Tier_2"] = [[Energy Absorption]]
 LANGUAGE["Perk_Title_cremator_positron_array"] = [[Positron Array]]
 LANGUAGE["Perk_cremator_positron_array"] = [[
-Immune to Fire damage.
-Absorb {1} of Fire damage taken as health.
-Fire from players heals {2} health per hit, up to {3} health per second.]]
+{1} increased Fire damage resistance.
+Absorb {2} of Fire damage from enemies as health.
+Fire from players hurts you and does not heal.]]
 
 LANGUAGE["Perk_Title_cremator_entropy_shield"] = [[Entropy Shield]]
 LANGUAGE["Perk_cremator_entropy_shield"] = [[Gain an Entropy Shield that reduces damage taken on hit.
@@ -2859,3 +2862,42 @@ LANGUAGE["F1_Enemy_Plague_Watchtower_Desc"] = "Melee Plague Elite variant that c
 LANGUAGE["F1_Enemy_Plague_Watchtower_Abil"] = [==[
 Hits without stopping and can jump.
 Spawn chance: 10% (20% from wave 10 on Hundred / Unarmed / Wave 666).]==]
+
+-- Give menu (Alt+E on a player)
+LANGUAGE["GiveMenu_GiveTo"] = "Give to %s"
+LANGUAGE["GiveMenu_Tab_Money"] = "Money"
+LANGUAGE["GiveMenu_Tab_Skulls"] = "Skulls"
+LANGUAGE["GiveMenu_Tab_Weapons"] = "Weapons"
+LANGUAGE["GiveMenu_BudgetShared"] = "Money is shared in Budget mode, so it can't be given."
+LANGUAGE["GiveMenu_YouHaveMoney"] = "You have $%d."
+LANGUAGE["GiveMenu_YouHaveSkulls"] = "You have %d skulls."
+LANGUAGE["GiveMenu_Amount"] = "Amount"
+LANGUAGE["GiveMenu_All"] = "All"
+LANGUAGE["GiveMenu_NotEnoughMoney"] = "You don't have that much money."
+LANGUAGE["GiveMenu_NotEnoughSkulls"] = "You don't have that many skulls."
+LANGUAGE["GiveMenu_UnknownClass"] = "Unknown class"
+LANGUAGE["GiveMenu_TargetInfo"] = "%s: %s, %d / %d weight free"
+LANGUAGE["GiveMenu_NoWeapons"] = "You have no weapons that can be given."
+LANGUAGE["GiveMenu_Weight"] = "Weight %d"
+LANGUAGE["GiveMenu_Give"] = "Give"
+LANGUAGE["GiveMenu_Reason_NotOwned"] = "You no longer have it"
+LANGUAGE["GiveMenu_Reason_NotShop"] = "Not a shop weapon"
+LANGUAGE["GiveMenu_Reason_CantGive"] = "Can't be given"
+LANGUAGE["GiveMenu_Reason_Relic"] = "Class relic"
+LANGUAGE["GiveMenu_Reason_HasIt"] = "They already have it"
+LANGUAGE["GiveMenu_Reason_TooHeavy"] = "Too heavy (needs %d, they have %d free)"
+LANGUAGE["GiveMenu_Reason_Class"] = "Their class can't use it"
+LANGUAGE["GiveMenu_Reason_CantTake"] = "They can't take it"
+LANGUAGE["GiveMenu_Notify_Budget"] = "Money is shared in Budget mode. Transfers are disabled."
+LANGUAGE["GiveMenu_Notify_NoMoney"] = "Not enough money!"
+LANGUAGE["GiveMenu_Notify_NoSkulls"] = "Not enough skull tokens!"
+LANGUAGE["GiveMenu_Notify_GaveMoney"] = "Gave $%d to %s"
+LANGUAGE["GiveMenu_Notify_GotMoney"] = "%s gave you $%d"
+LANGUAGE["GiveMenu_Notify_GaveSkulls"] = "Gave %d skulls to %s"
+LANGUAGE["GiveMenu_Notify_GotSkulls"] = "%s gave you %d skulls"
+LANGUAGE["GiveMenu_Notify_GaveWeapon"] = "Gave %s to %s"
+LANGUAGE["GiveMenu_Notify_GotWeapon"] = "%s gave you %s"
+LANGUAGE["GiveMenu_Notify_Refused"] = "Can't give that: %s"
+LANGUAGE["GiveMenu_Notify_Failed"] = "Couldn't give %s to %s."
+LANGUAGE["GiveMenu_Notify_TooFar"] = "You are too far away from %s."
+LANGUAGE["GiveMenu_Notify_BadAmount"] = "Invalid amount!"

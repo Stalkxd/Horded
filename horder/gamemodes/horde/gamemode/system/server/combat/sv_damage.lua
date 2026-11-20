@@ -352,27 +352,15 @@ hook.Add("PlayerShouldTakeDamage", "Horde_SpectatorNoDamage", function(ply, atta
     end
 end)
 
--- Fire a Cremator set off themselves, through a weapon or entity they own.
+-- Fire a Cremator set off on themselves: the self-burn splash from the Cremator base perk
+-- (it flags the player while it applies the hit) or their own molotov pool.
 function HORDE:IsCrematorSelfFire(ply, dmg)
     if dmg:GetAttacker() ~= ply then return false end
     if not HORDE:IsFireDamage(dmg) then return false end
+    if ply.Horde_CrematorSelfBurning then return true end
     local inflictor = dmg:GetInflictor()
-    if IsValid(inflictor) and (inflictor:IsNPC() or inflictor:IsNextBot()) then return false end
-    return ply.Horde_GetCurrentSubclass ~= nil and ply:Horde_GetCurrentSubclass() == "Cremator"
-end
-
-function HORDE:IsFriendlyFire(ply, dmg)
-    local attacker = dmg:GetAttacker()
-    return IsValid(attacker) and attacker:IsPlayer() and attacker ~= ply
-end
-
--- Runs Horde_OnPlayerFriendlyFireTaken once for a teammate's hit that is about to be
--- blocked. The damage itself is never applied.
-function HORDE:OnPlayerFriendlyFire(ply, dmg)
-    if not IsValid(ply) or not ply:Alive() then return end
-    if dmg:GetDamageCustom() ~= 0 then return end
-    if dmg:GetDamage() <= 0.5 then return end
-    hook.Run("Horde_OnPlayerFriendlyFireTaken", ply, dmg)
+    return IsValid(inflictor) and inflictor:GetClass() == "arccw_horde_fire"
+        and ply:Horde_GetPerk("cremator_base") and true or false
 end
 
 hook.Add("EntityTakeDamage", "Horde_ApplyDamageTaken", function(target, dmg)
@@ -386,24 +374,14 @@ hook.Add("EntityTakeDamage", "Horde_ApplyDamageTaken", function(target, dmg)
         return true
     end
 
-    -- Teammates never hurt each other, but perks that react to friendly fire
-    -- (Positron Array healing from a teammate's fire) still get to see the hit.
-    -- Horde_EntityTakeDamage blocks the same hits; both go through this helper so
-    -- the result doesn't depend on which EntityTakeDamage hook happens to run first.
-    if HORDE:IsFriendlyFire(ply, dmg) then
-        HORDE:OnPlayerFriendlyFire(ply, dmg)
-        return true
-    end
-
     if dmg:GetAttacker():IsPlayer() and (dmg:GetInflictor() == dmg:GetAttacker()) then return true end
 
     if dmg:GetInflictor():IsNPC() and dmg:GetAttacker():IsPlayer() then return true end
 
     -- IsPlayerMinion is true for anything whose owner is a player, which includes your own
-    -- weapon, projectiles and fire pools, not only turrets and pets. A Cremator's own fire
-    -- (molotov, blaster, flamethrower, Gauntlet) is let through so it burns them and their
-    -- fire perks (Positron Array healing) work; every other self hit through an owned
-    -- entity stays blocked as before.
+    -- weapon, projectiles and fire pools, not only turrets and pets. The Cremator's own
+    -- fire is let through: the base perk's self-burn splash and standing in their own
+    -- molotov. Every other self hit through an owned entity stays blocked as before.
     if (HORDE:IsPlayerMinion(dmg:GetInflictor()) or HORDE:IsPlayerMinion(dmg:GetAttacker()))
         and not HORDE:IsCrematorSelfFire(ply, dmg) then
         return true

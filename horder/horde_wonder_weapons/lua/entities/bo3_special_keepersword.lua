@@ -34,6 +34,14 @@ ENT.MaxKills = 24
 ENT.Range = 160
 ENT.RPM = 120
 
+-- Horde: under Horde an enemy survives the sword's hit, so the sword used to stay inside it and
+-- hit it again every tick until it ran out of hits, which with perk bonuses added up to about
+-- 4000 damage in a fraction of a second. Now one enemy can be hit at most once every HitDelay
+-- seconds, and the damage it really took from one throw (after perk bonuses) stops at MaxDamage.
+ENT.HitDamage = 700
+ENT.HitDelay = 0.5
+ENT.MaxDamage = 2000
+
 DEFINE_BASECLASS( ENT.Base )
 
 local nzombies = engine.ActiveGamemode() == "nzombies"
@@ -75,6 +83,9 @@ function ENT:Initialize(...)
 	self.Ratio = engine.TickInterval()*5
 	self.AutomaticFrameAdvance = true
 	self.TargetsToIgnore = {}
+	self.HordeNextHit = {}
+	self.HordeDealt = {}
+	self.HordeRatio = {}
 	self:SetActivated(true)
 	self:SetTarget(nil)
 	self:SetCollisionGroup(COLLISION_GROUP_WORLD)
@@ -167,6 +178,7 @@ function ENT:Think()
 					if v == ply then return end
 					if v:IsPlayer() and IsValid(ply) and !hook.Run("PlayerShouldTakeDamage", v, ply) then return end
 					if v:Health() <= 0 then continue end
+					if HORDE and not self:CanHit(v) then continue end
 
 					self:InflictDamage(v)
 				end
@@ -213,7 +225,23 @@ function ENT:InflictDamage(ent)
 	if ent:IsNPC() then
 		if not HORDE then ent:SetHealth(1) end
 	end
-	ent:TakeDamageInfo(damage)
+
+	if HORDE then
+		-- Aim for what is left of this throw's damage on this enemy, scaled by how much perk
+		-- bonuses raised the last hit, so the total lands on MaxDamage instead of past it
+		local left = self.MaxDamage - (self.HordeDealt[ent] or 0)
+		local base = math.max(1, math.min(self.HitDamage, left / (self.HordeRatio[ent] or 1)))
+		damage:SetDamage(base)
+		self.HordeNextHit[ent] = CurTime() + self.HitDelay
+
+		local before = ent:Health()
+		ent:TakeDamageInfo(damage)
+		local dealt = math.max(0, before - (IsValid(ent) and ent:Health() or 0))
+		self.HordeDealt[ent] = (self.HordeDealt[ent] or 0) + dealt
+		if dealt > 0 then self.HordeRatio[ent] = math.max(1, dealt / base) end
+	else
+		ent:TakeDamageInfo(damage)
+	end
 
 	ParticleEffect("bo3_keepersword_hit", ent:EyePos(), Angle(0,0,0))
 	self:EmitSound("TFA_BO3_ZODSWORD.Impact")
@@ -231,6 +259,12 @@ function ENT:InflictDamage(ent)
 	self:SetTarget(self:FindNearestEntity(pos, self.Range, self.TargetsToIgnore))
 end
 
+-- Horde: whether the sword may hit this enemy now (see HitDamage above)
+function ENT:CanHit(ent)
+	if (self.HordeDealt[ent] or 0) >= self.MaxDamage then return false end
+	return CurTime() >= (self.HordeNextHit[ent] or 0)
+end
+
 function ENT:FindNearestEntity(pos, range, ent)
 	local nearestEnt;
 
@@ -244,7 +278,11 @@ function ENT:FindNearestEntity(pos, range, ent)
 			if nzombies and v:IsPlayer() then continue end
 			if v:IsPlayer() and IsValid(ply) and !hook.Run("PlayerShouldTakeDamage", v, ply) then continue end
 
-			if !table.HasValue(ent, v) then
+			-- Horde: an enemy that is still standing can be chased again once its hit delay
+			-- is over, until this throw has dealt MaxDamage to it
+			local free
+			if HORDE then free = self:CanHit(v) else free = !table.HasValue(ent, v) end
+			if free then
 				nearestEnt = v;
 				range = distance;
 			end
