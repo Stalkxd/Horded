@@ -352,6 +352,15 @@ hook.Add("PlayerShouldTakeDamage", "Horde_SpectatorNoDamage", function(ply, atta
     end
 end)
 
+-- Fire a Cremator set off themselves, through a weapon or entity they own.
+function HORDE:IsCrematorSelfFire(ply, dmg)
+    if dmg:GetAttacker() ~= ply then return false end
+    if not HORDE:IsFireDamage(dmg) then return false end
+    local inflictor = dmg:GetInflictor()
+    if IsValid(inflictor) and (inflictor:IsNPC() or inflictor:IsNextBot()) then return false end
+    return ply.Horde_GetCurrentSubclass ~= nil and ply:Horde_GetCurrentSubclass() == "Cremator"
+end
+
 function HORDE:IsFriendlyFire(ply, dmg)
     local attacker = dmg:GetAttacker()
     return IsValid(attacker) and attacker:IsPlayer() and attacker ~= ply
@@ -390,7 +399,15 @@ hook.Add("EntityTakeDamage", "Horde_ApplyDamageTaken", function(target, dmg)
 
     if dmg:GetInflictor():IsNPC() and dmg:GetAttacker():IsPlayer() then return true end
 
-    if HORDE:IsPlayerMinion(dmg:GetInflictor()) or HORDE:IsPlayerMinion(dmg:GetAttacker()) then return true end
+    -- IsPlayerMinion is true for anything whose owner is a player, which includes your own
+    -- weapon, projectiles and fire pools, not only turrets and pets. A Cremator's own fire
+    -- (molotov, blaster, flamethrower, Gauntlet) is let through so it burns them and their
+    -- fire perks (Positron Array healing) work; every other self hit through an owned
+    -- entity stays blocked as before.
+    if (HORDE:IsPlayerMinion(dmg:GetInflictor()) or HORDE:IsPlayerMinion(dmg:GetAttacker()))
+        and not HORDE:IsCrematorSelfFire(ply, dmg) then
+        return true
+    end
 
     if dmg:GetDamage() <= 0.5 then return true end
 
