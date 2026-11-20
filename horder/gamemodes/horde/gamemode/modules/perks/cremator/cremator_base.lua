@@ -84,6 +84,10 @@ PERK.OwnerHooks.Horde_OnPlayerDamage = function (ply, npc, bonus, hitgroup, dmgi
         d:SetDamage(amount)
         d:SetDamageType(DMG_BURN)
         d:SetDamagePosition(center)
+        -- The inflictor is the Cremator's own weapon or projectile, which the damage code
+        -- otherwise blocks as a hit from something the player owns.
+        ply.Horde_CrematorSelfBurning = true
         ply:TakeDamageInfo(d)
+        ply.Horde_CrematorSelfBurning = nil
     end)
 end

@@ -352,6 +352,17 @@ hook.Add("PlayerShouldTakeDamage", "Horde_SpectatorNoDamage", function(ply, atta
     end
 end)
 
+-- Fire a Cremator set off on themselves: the self-burn splash from the Cremator base perk
+-- (it flags the player while it applies the hit) or their own molotov pool.
+function HORDE:IsCrematorSelfFire(ply, dmg)
+    if dmg:GetAttacker() ~= ply then return false end
+    if not HORDE:IsFireDamage(dmg) then return false end
+    if ply.Horde_CrematorSelfBurning then return true end
+    local inflictor = dmg:GetInflictor()
+    return IsValid(inflictor) and inflictor:GetClass() == "arccw_horde_fire"
+        and ply:Horde_GetPerk("cremator_base") and true or false
+end
+
 hook.Add("EntityTakeDamage", "Horde_ApplyDamageTaken", function(target, dmg)
     if not target:IsValid() or not target:IsPlayer() then return end
     if dmg:GetDamageCustom() ~= 0 then return true end
@@ -367,7 +378,14 @@ hook.Add("EntityTakeDamage", "Horde_ApplyDamageTaken", function(target, dmg)
 
     if dmg:GetInflictor():IsNPC() and dmg:GetAttacker():IsPlayer() then return true end
 
-    if HORDE:IsPlayerMinion(dmg:GetInflictor()) or HORDE:IsPlayerMinion(dmg:GetAttacker()) then return true end
+    -- IsPlayerMinion is true for anything whose owner is a player, which includes your own
+    -- weapon, projectiles and fire pools, not only turrets and pets. The Cremator's own
+    -- fire is let through: the base perk's self-burn splash and standing in their own
+    -- molotov. Every other self hit through an owned entity stays blocked as before.
+    if (HORDE:IsPlayerMinion(dmg:GetInflictor()) or HORDE:IsPlayerMinion(dmg:GetAttacker()))
+        and not HORDE:IsCrematorSelfFire(ply, dmg) then
+        return true
+    end
 
     if dmg:GetDamage() <= 0.5 then return true end
 

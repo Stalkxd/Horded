@@ -14,52 +14,37 @@ ENT.Armed = false
 ENT.NextDamageTick = 0
 
 ENT.Ticks = 0
-ENT.TouchedEntities = {}
 
 ENT.ArcCW_Killable = false
 
 AddCSLuaFile()
 
-local entmeta = FindMetaTable("Entity")
+-- The fire pool burns everything in range on a timer. It used to rely on Touch, which
+-- didn't reliably fire on this small physics model, so molotovs dealt no damage.
+ENT.BurnRadius = 140
+ENT.BurnDamage = 25
+ENT.BurnInterval = 0.5
 
-function entmeta:Horde_AddEffect_Molotov(ent)
-    if self.horde_effect_Molotov then return end
-    self.horde_effect_Molotov = true
-    local id = self:GetCreationID()
-    timer.Create("Horde_MolotovEffect" .. id, 0.5, 0, function ()
-        if not self:IsValid() then timer.Remove("Horde_MolotovEffect" .. id) return end
-        local d = DamageInfo()
-        d:SetDamage(25)
-        d:SetAttacker(ent.Owner)
-        d:SetInflictor(ent)
-        d:SetDamageType(DMG_BURN)
-        d:SetDamagePosition(self:GetPos())
-        self:TakeDamageInfo(d)
-    end)
-end
-
-function entmeta:Horde_RemoveEffect_Molotov()
-    if self.horde_effect_Molotov then
-        timer.Remove("Horde_MolotovEffect" .. self:GetCreationID())
-        self.horde_effect_Molotov = nil
-    end
-end
-
-function ENT:Touch(ent)
-    if SERVER then
-        if self.TouchedEntities[ent:GetCreationID()] and ent.horde_effect_Molotov then return end
-        if (ent:IsPlayer() or ent:IsNPC()) then
-            self.TouchedEntities[ent:GetCreationID()] = ent
-            ent:Horde_AddEffect_Molotov(self)
+function ENT:BurnArea()
+    local owner = self:GetOwner()
+    local has_owner = IsValid(owner) and owner:IsPlayer()
+    local now = CurTime()
+    for _, ent in ipairs(ents.FindInSphere(self:GetPos(), self.BurnRadius)) do
+        local is_player = ent:IsPlayer() and ent:Alive()
+        -- Players only take hits from a pool whose thrower is still here, so the
+        -- damage stays theirs (teammates are protected by friendly fire rules).
+        if ((is_player and has_owner) or (not is_player and HORDE:IsEnemy(ent)))
+            and (ent.Horde_MolotovNextBurn or 0) <= now then
+            -- Overlapping pools don't stack: each target burns once per interval.
+            ent.Horde_MolotovNextBurn = now + self.BurnInterval - 0.05
+            local d = DamageInfo()
+            d:SetDamage(self.BurnDamage)
+            d:SetAttacker(has_owner and owner or self)
+            d:SetInflictor(self)
+            d:SetDamageType(DMG_BURN)
+            d:SetDamagePosition(ent:GetPos())
+            ent:TakeDamageInfo(d)
         end
-    end
-end
-
-function ENT:EndTouch(ent)
-    if SERVER then
-        if not (ent:IsNPC() or ent:IsPlayer()) then return end
-        self.TouchedEntities[ent:GetCreationID()] = nil
-        ent:Horde_RemoveEffect_Molotov()
     end
 end
 
@@ -181,18 +166,17 @@ function ENT:Think()
         self.NextDamageTick = CurTime() + 0.25
 
         if self.SpawnTime + self.FireTime <= CurTime() then self:Remove() return end
+
+        if (self.NextBurn or 0) <= CurTime() then
+            self.NextBurn = CurTime() + self.BurnInterval
+            self:BurnArea()
+        end
     end
 end
 
 function ENT:OnRemove()
     if !self.FireSound then return end
     self.FireSound:Stop()
-
-    if SERVER then
-        for _, ent in pairs(self.TouchedEntities) do
-            if ent:IsValid() then ent:Horde_RemoveEffect_Molotov() end
-        end
-    end
 end
 
 function ENT:Detonate()
