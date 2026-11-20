@@ -75,7 +75,7 @@ function HORDE:Ready(ply)
     HORDE.player_ready[ply] = 1
     local ready_count = 0
     local total_player = 0
-    for _, ready_ply in pairs(player.GetAll()) do
+    for _, ready_ply in pairs(HORDE:GetActivePlayers()) do
         if HORDE.player_ready[ready_ply] == 1 then
             ready_count = ready_count + 1
         end
@@ -132,7 +132,7 @@ function HORDE:SkipTraderTime(ply)
     HORDE.player_ready[ply] = 1
     local skip_count = 0
     local total_player = 0
-    for _, skip_ply in pairs(player.GetAll()) do
+    for _, skip_ply in pairs(HORDE:GetActivePlayers()) do
         if HORDE.player_ready[skip_ply] == 1 then
             skip_count = skip_count + 1
         end
@@ -290,6 +290,7 @@ hook.Add("PlayerSay", "Horde_Commands", function(ply, input, public)
         ply:PrintMessage(HUD_PRINTTALK, "'!drop' - Drop weapon")
         ply:PrintMessage(HUD_PRINTTALK, "'!throwmoney <amount>' - Drop money")
         ply:PrintMessage(HUD_PRINTTALK, "'!rtv' -Initiate a map change vote")
+        ply:PrintMessage(HUD_PRINTTALK, "'!afk' - Go AFK (spectate, no respawns). '!back' - Return from AFK")
     elseif text[1] == "!start" then
         HORDE:Start(ply)
     elseif text[1] == "!ready" then

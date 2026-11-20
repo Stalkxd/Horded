@@ -103,7 +103,7 @@ hook.Add("PlayerSay", "Horde_WaveSkipCommand", function(ply, text)
 
     local total, votes = 0, 0
     for _, p in ipairs(player.GetAll()) do
-        if IsValid(p) then
+        if IsValid(p) and not p.Horde_AFK then
             total = total + 1
             if SKIP.Votes[p:SteamID()] then votes = votes + 1 end
         end
