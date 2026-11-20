@@ -1,6 +1,6 @@
 if not CLIENT then return end
 
--- Client side of the give menu (see sv_givemenu.lua). The server decides
+-- Client side of the give menu (opened with Alt+E on a player) (see sv_givemenu.lua). The server decides
 -- everything; this file only draws what it was sent and sends requests back.
 
 local GIVE_MONEY  = 0
@@ -23,6 +23,17 @@ surface.CreateFont("Horde_GiveMenu_Small", { font = "Arial", size = 15, extended
 
 local frame
 local state
+
+-- Localized text (english.lua / russian.lua), falling back to the key.
+local function L(key, ...)
+    local text = translate and translate.Get and translate.Get(key)
+    if not text then return key end
+    if select("#", ...) > 0 then
+        local ok, out = pcall(string.format, text, ...)
+        return ok and out or text
+    end
+    return text
+end
 
 local function SendGive(kind, writer)
     if not state or not IsValid(state.target) then return end
@@ -58,13 +69,12 @@ local function BuildCurrencyTab(parent, kind)
     local is_money = kind == GIVE_MONEY
     local balance = is_money and state.money or state.skulls
     local unit = is_money and "$" or ""
-    local noun = is_money and "money" or "skulls"
 
     if is_money and state.budget then
         local lbl = vgui.Create("DLabel", pnl)
         lbl:SetFont("Horde_GiveMenu_Text")
         lbl:SetTextColor(col_muted)
-        lbl:SetText("Money is shared in Budget mode, so it can't be given.")
+        lbl:SetText(L("GiveMenu_BudgetShared"))
         lbl:SetWrap(true)
         lbl:Dock(TOP)
         lbl:DockMargin(12, 12, 12, 0)
@@ -75,7 +85,7 @@ local function BuildCurrencyTab(parent, kind)
     local info = vgui.Create("DLabel", pnl)
     info:SetFont("Horde_GiveMenu_Text")
     info:SetTextColor(col_text)
-    info:SetText(string.format("You have %s%d %s.", unit, balance, noun))
+    info:SetText(L(is_money and "GiveMenu_YouHaveMoney" or "GiveMenu_YouHaveSkulls", balance))
     info:Dock(TOP)
     info:DockMargin(12, 12, 12, 6)
     info:SetTall(22)
@@ -83,7 +93,7 @@ local function BuildCurrencyTab(parent, kind)
     local entry = vgui.Create("DTextEntry", pnl)
     entry:SetFont("Horde_GiveMenu_Text")
     entry:SetNumeric(true)
-    entry:SetPlaceholderText("Amount")
+    entry:SetPlaceholderText(L("GiveMenu_Amount"))
     entry:Dock(TOP)
     entry:DockMargin(12, 0, 12, 6)
     entry:SetTall(30)
@@ -102,13 +112,13 @@ local function BuildCurrencyTab(parent, kind)
         b:SetEnabled(value > 0 and value <= balance)
     end
     for _, v in ipairs(picks) do add_pick(unit .. v, v) end
-    add_pick("All", balance)
+    add_pick(L("GiveMenu_All"), balance)
 
-    local give = StyledButton(pnl, "Give to " .. state.target:Nick(), function()
+    local give = StyledButton(pnl, L("GiveMenu_GiveTo", state.target:Nick()), function()
         local amount = math.floor(tonumber(entry:GetValue()) or 0)
         if amount <= 0 then return end
         if amount > balance then
-            notification.AddLegacy("You don't have that many " .. noun .. ".", NOTIFY_ERROR, 3)
+            notification.AddLegacy(L(is_money and "GiveMenu_NotEnoughMoney" or "GiveMenu_NotEnoughSkulls"), NOTIFY_ERROR, 3)
             return
         end
         SendGive(kind, function() net.WriteUInt(amount, 32) end)
@@ -128,9 +138,9 @@ local function BuildWeaponsTab(parent)
     local info = vgui.Create("DLabel", pnl)
     info:SetFont("Horde_GiveMenu_Small")
     info:SetTextColor(col_muted)
-    local class_name = state.subclass ~= "" and state.subclass or "Unknown class"
-    info:SetText(string.format("%s: %s, %d / %d weight free", state.target:Nick(), class_name,
-        state.free_weight, state.max_weight))
+    local class_name = state.subclass ~= "" and (L("Class_" .. state.subclass)) or L("GiveMenu_UnknownClass")
+    if class_name == "Class_" .. state.subclass then class_name = state.subclass end
+    info:SetText(L("GiveMenu_TargetInfo", state.target:Nick(), class_name, state.free_weight, state.max_weight))
     info:Dock(TOP)
     info:DockMargin(12, 10, 12, 6)
     info:SetTall(18)
@@ -143,7 +153,7 @@ local function BuildWeaponsTab(parent)
         local lbl = scroll:Add("DLabel")
         lbl:SetFont("Horde_GiveMenu_Text")
         lbl:SetTextColor(col_muted)
-        lbl:SetText("You have no weapons that can be given.")
+        lbl:SetText(L("GiveMenu_NoWeapons"))
         lbl:Dock(TOP)
         lbl:DockMargin(4, 4, 4, 4)
         lbl:SetTall(24)
@@ -158,12 +168,12 @@ local function BuildWeaponsTab(parent)
         row.Paint = function(_, rw, rh)
             draw.RoundedBox(4, 0, 0, rw, rh, Color(30, 30, 30, 230))
             draw.SimpleText(w.name, "Horde_GiveMenu_Text", 10, 6, col_text)
-            local sub = string.format("Weight %d", w.weight)
+            local sub = L("GiveMenu_Weight", w.weight)
             if not w.ok and w.reason ~= "" then sub = sub .. "  ·  " .. w.reason end
             draw.SimpleText(sub, "Horde_GiveMenu_Small", 10, 26, w.ok and col_muted or col_bad)
         end
 
-        local btn = StyledButton(row, "Give", function(self)
+        local btn = StyledButton(row, L("GiveMenu_Give"), function(self)
             self:SetEnabled(false)
             SendGive(GIVE_WEAPON, function() net.WriteString(w.class) end)
         end)
@@ -195,7 +205,7 @@ local function BuildMenu(active_tab)
         draw.RoundedBox(6, 0, 0, w, h, col_bg)
         draw.RoundedBoxEx(6, 0, 0, w, 34, col_crimson, true, true, false, false)
         local name = IsValid(state.target) and state.target:Nick() or "?"
-        draw.SimpleText("Give to " .. name, "Horde_GiveMenu_Title", 12, 17, col_text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        draw.SimpleText(L("GiveMenu_GiveTo", name), "Horde_GiveMenu_Title", 12, 17, col_text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
     frame.Think = function(self)
         local lp = LocalPlayer()
@@ -218,9 +228,9 @@ local function BuildMenu(active_tab)
     sheet.Paint = function() end
 
     local tabs = {
-        { "Money",   BuildCurrencyTab(sheet, GIVE_MONEY) },
-        { "Skulls",  BuildCurrencyTab(sheet, GIVE_SKULLS) },
-        { "Weapons", BuildWeaponsTab(sheet) },
+        { L("GiveMenu_Tab_Money"),   BuildCurrencyTab(sheet, GIVE_MONEY) },
+        { L("GiveMenu_Tab_Skulls"),  BuildCurrencyTab(sheet, GIVE_SKULLS) },
+        { L("GiveMenu_Tab_Weapons"), BuildWeaponsTab(sheet) },
     }
     for _, t in ipairs(tabs) do
         local added = sheet:AddSheet(t[1], t[2])
