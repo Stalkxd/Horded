@@ -248,9 +248,9 @@ timer.Create("Horde_AFKCheck", 1, 0, function()
     local grace = cv_grace:GetFloat()
 
     for _, ply in ipairs(player.GetHumans()) do
-        if ply.Horde_AFK then goto continue end
-        if cv_admin_immune:GetBool() and ply:IsAdmin() then goto continue end
-        if ply:IsTimingOut() then goto continue end
+        if ply.Horde_AFK then goto next_player end
+        if cv_admin_immune:GetBool() and ply:IsAdmin() then goto next_player end
+        if ply:IsTimingOut() then goto next_player end
 
         ply.Horde_AFKLastActive = ply.Horde_AFKLastActive or now
         local idle = now - ply.Horde_AFKLastActive
@@ -268,7 +268,7 @@ timer.Create("Horde_AFKCheck", 1, 0, function()
             Announce(ply, "is AFK and will be moved to the spectators in " .. math.floor(grace) .. " seconds.")
         end
 
-        ::continue::
+        ::next_player::
     end
 end)
 
