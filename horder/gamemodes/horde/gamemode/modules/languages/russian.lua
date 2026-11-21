@@ -3636,6 +3636,27 @@ LANGUAGE["Perk_sapper_mutation"] = [[
 Ваши Хаундаи имеют {1} шанс взроваться после смерти.
 Даёт им щит, блокирующий первый полученный удар независимо от силы.]]
 
+-- Anti-AFK (system/server/players/sv_afk.lua, system/client/core/cl_afk.lua)
+LANGUAGE["AFK_Announce_WentAFK"] = "отошёл (AFK) и теперь наблюдает."
+LANGUAGE["AFK_Announce_MovedIdle"] = "слишком долго бездействовал и переведён в наблюдатели."
+LANGUAGE["AFK_Announce_Back"] = "вернулся из AFK."
+LANGUAGE["AFK_Announce_Warning"] = "бездействует и будет переведён в наблюдатели через %d сек."
+LANGUAGE["AFK_Notify_RespawnNextWave"] = "Вы возродитесь в следующей волне."
+LANGUAGE["AFK_Notify_AlreadyAFKBack"] = "Вы уже в AFK. Напишите !back, чтобы вернуться."
+LANGUAGE["AFK_Notify_AlreadyAFK"] = "Вы уже в AFK."
+LANGUAGE["AFK_Notify_NotAFK"] = "Вы не в AFK."
+LANGUAGE["AFK_Notify_NoReturn"] = "На этом сервере игроки в AFK не могут вернуться, пока не перезайдут."
+LANGUAGE["AFK_Chat_Warning"] = "Вы слишком долго бездействуете. Двигайтесь или нажмите любую клавишу в течение %d сек., иначе вас переведут в наблюдатели."
+LANGUAGE["AFK_Chat_WelcomeBack"] = "С возвращением, вас не переведут в наблюдатели."
+LANGUAGE["AFK_Chat_SpectatingBack"] = "Теперь вы наблюдатель и не возродитесь. Напишите !back, чтобы вернуться."
+LANGUAGE["AFK_Chat_Spectating"] = "Теперь вы наблюдатель и не возродитесь."
+LANGUAGE["AFK_Chat_SomePlayer"] = "Игрок"
+LANGUAGE["AFK_HUD_Title"] = "ВЫ ЕЩЁ ЗДЕСЬ?"
+LANGUAGE["AFK_HUD_Countdown"] = "Перевод в наблюдатели через %d сек. Нажмите любую клавишу, чтобы остаться."
+LANGUAGE["AFK_HUD_BannerBack"] = "AFK - напишите !back, чтобы вернуться"
+LANGUAGE["AFK_HUD_Banner"] = "AFK - наблюдение"
+LANGUAGE["AFK_Help"] = "'!afk' - уйти в AFK (наблюдение, без возрождения). '!back' - вернуться из AFK"
+
 LANGUAGE_NOTIF = {
 	{ "^Wave (%d+)/(%d+) complete! (%d+) to go!$", "Волна %1/%2 пройдена! Осталось %3!" },
 	{ "^Wave (%d+) reward: %+(%d+) skull tokens$", "Награда за волну %1: +%2 черепов" },
