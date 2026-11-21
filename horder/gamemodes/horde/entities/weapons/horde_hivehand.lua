@@ -58,7 +58,7 @@ SWEP.Slot = 3
 SWEP.SlotPos = 3
 
 SWEP.UseHands = false
-SWEP.HoldType = "ar2"
+SWEP.HoldType = "shotgun"
 SWEP.FiresUnderwater = true
 SWEP.DrawCrosshair = false
 SWEP.DrawAmmo = true
