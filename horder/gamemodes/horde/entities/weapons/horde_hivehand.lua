@@ -66,8 +66,6 @@ SWEP.CSMuzzleFlashes = 1
 SWEP.Base = "weapon_base"
 
 SWEP.RegenerationTimer = CurTime()
-SWEP.Idle = 0
-SWEP.IdleTimer = CurTime()
 SWEP.Recoil = 0
 SWEP.RecoilTimer = CurTime()
 
@@ -87,10 +85,58 @@ SWEP.Secondary.Automatic = true
 SWEP.Secondary.Ammo = "none"
 SWEP.Secondary.Delay = 0.1
 
+function SWEP:SetupDataTables()
+    -- Networked so the client and server agree on when to go back to idle.
+    -- The old plain Lua fields only played the idle on the server, which made
+    -- the predicted viewmodel snap.
+    self:NetworkVar( "Float", 0, "NextIdle" )
+end
+
 function SWEP:Initialize()
     self:SetWeaponHoldType( self.HoldType )
-    self.Idle = 0
-    self.IdleTimer = CurTime() + 1
+    self:SetNextIdle( CurTime() + 1 )
+end
+
+-- The viewmodel has three sequences on ACT_VM_IDLE (idle1, fidgetSway,
+-- fidgetShake) and all of them loop. SendWeaponAnim( ACT_VM_IDLE ) picked one
+-- at random and then looped it forever, so the gun could get stuck shaking or
+-- swaying. Play idle1 by name instead, and only play a fidget once in a while
+-- before going back to idle1.
+local fidgets = { "fidgetSway", "fidgetShake" }
+
+function SWEP:SetAnimDuration()
+    local vm = IsValid( self.Owner ) and self.Owner:GetViewModel()
+    local dur = IsValid( vm ) and vm:SequenceDuration() or 0.5
+    self:SetNextIdle( CurTime() + dur )
+end
+
+function SWEP:PlayIdle()
+    local owner = self.Owner
+    if !IsValid( owner ) then return end
+    local vm = owner:GetViewModel()
+    if !IsValid( vm ) then return end
+
+    local name = "idle1"
+    local fidget = util.SharedRandom( "HivehandFidget", 0, 1, math.floor( CurTime() ) ) < 0.25
+    if fidget then
+        name = fidgets[ math.floor( util.SharedRandom( "HivehandFidgetPick", 1, 2.999, math.floor( CurTime() ) ) ) ]
+    end
+
+    local seq = vm:LookupSequence( name )
+    if seq < 0 then
+        self:SendWeaponAnim( ACT_VM_IDLE )
+        self:SetNextIdle( 0 )
+        return
+    end
+    vm:SendViewModelMatchingSequence( seq )
+
+    if fidget then
+        -- Fidgets loop in the model, so cut them after one pass.
+        self:SetNextIdle( CurTime() + vm:SequenceDuration( seq ) )
+    else
+        -- idle1 loops on its own; maybe fidget after a while.
+        self:SetNextIdle( CurTime() + util.SharedRandom( "HivehandIdle", 8, 14, math.floor( CurTime() ) ) )
+    end
 end
 
 function SWEP:DrawHUD()
@@ -112,12 +158,11 @@ end
 
 function SWEP:Deploy()
     self:SetWeaponHoldType( self.HoldType )
-    self.Weapon:SendWeaponAnim( ACT_VM_DRAW )
+    self:SendWeaponAnim( ACT_VM_DRAW )
     self:SetNextPrimaryFire( CurTime() + 0.5 )
     self:SetNextSecondaryFire( CurTime() + 0.5 )
     self.RegenerationTimer = CurTime() + 0.5
-    self.Idle = 0
-    self.IdleTimer = CurTime() + self.Owner:GetViewModel():SequenceDuration()
+    self:SetAnimDuration()
     self.Recoil = 0
     self.RecoilTimer = CurTime()
     return true
@@ -125,8 +170,7 @@ end
 
 function SWEP:Holster()
     self.RegenerationTimer = CurTime()
-    self.Idle = 0
-    self.IdleTimer = CurTime()
+    self:SetNextIdle( 0 )
     self.Recoil = 0
     self.RecoilTimer = CurTime()
     return true
@@ -161,14 +205,12 @@ if SERVER then
     end
 end
     self:EmitSound( self.Primary.Sound )
-    self.Weapon:SendWeaponAnim( ACT_VM_PRIMARYATTACK )
+    self:PlayShootAnim()
     self.Owner:SetAnimation( PLAYER_ATTACK1 )
     self:TakePrimaryAmmo( self.Primary.TakeAmmo )
     self:SetNextPrimaryFire( CurTime() + self.Primary.Delay )
     self:SetNextSecondaryFire( CurTime() + self.Primary.Delay )
     self.RegenerationTimer = CurTime() + 0.5
-    self.Idle = 0
-    self.IdleTimer = CurTime() + self.Owner:GetViewModel():SequenceDuration()
     if ( CLIENT || game.SinglePlayer() ) and IsFirstTimePredicted() then
         self.Recoil = math.random( 1, 2 )
         self.RecoilTimer = CurTime() + self.Secondary.Delay
@@ -210,14 +252,12 @@ function SWEP:SecondaryAttack()
         end
     end
     self:EmitSound( self.Primary.Sound )
-    self.Weapon:SendWeaponAnim( ACT_VM_PRIMARYATTACK )
+    self:PlayShootAnim()
     self.Owner:SetAnimation( PLAYER_ATTACK1 )
     self:TakePrimaryAmmo( self.Primary.TakeAmmo )
     self:SetNextPrimaryFire( CurTime() + self.Secondary.Delay )
     self:SetNextSecondaryFire( CurTime() + self.Secondary.Delay )
     self.RegenerationTimer = CurTime() + 0.5
-    self.Idle = 0
-    self.IdleTimer = CurTime() + self.Owner:GetViewModel():SequenceDuration()
     if ( CLIENT || game.SinglePlayer() ) and IsFirstTimePredicted() then
         self.Recoil = math.random( 1, 2 )
         self.RecoilTimer = CurTime() + self.Secondary.Delay
@@ -228,6 +268,21 @@ function SWEP:SecondaryAttack()
             self.Owner:SetEyeAngles( self.Owner:EyeAngles() + Angle( 2.5, 0, 0 ) )
         end
     end
+end
+
+function SWEP:PlayShootAnim()
+    local vm = self.Owner:GetViewModel()
+    local seq = IsValid( vm ) and vm:LookupSequence( "Shoot" ) or -1
+    if seq >= 0 then
+        -- Restart the shot every time, even if the last one is still playing
+        -- (secondary fires every 0.1s and the shoot sequence is ~0.46s).
+        vm:SendViewModelMatchingSequence( seq )
+        vm:SetCycle( 0 )
+        vm:SetPlaybackRate( 1 )
+    else
+        self:SendWeaponAnim( ACT_VM_PRIMARYATTACK )
+    end
+    self:SetAnimDuration()
 end
 
 function SWEP:Reload()
@@ -252,11 +307,9 @@ if ( CLIENT || game.SinglePlayer() ) and IsFirstTimePredicted() then
         self.Owner:SetAmmo( self.Weapon:Ammo1() + 1, self.Primary.Ammo )
         self.RegenerationTimer = CurTime() + 0.5
     end
-    if self.Idle == 0 and self.IdleTimer <= CurTime() then
-        if SERVER then
-            self.Weapon:SendWeaponAnim( ACT_VM_IDLE )
-        end
-        self.Idle = 1
+    local nextIdle = self:GetNextIdle()
+    if nextIdle > 0 and nextIdle <= CurTime() then
+        self:PlayIdle()
     end
     if self.Weapon:Ammo1() > self.Primary.MaxAmmo then
         self.Owner:SetAmmo( self.Primary.MaxAmmo, self.Primary.Ammo )
