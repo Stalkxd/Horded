@@ -1022,7 +1022,7 @@ LANGUAGE["Perk_Title_cremator_positron_array"] = [[Позитронная реш
 LANGUAGE["Perk_cremator_positron_array"] = [[
 Сопротивление урону от огня увеличено на {1}.
 Вы впитываете {2} урона от огня врагов в качестве здоровья.
-Огонь от игроков наносит вам урон и не лечит.]]
+Ваш собственный огонь не наносит вам урона и лечит на {3} от его урона, но не больше {4} здоровья в секунду.]]
 
 LANGUAGE["Perk_Title_cremator_entropy_shield"] = [[Энтропийный щит]]
 LANGUAGE["Perk_cremator_entropy_shield"] = [[
