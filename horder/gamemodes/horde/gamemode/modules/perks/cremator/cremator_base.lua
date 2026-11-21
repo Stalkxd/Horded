@@ -9,8 +9,8 @@ Attacks have {5} chance to Ignite enemies.
 Ignite base duration is {6} and deals damage over time based on hit damage.
 Fire damage has {7} Ignite chance.
 
-Like a Demolition's explosives, your fire burns you too: Fire damage you deal
-within {8} units of yourself splashes back up to {9} of it on you.]]
+Your fire heals you: Fire damage you deal heals you {8} of it, up to {9} health
+per second. Your own fire never hurts you.]]
 PERK.Params = {
     [1] = {percent = true, base = 0.25, level = 0.01, max = 0.5, classname = HORDE.Class_Cremator},
     [2] = {value = 0.25, percent = true},
@@ -19,8 +19,8 @@ PERK.Params = {
     [5] = {value = 0.15, percent = true},
     [6] = {value = 4},
     [7] = {value = 1, percent = true},
-    [8] = {value = 160},
-    [9] = {value = 0.5, percent = true},
+    [8] = {value = 0.1, percent = true},
+    [9] = {value = 10},
 }
 
 PERK.Hooks = {}
@@ -48,55 +48,38 @@ PERK.Hooks.Horde_PrecomputePerkLevelBonus = function (ply)
     end
 end
 
--- Self-burn: fire the Cremator deals close to themselves splashes back on them, the way a
--- Demolition's own explosions hurt them. Full share at point blank, none at the edge of
--- the radius, then the usual resistances apply (Cremator base 25-50%, Positron Array +25%).
--- Ignite ticks (inflictor is the player) and molotov fire (which already burns whoever
--- stands in it) don't splash.
-local SELF_BURN_RADIUS = 160
-local SELF_BURN_SHARE = 0.5
-local SELF_BURN_INTERVAL = 0.25
-local SKIP_INFLICTORS = { arccw_horde_fire = true, entityflame = true }
+-- Fire heals the Cremator: every hit of Fire damage they deal (flamethrower, blaster,
+-- Gauntlet, molotov, Ignite) heals them 10% of the damage, up to 10 health per second.
+-- Their own fire never hurts them (sv_damage.lua turns it into the same heal).
+-- No perk, range or other condition. Set horde_cremator_heal_debug 1 to print each heal.
+local HEAL_SHARE = 0.1
+local HEAL_PER_SECOND = 10
+local debug_cv = CreateConVar("horde_cremator_heal_debug", "0", FCVAR_ARCHIVE,
+    "Print every Cremator fire heal to the server console.")
+
+function HORDE:CrematorFireHeal(ply, damage, source)
+    if not IsValid(ply) or not ply:IsPlayer() or not ply:Alive() then return end
+    local now = CurTime()
+    if (ply.Horde_CrematorHealWindowEnd or 0) <= now then
+        ply.Horde_CrematorHealWindowEnd = now + 1
+        ply.Horde_CrematorHealWindowAmount = 0
+    end
+    local amount = math.min(math.max(1, damage * HEAL_SHARE),
+        HEAL_PER_SECOND - ply.Horde_CrematorHealWindowAmount)
+    if debug_cv:GetBool() then
+        print(string.format("[Cremator heal] %s %s dmg=%.1f heal=%.1f hp=%d/%d", ply:Nick(),
+            tostring(source), damage, math.max(amount, 0), ply:Health(), ply:GetMaxHealth()))
+    end
+    if amount <= 0 then return end
+    ply.Horde_CrematorHealWindowAmount = ply.Horde_CrematorHealWindowAmount + amount
+    HORDE:OnPlayerHeal(ply, HealInfo:New({amount = amount, healer = ply}))
+end
 
 PERK.OwnerHooks.Horde_OnPlayerDamage = function (ply, npc, bonus, hitgroup, dmginfo)
     if not ply:Horde_GetPerk("cremator_base") then return end
     if not HORDE:IsFireDamage(dmginfo) then return end
-    if dmginfo:GetDamageCustom() == HORDE.DMG_OVER_TIME then return end
     local inflictor = dmginfo:GetInflictor()
-    if inflictor == ply then
-        -- Hitscan bullets can name the player as the inflictor; count them as the
-        -- weapon in hand. Entropy Shield's slow-burn pulse doesn't splash back.
-        if not dmginfo:IsDamageType(DMG_BURN) then return end
-        inflictor = ply:GetActiveWeapon()
-    end
-    if not IsValid(inflictor) or SKIP_INFLICTORS[inflictor:GetClass()] then return end
-    -- Turrets and pets don't burn their owner. (HORDE:IsMinion was used here, but it is
-    -- also true for the Cremator's own weapon and projectiles, so nothing ever splashed.)
-    if inflictor:IsNPC() or inflictor:IsNextBot() then return end
-    if (ply.Horde_CrematorSelfBurnNext or 0) > CurTime() then return end
-
-    local center = ply:WorldSpaceCenter()
-    local dist = npc:NearestPoint(center):Distance(center)
-    local pos = dmginfo:GetDamagePosition()
-    if pos and not pos:IsZero() then dist = math.min(dist, pos:Distance(center)) end
-    if dist >= SELF_BURN_RADIUS then return end
-
-    local amount = dmginfo:GetDamage() * SELF_BURN_SHARE * (1 - dist / SELF_BURN_RADIUS)
-    if amount < 1 then return end
-    ply.Horde_CrematorSelfBurnNext = CurTime() + SELF_BURN_INTERVAL
-
-    timer.Simple(0, function ()
-        if not IsValid(ply) or not ply:Alive() then return end
-        local d = DamageInfo()
-        d:SetAttacker(ply)
-        d:SetInflictor(IsValid(inflictor) and inflictor or game.GetWorld())
-        d:SetDamage(amount)
-        d:SetDamageType(DMG_BURN)
-        d:SetDamagePosition(center)
-        -- The inflictor is the Cremator's own weapon or projectile, which the damage code
-        -- otherwise blocks as a hit from something the player owns.
-        ply.Horde_CrematorSelfBurning = true
-        ply:TakeDamageInfo(d)
-        ply.Horde_CrematorSelfBurning = nil
-    end)
+    -- Turrets and pets don't heal their owner.
+    if IsValid(inflictor) and (inflictor:IsNPC() or inflictor:IsNextBot()) then return end
+    HORDE:CrematorFireHeal(ply, dmginfo:GetDamage(), IsValid(inflictor) and inflictor:GetClass() or "?")
 end
