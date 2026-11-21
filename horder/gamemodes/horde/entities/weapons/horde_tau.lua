@@ -333,6 +333,15 @@ function SWEP:Think()
         self.Owner:SetAmmo( self.Primary.MaxAmmo, self.Primary.Ammo )
     end
     if self.Spin == 1 and self.SpinTimer <= CurTime() then
+        -- Overcharge: explode exactly once. Spin used to stay at 1 here, so this
+        -- block ran every Think tick (infinite explosions while RMB was held) and
+        -- releasing RMB afterwards still fired a full 10x charged shot.
+        self.Spin = 0
+        self:TakePrimaryAmmo( math.min( self.Weapon:Clip1(), 10 ) )
+        self:SetNextPrimaryFire( CurTime() + 1.5 )
+        self:SetNextSecondaryFire( CurTime() + 1.5 )
+        self.Idle = 0
+        self.IdleTimer = CurTime() + 1.5
         if SERVER then
             local explode = ents.Create( "env_explosion" )
             explode:SetOwner( self.Owner )
@@ -342,8 +351,8 @@ function SWEP:Think()
             self.Owner:StopSound( "Weapon_Horde_Tau_Cannon.Double_2" )
             self.Owner:StopSound( "Weapon_Horde_Tau_Cannon.Double_3" )
             self.Owner:EmitSound( "Weapon_Horde_Tau_Cannon.Explode" )
+            util.BlastDamage( self, self.Owner, self:GetPos(), 256, 50 )
         end
         self:StopSound( self.Secondary.Sound )
-        util.BlastDamage( self, self.Owner, self:GetPos(), 256, 50 )
     end
 end
