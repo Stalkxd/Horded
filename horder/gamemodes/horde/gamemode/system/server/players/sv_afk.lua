@@ -66,11 +66,21 @@ local function SyncReady()
     net.Broadcast()
 end
 
-local function Announce(ply, text)
+-- Text shown to one player, in that player's language (modules/languages/*.lua).
+local function T(ply, key, ...)
+    local ok, text = pcall(translate.ClientFormat, ply, key, ...)
+    if ok and isstring(text) then return text end
+    return key
+end
+
+-- Chat line about someone. Only the translation key and the number go over the wire, so every
+-- client reads it in their own language (system/client/core/cl_afk.lua).
+local function Announce(ply, key, num)
     net.Start("Horde_AFK")
     net.WriteUInt(AFK_ANNOUNCE, 3)
     net.WriteEntity(ply)
-    net.WriteString(text)
+    net.WriteString(key)
+    net.WriteUInt(math.Clamp(math.floor(num or 0), 0, 65535), 16)
     net.Broadcast()
 end
 
@@ -170,9 +180,9 @@ function HORDE:SetPlayerAFK(ply, reason)
     net.Send(ply)
 
     if reason == "command" then
-        Announce(ply, "went AFK and is now spectating.")
+        Announce(ply, "AFK_Announce_WentAFK")
     else
-        Announce(ply, "was idle for too long and was moved to the spectators.")
+        Announce(ply, "AFK_Announce_MovedIdle")
     end
 
     HORDE.refresh_living_players = true
@@ -194,7 +204,7 @@ function HORDE:ClearPlayerAFK(ply)
     net.Start("Horde_AFK")
     net.WriteUInt(AFK_RETURNED, 3)
     net.Send(ply)
-    Announce(ply, "is back from AFK.")
+    Announce(ply, "AFK_Announce_Back")
 
     if ply:Alive() then return end
     -- Same rules as any dead player: back right away in the lobby or a break, otherwise at
@@ -206,7 +216,7 @@ function HORDE:ClearPlayerAFK(ply)
             SyncReady()
         end
     else
-        HORDE:SendNotification("You will respawn next wave.", 0, ply)
+        HORDE:SendNotification(T(ply, "AFK_Notify_RespawnNextWave"), 0, ply)
     end
 end
 
@@ -265,7 +275,7 @@ timer.Create("Horde_AFKCheck", 1, 0, function()
             net.WriteUInt(AFK_WARN, 3)
             net.WriteUInt(math.Clamp(math.floor(grace), 0, 65535), 16)
             net.Send(ply)
-            Announce(ply, "is AFK and will be moved to the spectators in " .. math.floor(grace) .. " seconds.")
+            Announce(ply, "AFK_Announce_Warning", grace)
         end
 
         ::next_player::
@@ -283,9 +293,9 @@ hook.Add("PlayerSay", "Horde_AFKCommands", function(ply, text)
     if cmd == "!afk" then
         if ply.Horde_AFK then
             if cv_return:GetBool() then
-                HORDE:SendNotification("You are already AFK. Type !back to rejoin.", 0, ply)
+                HORDE:SendNotification(T(ply, "AFK_Notify_AlreadyAFKBack"), 0, ply)
             else
-                HORDE:SendNotification("You are already AFK.", 0, ply)
+                HORDE:SendNotification(T(ply, "AFK_Notify_AlreadyAFK"), 0, ply)
             end
         else
             HORDE:SetPlayerAFK(ply, "command")
@@ -295,9 +305,9 @@ hook.Add("PlayerSay", "Horde_AFKCommands", function(ply, text)
 
     if cmd == "!back" or cmd == "!unafk" then
         if not ply.Horde_AFK then
-            HORDE:SendNotification("You are not AFK.", 0, ply)
+            HORDE:SendNotification(T(ply, "AFK_Notify_NotAFK"), 0, ply)
         elseif not cv_return:GetBool() then
-            HORDE:SendNotification("AFK players cannot rejoin on this server until they reconnect.", 1, ply)
+            HORDE:SendNotification(T(ply, "AFK_Notify_NoReturn"), 1, ply)
         else
             HORDE:ClearPlayerAFK(ply)
         end
